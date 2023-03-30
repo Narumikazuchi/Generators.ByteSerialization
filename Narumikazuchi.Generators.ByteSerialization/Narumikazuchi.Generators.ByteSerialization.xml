@@ -1,0 +1,259 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Narumikazuchi.Generators.ByteSerialization</name>
+    </assembly>
+    <members>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute">
+            <summary>
+            Generates serialization code for this type.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute.#ctor">
+            <summary>
+            Generates serialization code for this type.
+            </summary>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializer">
+            <summary>
+            Provides methods to serialize runtime objects into and from <see cref="T:System.Byte"/>[] arrays or streams.
+            </summary>
+            <remarks>
+            To make a runtime object serializable you can either decorate it with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute"/>, in which case
+            the serialization code will be generated automatically, or write a <see cref="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1"/> for
+            the type.
+            </remarks>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="read">The number of bytes read from the buffer.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified strategy <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="read">The number of bytes read from the buffer.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.IO.Stream,System.Int32@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="read">The number of bytes read from the buffer.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.IO.Stream,System.Int32@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="read">The number of bytes read from the buffer.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(``0,System.Int32@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="read">The number of bytes read from the buffer.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``3(``0,System.Int32@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="read">The number of bytes read from the buffer.</param>
+            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``1(``0)">
+            <summary>
+            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object.
+            </summary>
+            <param name="graph">The runtime object to calculate the expected size of.</param>
+            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``2(``0)">
+            <summary>
+            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="graph">The runtime object to calculate the expected size of.</param>
+            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The <see cref="T:System.Byte"/>-representation of the specified runtime object.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Span{System.Byte},``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.Span{System.Byte},``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.IO.Stream,``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.IO.Stream,``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(``0,``1)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``3(``0,``1)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.FixedSerializationSizeAttribute">
+            <summary>
+            Tells the code generator that this strategy will always occupy the same amount of bytes after serialization.
+            </summary>
+            <remarks>
+            Mark <see cref="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1"/> implementations with this attribute to
+            optimize the generated serialization code. Has no effect on any other class or struct.
+            </remarks>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.FixedSerializationSizeAttribute.#ctor(System.Int32)">
+            <summary>
+            Tells the code generator that this strategy will always occupy the same amount of bytes after serialization.
+            </summary>
+            <remarks>
+            Mark <see cref="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1"/> implementations with this attribute to
+            optimize the generated serialization code. Has no effect on any other class or struct.
+            </remarks>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1">
+            <summary>
+            Provides methods necessary for serialization of the type <typeparamref name="TSerializable"/>.
+            </summary>
+            <remarks>
+            While you can implement this interface yourself and you can then use it with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializer"/>
+            methods, this interface is mainly used by the code generator. The code generator is really efficient in 
+            writing serialization code, so try to use the code generator if possible.
+            </remarks>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Serialize(System.Span{System.Byte},`0)">
+            <summary>
+            Serializes a runtime object of type <typeparamref name="TSerializable"/> into it's <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="buffer">The buffer to serialize the value into.</param>
+            <param name="value">The value to serialize.</param>
+            <returns>The amount of bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <summary>
+            Deserializes the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The buffer to read the bytes from.</param>
+            <param name="read">The amount of bytes read from the buffer.</param>
+            <returns>The runtime object represented by the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.GetExpectedByteSize(`0)">
+            <summary>
+            Calculates the expected size of the serialized object.
+            </summary>
+            <param name="value">The object the calculation is based on.</param>
+            <returns>The expected size of the serialized object.</returns>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1">
+            <summary>
+            Provides Methods to serialize a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <summary>
+            Deserializes the contents of the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The buffer to read from.</param>
+            <param name="read">The amount of bytes read from the buffer.</param>
+            <returns>The <typeparamref name="TSerializable"/> represented by the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1.GetExpectedByteSize(`0)">
+            <summary>
+            Calculatees the expected amount of bytes the specified <paramref name="value"/> will occupy once serialized. 
+            </summary>
+            <param name="value">The value to use as base for calculation.</param>
+            <returns>The expected amount of bytes the value will occupy in it's serialized state.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1.Serialize(System.Span{System.Byte},`0)">
+            <summary>
+            Serializes the specified <paramref name="value"/> into the <paramref name="buffer"/>.
+            </summary>
+            <param name="buffer">The buffer into which to store the serialized value.</param>
+            <param name="value">The value to serialize.</param>
+            <returns>The amount of bytes written to the buffer.</returns>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute">
+            <summary>
+            Ignores this member when serializing this object.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute.#ctor">
+            <summary>
+            Ignores this member when serializing this object.
+            </summary>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.UseByteSerializationStrategyAttribute`2">
+            <summary>
+            Tells the serialization code generator to use the <typeparamref name="TStrategy"/> when serializing and
+            deserializing members of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <remarks>
+            This attribute will only be effective on types that are decorated with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute"/>.
+            </remarks>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.UseByteSerializationStrategyAttribute`2.#ctor">
+            <summary>
+            Tells the serialization code generator to use the <typeparamref name="TStrategy"/> when serializing and
+            deserializing members of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <remarks>
+            This attribute will only be effective on types that are decorated with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute"/>.
+            </remarks>
+        </member>
+    </members>
+</doc>
