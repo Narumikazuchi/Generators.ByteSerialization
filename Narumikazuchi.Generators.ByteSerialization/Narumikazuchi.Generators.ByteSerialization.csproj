@@ -1,0 +1,91 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<WarningsNotAsErrors>1591</WarningsNotAsErrors>
+		<NoWarn>NU1803;1701;1702,0282</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<WarningsNotAsErrors>1591;1701;1702;0282;0169;0649;0414;0162</WarningsNotAsErrors>
+		<NoWarn>NU1803;CS8785</NoWarn>
+	</PropertyGroup>
+
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<Exec Command="&quot;$(DevEnvDir)devenv&quot; &quot;$(SolutionDir)Solution.sln&quot; /Build $(Configuration) /Project &quot;$(SolutionDir)Narumikazuchi.Generators.ByteSerialization.Core\Narumikazuchi.Generators.ByteSerialization.Core.csproj&quot;" />
+	</Target>
+
+	<ItemGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<None Include="..\Narumikazuchi.Generators.ByteSerialization.Core\bin\Debug\netstandard2.0\Narumikazuchi.Generators.ByteSerialization.Core.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Update="..\Narumikazuchi.Generators.ByteSerialization.Core\tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="tools\%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<None Include="..\Narumikazuchi.Generators.ByteSerialization.Core\bin\Release\netstandard2.0\Narumikazuchi.Generators.ByteSerialization.Core.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Update="..\Narumikazuchi.Generators.ByteSerialization.Core\tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="tools\%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<DocumentationFile>Narumikazuchi.Generators.ByteSerialization.xml</DocumentationFile>
+		<Authors>Narumikazuchi</Authors>
+		<Copyright>©2023 Narumikazuchi</Copyright>
+		<Version>2023.3.29.6-prerelease</Version>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<RepositoryUrl>https://github.com/Narumikazuchi/Generators.ByteSerialization</RepositoryUrl>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
+		<PackageProjectUrl>https://github.com/Narumikazuchi/Generators.ByteSerialization/wiki</PackageProjectUrl>
+		<PackageIcon>logo.png</PackageIcon>
+		<PackageTags>Type Extensions</PackageTags>
+		<PackageReadmeFile>README nuget.md</PackageReadmeFile>
+		<Description>A detailed overview of the contents and their used can be found in the [wiki](https://github.com/Narumikazuchi/Generators.ByteSerialization/wiki).</Description>
+		<PackageId>Narumikazuchi.Generators.ByteSerialization</PackageId>
+		<Title>Narumikazuchi.Generators.ByteSerialization</Title>
+		<AssemblyName>Narumikazuchi.Generators.ByteSerialization</AssemblyName>
+		<RootNamespace>Narumikazuchi.Generators.ByteSerialization</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\logo.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\README nuget.md">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Narumikazuchi.InputOutput" Version="0.3.5-beta" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="System" />
+		<Using Include="System.Collections.Generic" />
+		<Using Include="System.IO" />
+		<Using Include="System.Runtime.CompilerServices" />
+		<Using Include="System.Runtime.InteropServices" />
+		<Using Include="System.Text" />
+	</ItemGroup>
+
+</Project>
