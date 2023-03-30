@@ -1,5 +1,6 @@
 ﻿namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
+[Generator]
 public sealed partial class SerializableGenerator
 {
     static private void GenerateSerializationMethods(SourceProductionContext context,
@@ -167,7 +168,7 @@ public sealed partial class SerializableGenerator
                 builder.Append("record ");
             }
 
-            builder.AppendLine($"class {symbol.Name} : Narumikazuchi.Serialization.Bytes.IByteSerializable<{symbol.Name}>");
+            builder.AppendLine($"class {symbol.Name} : Narumikazuchi.Generators.ByteSerialization.IByteSerializable<{symbol.Name}>");
         }
         else if (symbol.IsValueType)
         {
@@ -177,7 +178,7 @@ public sealed partial class SerializableGenerator
                 builder.Append("record ");
             }
 
-            builder.AppendLine($"struct {symbol.Name} : Narumikazuchi.Serialization.Bytes.IByteSerializable<{symbol.Name}>");
+            builder.AppendLine($"struct {symbol.Name} : Narumikazuchi.Generators.ByteSerialization.IByteSerializable<{symbol.Name}>");
         }
 
         builder.AppendLine($"{indent}{{");
@@ -265,6 +266,7 @@ public sealed partial class SerializableGenerator
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 ";
         String source = meta + builder.ToString();
@@ -285,13 +287,13 @@ using System.Runtime.CompilerServices;
         {
             return !field.AssociatedSymbol.GetAttributes()
                                           .Any(data => data.AttributeClass is not null &&
-                                                       data.AttributeClass.ToDisplayString() is "Narumikazuchi.Serialization.Bytes.IngoreForSerializationAttribute");
+                                                       data.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
         }
         else
         {
             return !field.GetAttributes()
                          .Any(data => data.AttributeClass is not null &&
-                                      data.AttributeClass.ToDisplayString() is "Narumikazuchi.Serialization.Bytes.IngoreForSerializationAttribute");
+                                      data.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
         }
     }
 
@@ -313,7 +315,7 @@ using System.Runtime.CompilerServices;
 
         return !parameter.GetAttributes()
                          .Any(data => data.AttributeClass is not null &&
-                                      data.AttributeClass.ToDisplayString() is "Narumikazuchi.Serialization.Bytes.IngoreForSerializationAttribute");
+                                      data.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
     }
 
     static private readonly String[] s_KnownTypes = new[]
@@ -342,6 +344,6 @@ using System.Runtime.CompilerServices;
         nameof(Version)
     };
 
-    private const String BYTESERIALIZABLE_ATTRIBUTE = "Narumikazuchi.Serialization.Bytes.ByteSerializableAttribute";
-    private const String USEBYTESERIALIZATIONSTRATEGY_ATTRIBUTE = "Narumikazuchi.Serialization.Bytes.UseByteSerializationStrategy";
+    private const String BYTESERIALIZABLE_ATTRIBUTE = "Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute";
+    private const String USEBYTESERIALIZATIONSTRATEGY_ATTRIBUTE = "Narumikazuchi.Generators.ByteSerialization.UseByteSerializationStrategy";
 }

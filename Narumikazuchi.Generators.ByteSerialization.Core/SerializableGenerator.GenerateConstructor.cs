@@ -30,6 +30,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace Narumikazuchi.Generated;
+
 [EditorBrowsable(EditorBrowsableState.Never)]
 [CompilerGenerated]
 ";
@@ -83,11 +84,23 @@ namespace Narumikazuchi.Generated;
         String indent = "    ";
         builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[CompilerGenerated]");
-        builder.AppendLine($"{indent}static public ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} GenerateConstructorFor_{symbol.ToDisplayString().Replace(".", "")}");
+        builder.AppendLine($"{indent}static public ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
-        builder.AppendLine($"{indent}[MethodImpl(MethodImplOptions.AggressiveInlining)]");
         builder.AppendLine($"{indent}get");
+        builder.AppendLine($"{indent}{{");
+        indent += "    ";
+        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}.Value;");
+
+        indent = indent.Substring(4);
+        builder.AppendLine($"{indent}}}");
+        indent = indent.Substring(4);
+        builder.AppendLine($"{indent}}}");
+        builder.AppendLine();
+
+        builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
+        builder.AppendLine($"{indent}[CompilerGenerated]");
+        builder.AppendLine($"{indent}static private ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} GenerateConstructorFor_{symbol.ToDisplayString().Replace(".", "")}()");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
 
@@ -98,10 +111,10 @@ namespace Narumikazuchi.Generated;
 
         indent = indent.Substring(4);
         builder.AppendLine($"{indent}}}");
-        indent = indent.Substring(4);
-        builder.AppendLine($"{indent}}}");
         builder.AppendLine();
-        builder.AppendLine($"{indent}static private ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}? s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} = default;");
+
+        builder.AppendLine();
+        builder.AppendLine($"{indent}static private Lazy<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}> s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} = new Lazy<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}>(GenerateConstructorFor_{symbol.ToDisplayString().Replace(".", "")}, LazyThreadSafetyMode.ExecutionAndPublication);");
         builder.Append('}');
 
         String meta = $@"//------------------------------------------------------------------------------
@@ -120,6 +133,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Narumikazuchi.Generated;
 
@@ -137,14 +151,6 @@ namespace Narumikazuchi.Generated;
                                                 StringBuilder builder,
                                                 String indent)
     {
-        builder.AppendLine($"{indent}if (s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} is not null)");
-        builder.AppendLine($"{indent}{{");
-        indent += "    ";
-        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")};");
-        indent = indent.Substring(4);
-        builder.AppendLine($"{indent}}}");
-        builder.AppendLine();
-
         builder.Append($"{indent}Type[] parameters = new Type[] {{ ");
         Boolean first = true;
         foreach (IFieldSymbol field in fields)
@@ -202,7 +208,6 @@ namespace Narumikazuchi.Generated;
 
         builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldloc_0);");
         builder.AppendLine($"{indent}generator.Emit(OpCodes.Ret);");
-        builder.AppendLine($"{indent}s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} = method.CreateDelegate<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}>();");
-        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")};");
+        builder.AppendLine($"{indent}return method.CreateDelegate<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}>();");
     }
 }

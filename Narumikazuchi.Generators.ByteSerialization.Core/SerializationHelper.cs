@@ -44,14 +44,14 @@ static public class SerializationHelper
                 builder.AppendLine($"{indent}pointer += 8;");
                 break;
             case nameof(Guid):
-                builder.AppendLine($"{indent}value.{target.Name}.TryWriteBytes(buffer[pointer..(pointer + 16)]);");
+                builder.AppendLine($"{indent}_ = value.{target.Name}.TryWriteBytes(buffer[pointer..(pointer + 16)]);");
                 builder.AppendLine($"{indent}pointer += 16;");
                 break;
             case nameof(SByte):
                 builder.AppendLine($"{indent}buffer[pointer++] = (Byte)value.{target.Name};");
                 break;
             case nameof(String):
-                builder.AppendLine($"{indent}pointer += Narumikazuchi.Serialization.Bytes.Strategies.StringStrategy.Serialize(buffer)[pointer..], value.{target.Name});");
+                builder.AppendLine($"{indent}pointer += Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Serialize(buffer[pointer..], value.{target.Name});");
                 break;
         }
     }

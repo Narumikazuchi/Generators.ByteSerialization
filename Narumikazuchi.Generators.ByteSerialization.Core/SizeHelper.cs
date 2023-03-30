@@ -55,7 +55,7 @@ static public class SizeHelper
                 expectedSize += 16;
                 break;
             case nameof(String):
-                builder.AppendLine($"{indent}expectedSize += Narumikazuchi.Serialization.Bytes.ByteSerializer.GetExpectedSerializedSize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>(value.{target.Name});");
+                builder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>(value.{target.Name});");
                 break;
         }
     }

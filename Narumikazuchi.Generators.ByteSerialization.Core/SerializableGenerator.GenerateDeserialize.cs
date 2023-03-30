@@ -12,7 +12,7 @@ public partial class SerializableGenerator
         builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[CompilerGenerated]");
         builder.AppendLine($"{indent}[MethodImpl(MethodImplOptions.AggressiveInlining)]");
-        builder.AppendLine($"{indent}static {symbol.Name} Narumikazuchi.Serialization.Bytes.IByteSerializable<{symbol.Name}>.Deserialize(ReadOnlySpan<Byte> buffer, out Int32 read)");
+        builder.AppendLine($"{indent}static {symbol.Name} Narumikazuchi.Generators.ByteSerialization.IByteSerializable<{symbol.Name}>.Deserialize(ReadOnlySpan<Byte> buffer, out Int32 read)");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
 
@@ -38,7 +38,7 @@ public partial class SerializableGenerator
                                                     String indent)
     {
         StringBuilder constructBuilder = new();
-        constructBuilder.Append($"{indent}return Narumikazuchi.Generated.ConstructorGenerator.GenerateConstructorFor_{symbol.ToDisplayString().Replace(".", "")}.Invoke(");
+        constructBuilder.Append($"{indent}return Narumikazuchi.Generated.ConstructorGenerator.ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}.Invoke(");
 
         Boolean first = true;
         foreach (IFieldSymbol field in fields)
@@ -61,7 +61,7 @@ public partial class SerializableGenerator
                     builder.Append($"{indent}{field.Type.ToDisplayString()} ");
                 }
 
-                builder.AppendLine($"_{target.Name} = Narumikazuchi.Serialization.Bytes.ByteSerializer.Deserialize<{field.Type.Name}, {strategyType.ToDisplayString()}>(buffer[read..], out bytesRead);");
+                builder.AppendLine($"_{target.Name} = Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{field.Type.Name}, {strategyType.ToDisplayString()}>(buffer[read..], out bytesRead);");
                 builder.AppendLine($"{indent}read += bytesRead;");
                 if (first)
                 {
@@ -98,7 +98,7 @@ public partial class SerializableGenerator
                                                                                      attribute.AttributeClass.ToDisplayString() is BYTESERIALIZABLE_ATTRIBUTE);
                 if (isSerializable)
                 {
-                    builder.AppendLine($"{indent}{field.Type.ToDisplayString()} _{target.Name} = Narumikazuchi.Serialization.Bytes.ByteSerializer.Deserialize<{field.Type.ToDisplayString()}>(buffer[read..], out bytesRead);");
+                    builder.AppendLine($"{indent}{field.Type.ToDisplayString()} _{target.Name} = Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{field.Type.ToDisplayString()}>(buffer[read..], out bytesRead);");
                     builder.AppendLine($"{indent}read += bytesRead;");
                     if (first)
                     {
@@ -117,8 +117,8 @@ public partial class SerializableGenerator
                     EnumDeclarationSyntax syntax = (EnumDeclarationSyntax)field.Type.DeclaringSyntaxReferences[0].GetSyntax();
                     if (syntax.BaseList is null)
                     {
-                        builder.AppendLine($"{indent}{field.Type.ToDisplayString()} _{target.Name} = ({field.Type.ToDisplayString()})Narumikazuchi.Serialization.Bytes.Strategies.Int32Strategy.Deserialize(buffer[read..], out bytesRead);");
-                        builder.AppendLine($"{indent}read += bytesRead;");
+                        builder.AppendLine($"{indent}{field.Type.ToDisplayString()} _{target.Name} = ({field.Type.ToDisplayString()})Unsafe.ReadUnaligned<Int32>(ref MemoryMarshal.GetReference(buffer[read..]));");
+                        builder.AppendLine($"{indent}read += 4;");
                         if (first)
                         {
                             first = false;

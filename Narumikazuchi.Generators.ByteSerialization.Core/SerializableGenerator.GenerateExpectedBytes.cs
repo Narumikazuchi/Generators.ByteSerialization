@@ -12,7 +12,7 @@ public partial class SerializableGenerator
         builder.AppendLine($"{indent}[CompilerGenerated]");
         builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[MethodImpl(MethodImplOptions.AggressiveInlining)]");
-        builder.AppendLine($"{indent}static Int32 Narumikazuchi.Serialization.Bytes.IByteSerializable<{symbol.Name}>.GetExpectedByteSize({symbol.Name} value)");
+        builder.AppendLine($"{indent}static Int32 Narumikazuchi.Generators.ByteSerialization.IByteSerializable<{symbol.Name}>.GetExpectedByteSize({symbol.Name} value)");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
 
@@ -46,10 +46,10 @@ public partial class SerializableGenerator
                                        value: out ITypeSymbol? strategyType))
             {
                 AttributeData? attribute = strategyType.GetAttributes().FirstOrDefault(attribute => attribute.AttributeClass is not null &&
-                                                                                                    attribute.AttributeClass.ToDisplayString() is "Narumikazuchi.Serialization.Bytes.FixedSerializationSizeAttribute");
+                                                                                                    attribute.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.FixedSerializationSizeAttribute");
                 if (attribute is null)
                 {
-                    sizeBuilder.AppendLine($"{indent}expectedSize += Narumikazuchi.Serialization.Bytes.ByteSerializer.GetExpectedSerializedSize<{field.Type.Name}, {strategyType.ToDisplayString()}>(value.{target.Name});");
+                    sizeBuilder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize<{field.Type.Name}, {strategyType.ToDisplayString()}>(value.{target.Name});");
                 }
                 else
                 {
@@ -71,7 +71,7 @@ public partial class SerializableGenerator
                                                                                      attribute.AttributeClass.ToDisplayString() is BYTESERIALIZABLE_ATTRIBUTE);
                 if (isSerializable)
                 {
-                    sizeBuilder.AppendLine($"{indent}expectedSize += Narumikazuchi.Serialization.Bytes.ByteSerializer.GetExpectedSerializedSize(value.{target.Name});");
+                    sizeBuilder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize(value.{target.Name});");
                 }
                 else if (field.Type.IsValueType &&
                          field.Type.TypeKind is TypeKind.Enum)

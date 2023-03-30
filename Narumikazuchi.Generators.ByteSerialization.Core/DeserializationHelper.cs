@@ -49,7 +49,7 @@ static public class DeserializationHelper
                 builder.AppendLine($"{indent}SByte _{target.Name} = (SByte)buffer[read++];");
                 break;
             case nameof(String):
-                builder.AppendLine($"{indent}String _{target.Name} = Narumikazuchi.Serialization.Bytes.ByteSerializer.Deserialize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>(buffer[read..], out bytesRead);");
+                builder.AppendLine($"{indent}String _{target.Name} = Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>(buffer[read..], out bytesRead);");
                 builder.AppendLine($"{indent}read += bytesRead;");
                 break;
         }
