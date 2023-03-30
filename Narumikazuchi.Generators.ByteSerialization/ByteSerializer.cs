@@ -92,7 +92,8 @@ static public class ByteSerializer
         where TSerializable : IByteSerializable<TSerializable>
     {
         Byte[] buffer = new Byte[4];
-        Int32 size = stream.Read(buffer);
+        stream.Read(buffer);
+        Int32 size = Unsafe.As<Byte, Int32>(ref buffer[0]);
         buffer = new Byte[size];
         stream.Read(buffer);
         TSerializable result = TSerializable.Deserialize(buffer: buffer,
@@ -112,7 +113,8 @@ static public class ByteSerializer
         where TStrategy : IByteSerializationStrategy<TSerializable>
     {
         Byte[] buffer = new Byte[4];
-        Int32 size = stream.Read(buffer);
+        stream.Read(buffer);
+        Int32 size = Unsafe.As<Byte, Int32>(ref buffer[0]);
         buffer = new Byte[size];
         stream.Read(buffer);
         TSerializable result = TStrategy.Deserialize(buffer: buffer,
