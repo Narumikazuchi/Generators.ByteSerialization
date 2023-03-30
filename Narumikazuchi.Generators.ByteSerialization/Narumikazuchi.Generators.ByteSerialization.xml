@@ -237,6 +237,300 @@
             Ignores this member when serializing this object.
             </summary>
         </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Boolean"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy.GetExpectedByteSize(System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy.Serialize(System.Span{System.Byte},System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Byte"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy.GetExpectedByteSize(System.Byte)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy.Serialize(System.Span{System.Byte},System.Byte)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Char"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy.GetExpectedByteSize(System.Char)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy.Serialize(System.Span{System.Byte},System.Char)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.DateOnly"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy.GetExpectedByteSize(System.DateOnly)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy.Serialize(System.Span{System.Byte},System.DateOnly)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.DateTimeOffset"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy.GetExpectedByteSize(System.DateTimeOffset)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy.Serialize(System.Span{System.Byte},System.DateTimeOffset)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.DateTime"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy.GetExpectedByteSize(System.DateTime)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy.Serialize(System.Span{System.Byte},System.DateTime)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Decimal"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy.GetExpectedByteSize(System.Decimal)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy.Serialize(System.Span{System.Byte},System.Decimal)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Double"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy.GetExpectedByteSize(System.Double)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy.Serialize(System.Span{System.Byte},System.Double)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Guid"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy.GetExpectedByteSize(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy.Serialize(System.Span{System.Byte},System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Half"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy.GetExpectedByteSize(System.Half)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy.Serialize(System.Span{System.Byte},System.Half)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Int16"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy.GetExpectedByteSize(System.Int16)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy.Serialize(System.Span{System.Byte},System.Int16)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Int32"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy.GetExpectedByteSize(System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy.Serialize(System.Span{System.Byte},System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Int64"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy.GetExpectedByteSize(System.Int64)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy.Serialize(System.Span{System.Byte},System.Int64)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.SByte"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy.GetExpectedByteSize(System.SByte)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy.Serialize(System.Span{System.Byte},System.SByte)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.Single"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy.GetExpectedByteSize(System.Single)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy.Serialize(System.Span{System.Byte},System.Single)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.String"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.GetExpectedByteSize(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Serialize(System.Span{System.Byte},System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.TimeOnly"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy.GetExpectedByteSize(System.TimeOnly)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy.Serialize(System.Span{System.Byte},System.TimeOnly)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.TimeSpan"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy.GetExpectedByteSize(System.TimeSpan)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy.Serialize(System.Span{System.Byte},System.TimeSpan)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.UInt16"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy.GetExpectedByteSize(System.UInt16)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy.Serialize(System.Span{System.Byte},System.UInt16)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.UInt32"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy.GetExpectedByteSize(System.UInt32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy.Serialize(System.Span{System.Byte},System.UInt32)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy">
+            <summary>
+            Provides Methods to serialize a runtime object of type <see cref="T:System.UInt64"/>.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy.GetExpectedByteSize(System.UInt64)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy.Serialize(System.Span{System.Byte},System.UInt64)">
+            <inheritdoc/>
+        </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.UseByteSerializationStrategyAttribute`2">
             <summary>
             Tells the serialization code generator to use the <typeparamref name="TStrategy"/> when serializing and
