@@ -42,7 +42,7 @@ static public class DeserializationHelper
                 builder.AppendLine($"{indent}read += 8;");
                 break;
             case nameof(Guid):
-                builder.AppendLine($"{indent}Guid _{target.Name} = new Guid(buffer[..16]);");
+                builder.AppendLine($"{indent}Guid _{target.Name} = new Guid(buffer[read..(read + 16)]);");
                 builder.AppendLine($"{indent}read += 16;");
                 break;
             case nameof(SByte):

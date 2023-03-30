@@ -10,7 +10,6 @@ public partial class SerializableGenerator
                                                           String indent)
     {
         builder.AppendLine($"{indent}[CompilerGenerated]");
-        builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[MethodImpl(MethodImplOptions.AggressiveInlining)]");
         builder.AppendLine($"{indent}static Int32 Narumikazuchi.Generators.ByteSerialization.IByteSerializable<{symbol.Name}>.GetExpectedByteSize({symbol.Name} value)");
         builder.AppendLine($"{indent}{{");

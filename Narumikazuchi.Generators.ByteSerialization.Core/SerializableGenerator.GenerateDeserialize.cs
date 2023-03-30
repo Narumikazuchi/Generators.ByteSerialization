@@ -9,7 +9,6 @@ public partial class SerializableGenerator
                                                   StringBuilder builder,
                                                   String indent)
     {
-        builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[CompilerGenerated]");
         builder.AppendLine($"{indent}[MethodImpl(MethodImplOptions.AggressiveInlining)]");
         builder.AppendLine($"{indent}static {symbol.Name} Narumikazuchi.Generators.ByteSerialization.IByteSerializable<{symbol.Name}>.Deserialize(ReadOnlySpan<Byte> buffer, out Int32 read)");
