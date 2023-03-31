@@ -64,10 +64,14 @@ public partial class SerializableGenerator
                                               indent: indent,
                                               expectedSize: ref expectedSize);
             }
-            else if (field.Type.IsUnmanagedType)
+            else if (field.Type.IsUnmanagedType &&
+                     field.Type.TypeKind is not TypeKind.Pointer &&
+                     field.Type.Name is not "IntPtr"
+                                     and not "UIntPtr")
             {
-                if (semanticModel.Compilation.Options is CSharpCompilationOptions compilationOptions &&
-                    compilationOptions.AllowUnsafe)
+                if ((semanticModel.Compilation.Options is CSharpCompilationOptions compilationOptions &&
+                    compilationOptions.AllowUnsafe) ||
+                    field.Type.TypeKind is TypeKind.Enum)
                 {
                     sizeBuilder.AppendLine($"{indent}expectedSize += sizeof({field.Type.ToTypename()});");
                 }

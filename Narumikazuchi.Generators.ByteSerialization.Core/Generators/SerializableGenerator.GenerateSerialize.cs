@@ -62,8 +62,9 @@ public partial class SerializableGenerator
                                      and not "UIntPtr")
             {
                 builder.AppendLine($"{indent}Unsafe.As<Byte, {field.Type.ToTypename()}>(ref buffer[pointer]) = value.{target.Name};");
-                if (semanticModel.Compilation.Options is CSharpCompilationOptions compilationOptions &&
-                    compilationOptions.AllowUnsafe)
+                if ((semanticModel.Compilation.Options is CSharpCompilationOptions compilationOptions &&
+                    compilationOptions.AllowUnsafe) ||
+                    field.Type.TypeKind is TypeKind.Enum)
                 {
                     builder.AppendLine($"{indent}pointer += sizeof({field.Type.ToTypename()});");
                 }
