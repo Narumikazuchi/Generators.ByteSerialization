@@ -264,7 +264,6 @@ public sealed partial class SerializableGenerator
 #nullable enable
 
 using System;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 

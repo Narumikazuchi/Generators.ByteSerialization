@@ -51,17 +51,7 @@ public partial class SerializableGenerator
             if (strategies.TryGetValue(key: field.Type,
                                        value: out ITypeSymbol? strategyType))
             {
-                if (field.Type.ContainingNamespace.ToDisplayString() is "System")
-                {
-                    builder.Append($"{indent}{field.Type.Name} ");
-                }
-                else
-                {
-                    builder.Append($"{indent}{field.Type.ToDisplayString()} ");
-                }
-
-                builder.AppendLine($"_{target.Name} = Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{field.Type.Name}, {strategyType.ToDisplayString()}>(buffer[read..], out bytesRead);");
-                builder.AppendLine($"{indent}read += bytesRead;");
+                builder.AppendLine($"{indent}read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{field.Type.Name}, {strategyType.ToDisplayString()}>(buffer[read..], out {field.Type.ToTypename()} _{target.Name});");
                 if (first)
                 {
                     first = false;
@@ -97,8 +87,7 @@ public partial class SerializableGenerator
                                                                                      attribute.AttributeClass.ToDisplayString() is BYTESERIALIZABLE_ATTRIBUTE);
                 if (isSerializable)
                 {
-                    builder.AppendLine($"{indent}{field.Type.ToDisplayString()} _{target.Name} = Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{field.Type.ToDisplayString()}>(buffer[read..], out bytesRead);");
-                    builder.AppendLine($"{indent}read += bytesRead;");
+                    builder.AppendLine($"{indent}read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{field.Type.ToDisplayString()}>(buffer[read..], out {field.Type.ToDisplayString()} _{target.Name});");
                     if (first)
                     {
                         first = false;

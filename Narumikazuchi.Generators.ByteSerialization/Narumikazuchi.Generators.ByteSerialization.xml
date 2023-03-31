@@ -24,62 +24,14 @@
             the type.
             </remarks>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte})">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
-            <param name="read">The number of bytes read from the buffer.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified strategy <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
-            <param name="read">The number of bytes read from the buffer.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.IO.Stream,System.Int32@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="read">The number of bytes read from the buffer.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.IO.Stream,System.Int32@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="read">The number of bytes read from the buffer.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(``0,System.Int32@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="read">The number of bytes read from the buffer.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``3(``0,System.Int32@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="read">The number of bytes read from the buffer.</param>
-            <returns>The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</returns>
-        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``1(``0)">
+            <summary>
+            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object.
+            </summary>
+            <param name="graph">The runtime object to calculate the expected size of.</param>
+            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``1(System.Collections.Generic.IEnumerable{``0})">
             <summary>
             Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object.
             </summary>
@@ -93,6 +45,109 @@
             <param name="graph">The runtime object to calculate the expected size of.</param>
             <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``2(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="graph">The runtime object to calculate the expected size of.</param>
+            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},``0@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},System.Collections.Immutable.ImmutableArray{``0}@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="result">The runtime collection of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.ReadOnlySpan{System.Byte},``0@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified strategy <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.ReadOnlySpan{System.Byte},System.Collections.Immutable.ImmutableArray{``0}@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified strategy <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="result">The runtime collection of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.IO.Stream,``0@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.IO.Stream,System.Collections.Immutable.ImmutableArray{``0}@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.IO.Stream,``0@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.IO.Stream,System.Collections.Immutable.ImmutableArray{``0}@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(``0,``1@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(``0,System.Collections.Immutable.ImmutableArray{``1}@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``3(``0,``1@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``3(``0,System.Collections.Immutable.ImmutableArray{``1}@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(``0)">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
@@ -100,7 +155,22 @@
             <param name="graph">The runtime object to serialize.</param>
             <returns>The <see cref="T:System.Byte"/>-representation of the specified runtime object.</returns>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The <see cref="T:System.Byte"/>-representation of the specified runtime object.</returns>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Span{System.Byte},``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Span{System.Byte},System.Collections.Generic.IEnumerable{``0})">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
             </summary>
@@ -116,7 +186,23 @@
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.Span{System.Byte},System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.IO.Stream,``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.IO.Stream,System.Collections.Generic.IEnumerable{``0})">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
             </summary>
@@ -132,6 +218,14 @@
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.IO.Stream,System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(``0,``1)">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
@@ -140,7 +234,23 @@
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(``0,System.Collections.Generic.IEnumerable{``1})">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``3(``0,``1)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            </summary>
+            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``3(``0,System.Collections.Generic.IEnumerable{``1})">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
             </summary>
