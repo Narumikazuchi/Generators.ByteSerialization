@@ -286,14 +286,6 @@
             writing serialization code, so try to use the code generator if possible.
             </remarks>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Serialize(System.Span{System.Byte},`0)">
-            <summary>
-            Serializes a runtime object of type <typeparamref name="TSerializable"/> into it's <see cref="T:System.Byte"/>-representation.
-            </summary>
-            <param name="buffer">The buffer to serialize the value into.</param>
-            <param name="value">The value to serialize.</param>
-            <returns>The amount of bytes written to the buffer.</returns>
-        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
             <summary>
             Deserializes the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.
@@ -308,6 +300,14 @@
             </summary>
             <param name="value">The object the calculation is based on.</param>
             <returns>The expected size of the serialized object.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Serialize(System.Span{System.Byte},`0)">
+            <summary>
+            Serializes a runtime object of type <typeparamref name="TSerializable"/> into it's <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="buffer">The buffer to serialize the value into.</param>
+            <param name="value">The value to serialize.</param>
+            <returns>The amount of bytes written to the buffer.</returns>
         </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1">
             <summary>

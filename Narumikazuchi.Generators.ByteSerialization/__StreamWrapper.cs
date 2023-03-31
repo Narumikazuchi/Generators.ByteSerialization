@@ -1,6 +1,4 @@
 ﻿using Narumikazuchi.InputOutput;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Narumikazuchi.Generators.ByteSerialization;
 
@@ -16,19 +14,9 @@ internal readonly struct __StreamWrapper : ISeekableStream, IWriteableStream
         m_Stream.Dispose();
     }
 
-    public ValueTask DisposeAsync()
-    {
-        return m_Stream.DisposeAsync();
-    }
-
     public void Flush()
     {
         m_Stream.Flush();
-    }
-
-    public async ValueTask FlushAsync()
-    {
-        await m_Stream.FlushAsync();
     }
 
     public Int64 Seek(Int64 offset,
@@ -36,6 +24,21 @@ internal readonly struct __StreamWrapper : ISeekableStream, IWriteableStream
     {
         return m_Stream.Seek(offset: offset,
                              origin: origin);
+    }
+
+    public void WriteByte(Byte value)
+    {
+        m_Stream.WriteByte(value);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        return m_Stream.DisposeAsync();
+    }
+
+    public async ValueTask FlushAsync()
+    {
+        await m_Stream.FlushAsync();
     }
 
     public void Write(ReadOnlySpan<Byte> buffer)
@@ -48,11 +51,6 @@ internal readonly struct __StreamWrapper : ISeekableStream, IWriteableStream
     {
         await m_Stream.WriteAsync(buffer: buffer,
                                   cancellationToken: cancellationToken);
-    }
-
-    public void WriteByte(Byte value)
-    {
-        m_Stream.WriteByte(value);
     }
 
     public Int64 Length

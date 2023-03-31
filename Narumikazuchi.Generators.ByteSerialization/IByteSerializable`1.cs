@@ -12,16 +12,6 @@ public interface IByteSerializable<TSerializable>
     where TSerializable : IByteSerializable<TSerializable>
 {
     /// <summary>
-    /// Serializes a runtime object of type <typeparamref name="TSerializable"/> into it's <see cref="Byte"/>-representation.
-    /// </summary>
-    /// <param name="buffer">The buffer to serialize the value into.</param>
-    /// <param name="value">The value to serialize.</param>
-    /// <returns>The amount of bytes written to the buffer.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static public abstract Int32 Serialize(Span<Byte> buffer,
-                                           TSerializable value);
-
-    /// <summary>
     /// Deserializes the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.
     /// </summary>
     /// <param name="buffer">The buffer to read the bytes from.</param>
@@ -38,4 +28,14 @@ public interface IByteSerializable<TSerializable>
     /// <returns>The expected size of the serialized object.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static public abstract Int32 GetExpectedByteSize(TSerializable value);
+    
+    /// <summary>
+    /// Serializes a runtime object of type <typeparamref name="TSerializable"/> into it's <see cref="Byte"/>-representation.
+    /// </summary>
+    /// <param name="buffer">The buffer to serialize the value into.</param>
+    /// <param name="value">The value to serialize.</param>
+    /// <returns>The amount of bytes written to the buffer.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static public abstract Int32 Serialize(Span<Byte> buffer,
+                                           TSerializable value);
 }
