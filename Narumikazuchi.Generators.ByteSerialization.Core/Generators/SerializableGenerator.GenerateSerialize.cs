@@ -69,7 +69,7 @@ public partial class SerializableGenerator
                 }
                 else
                 {
-                    builder.AppendLine($"{indent}pointer += {field.Type.UnmanagedSize()};");
+                    builder.AppendLine($"{indent}pointer += Marshal.SizeOf<{field.Type.ToTypename()}>();");
                 }
             }
             else if (field.Type.IsSerializable())

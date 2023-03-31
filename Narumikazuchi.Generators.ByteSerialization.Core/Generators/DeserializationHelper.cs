@@ -19,7 +19,6 @@ static public class DeserializationHelper
             case nameof(Char):
             case nameof(Decimal):
             case nameof(Double):
-            case "Half":
             case nameof(Int16):
             case nameof(Int32):
             case nameof(Int64):
@@ -47,6 +46,10 @@ static public class DeserializationHelper
             case nameof(Guid):
                 builder.AppendLine($"{indent}Guid _{target.Name} = new Guid(buffer[read..(read + 16)]);");
                 builder.AppendLine($"{indent}read += 16;");
+                break;
+            case "Half":
+                builder.AppendLine($"{indent}{typename} _{target.Name} = Unsafe.ReadUnaligned<{typename}>(ref MemoryMarshal.GetReference(buffer[read..]));");
+                builder.AppendLine($"{indent}read += Marshal.SizeOf<{typename}>();");
                 break;
             case nameof(SByte):
                 builder.AppendLine($"{indent}SByte _{target.Name} = (SByte)buffer[read++];");

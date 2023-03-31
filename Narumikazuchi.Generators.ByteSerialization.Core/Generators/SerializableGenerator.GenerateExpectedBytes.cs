@@ -73,7 +73,7 @@ public partial class SerializableGenerator
                 }
                 else
                 {
-                    expectedSize += field.Type.UnmanagedSize();
+                    sizeBuilder.AppendLine($"{indent}expectedSize += Marshal.SizeOf<{field.Type.ToTypename()}>();");
                 }
             }
             else if (field.Type.IsSerializable())

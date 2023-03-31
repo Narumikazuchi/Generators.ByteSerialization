@@ -22,6 +22,18 @@ static public class Extensions
 
     static public Int32 UnmanagedSize(this ITypeSymbol type)
     {
+        if (type.TypeKind is TypeKind.Enum)
+        {
+            if (type is INamedTypeSymbol named)
+            {
+                return named.EnumUnderlyingType.UnmanagedSize();
+            }
+            else
+            {
+                return 4;
+            }
+        }
+
         String typename = type.ToTypename();
         return typename switch
         {

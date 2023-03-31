@@ -19,7 +19,6 @@ static public class SerializationHelper
             case nameof(Char):
             case nameof(Decimal):
             case nameof(Double):
-            case "Half":
             case nameof(Int16):
             case nameof(Int32):
             case nameof(Int64):
@@ -46,6 +45,10 @@ static public class SerializationHelper
             case nameof(Guid):
                 builder.AppendLine($"{indent}_ = value.{target.Name}.TryWriteBytes(buffer[pointer..(pointer + 16)]);");
                 builder.AppendLine($"{indent}pointer += 16;");
+                break;
+            case "Half":
+                builder.AppendLine($"{indent}Unsafe.As<Byte, {typename}>(ref buffer[pointer]) = value.{target.Name};");
+                builder.AppendLine($"{indent}pointer += Marshal.SizeOf<{typename}>();");
                 break;
             case nameof(SByte):
                 builder.AppendLine($"{indent}buffer[pointer++] = (Byte)value.{target.Name};");
