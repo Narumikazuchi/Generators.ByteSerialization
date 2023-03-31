@@ -1,4 +1,5 @@
 ﻿using Narumikazuchi.InputOutput;
+using System.Reflection;
 
 namespace Narumikazuchi.Generators.ByteSerialization;
 
@@ -56,7 +57,14 @@ public partial class ByteSerializer
         }
 
         Unsafe.As<Byte, Int32>(ref buffer[0]) = pointer - sizeof(Int32);
-        return buffer;
+        if (pointer < buffer.Length)
+        {
+            return buffer[..pointer];
+        }
+        else
+        {
+            return buffer;
+        }
     }
     /// <summary>
     /// Serializes the specified runtime object into it's raw <see cref="Byte"/>-representation.
@@ -313,9 +321,9 @@ public partial class ByteSerializer
             foreach (TSerializable element in graph)
             {
                 buffer = new Byte[TSerializable.GetExpectedByteSize(element)];
-                _ = TSerializable.Serialize(buffer: buffer.AsSpan(),
-                                            value: element);
-                stream.Write(buffer);
+                Int32 used = TSerializable.Serialize(buffer: buffer.AsSpan(),
+                                                     value: element);
+                stream.Write(buffer.AsSpan()[..used]);
             }
 
             buffer = new Byte[4];
@@ -357,7 +365,7 @@ public partial class ByteSerializer
             }
 
             Unsafe.As<Byte, Int32>(ref buffer[0]) = pointer - sizeof(Int32);
-            stream.Write(buffer);
+            stream.Write(buffer.AsSpan()[..pointer]);
             return pointer;
         }
     }
@@ -421,9 +429,9 @@ public partial class ByteSerializer
             foreach (TSerializable element in graph)
             {
                 buffer = new Byte[TStrategy.GetExpectedByteSize(element)];
-                _ = TStrategy.Serialize(buffer: buffer.AsSpan(),
-                                        value: element);
-                stream.Write(buffer);
+                Int32 used = TStrategy.Serialize(buffer: buffer.AsSpan(),
+                                                 value: element);
+                stream.Write(buffer.AsSpan()[..used]);
             }
 
             buffer = new Byte[4];
@@ -465,7 +473,7 @@ public partial class ByteSerializer
             }
 
             Unsafe.As<Byte, Int32>(ref buffer[0]) = pointer - sizeof(Int32);
-            stream.Write(buffer);
+            stream.Write(buffer.AsSpan()[..pointer]);
             return pointer;
         }
     }
