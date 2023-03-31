@@ -10,6 +10,6 @@ public readonly struct Vector2D
 }
 
 [ByteSerializable]
-public sealed unsafe partial record class Unmanaged(Half Half,
-                                                    Guid Id,
-                                                    Vector2D Vector2D);
+public sealed partial record class Unmanaged(Half Half,
+                                             Guid Id,
+                                             Vector2D Vector2D);

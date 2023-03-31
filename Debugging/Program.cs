@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Debugging;
 
@@ -25,7 +26,7 @@ public class Program
         Console.ReadLine();
     }
 
-    static private unsafe void TryComposite()
+    static private void TryComposite()
     {
         Console.WriteLine("Starting Composite...");
         Composite source = new(/*new Enumerables(new Int64[] { 42, 69 },
@@ -190,7 +191,7 @@ public class Program
         Console.WriteLine(source.Equals(control));
     }
 
-    static private unsafe void TryUnmanaged()
+    static private void TryUnmanaged()
     {
         Console.WriteLine("Starting Unmanaged...");
         Unmanaged source = new((Half)512.256f,
