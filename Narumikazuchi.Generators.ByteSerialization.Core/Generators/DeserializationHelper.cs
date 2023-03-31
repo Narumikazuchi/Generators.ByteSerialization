@@ -1,4 +1,4 @@
-﻿namespace Narumikazuchi.Generators.ByteSerialization;
+﻿namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 static public class DeserializationHelper
 {
@@ -35,10 +35,13 @@ static public class DeserializationHelper
                 builder.AppendLine($"{indent}read += 4;");
                 break;
             case nameof(DateTime):
-            case nameof(DateTimeOffset):
             case "TimeOnly":
             case nameof(TimeSpan):
                 builder.AppendLine($"{indent}{typename} _{target.Name} = new {typename}(Unsafe.ReadUnaligned<Int64>(ref MemoryMarshal.GetReference(buffer[read..])));");
+                builder.AppendLine($"{indent}read += 8;");
+                break;
+            case nameof(DateTimeOffset):
+                builder.AppendLine($"{indent}{typename} _{target.Name} = new {typename}(Unsafe.ReadUnaligned<Int64>(ref MemoryMarshal.GetReference(buffer[read..])), TimeSpan.Zero);");
                 builder.AppendLine($"{indent}read += 8;");
                 break;
             case nameof(Guid):
@@ -53,16 +56,5 @@ static public class DeserializationHelper
                 builder.AppendLine($"{indent}read += bytesRead;");
                 break;
         }
-    }
-
-    static public void WriteEnumTypeDeserialization(IFieldSymbol field,
-                                                    ISymbol target,
-                                                    ITypeSymbol baseType,
-                                                    StringBuilder builder,
-                                                    String indent)
-    {
-        String typename = baseType.ToTypename();
-        builder.AppendLine($"{indent}{field.Type.ToDisplayString()} _{target.Name} = ({field.Type.ToDisplayString()})Unsafe.ReadUnaligned<{typename}>(ref MemoryMarshal.GetReference(buffer[read..]));");
-        builder.AppendLine($"{indent}read += sizeof({typename});");
     }
 }

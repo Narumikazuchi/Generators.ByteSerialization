@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
-		<Nullable>enable</Nullable>
+		<Nullable>disable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
@@ -11,6 +11,7 @@
 		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 		<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
 		<IsRoslynComponent>true</IsRoslynComponent>
+		<RootNamespace>Narumikazuchi.Generators.ByteSerialization</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -50,6 +51,7 @@
 		<Using Include="Microsoft.CodeAnalysis.Diagnostics" />
 		<Using Include="Microsoft.CodeAnalysis.Text" />
 		<Using Include="System" />
+		<Using Include="System.Collections" />
 		<Using Include="System.Collections.Generic" />
 		<Using Include="System.Collections.Immutable" />
 		<Using Include="System.Diagnostics" />

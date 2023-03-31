@@ -52,6 +52,6 @@ public partial class SerializableGenerator
             }
         }
 
-        return default!;
+        return default;
     }
 }

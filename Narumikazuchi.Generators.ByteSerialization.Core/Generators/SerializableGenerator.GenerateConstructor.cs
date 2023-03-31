@@ -63,14 +63,7 @@ namespace Narumikazuchi.Generated;
                 target = field.AssociatedSymbol;
             }
 
-            if (field.Type.ContainingNamespace.ToDisplayString() is "System")
-            {
-                builder.Append($"{field.Type.Name} {target.Name}");
-            }
-            else
-            {
-                builder.Append($"{field.Type.ToDisplayString()} {target.Name}");
-            }
+            builder.Append($"{field.Type.ToTypename()} {target.Name}");
         }
     }
 
@@ -164,14 +157,7 @@ namespace Narumikazuchi.Generated;
                 builder.Append(", ");
             }
 
-            if (field.Type.ContainingNamespace.ToDisplayString() is "System")
-            {
-                builder.Append($"typeof({field.Type.Name})");
-            }
-            else
-            {
-                builder.Append($"typeof({field.Type.ToDisplayString()})");
-            }
+            builder.Append($"typeof({field.Type.ToTypename()})");
         }
         builder.AppendLine(" };");
 
