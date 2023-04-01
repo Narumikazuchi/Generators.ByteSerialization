@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace Debugging;
 
@@ -11,7 +10,7 @@ public class Program
     static public void Main(String[] args)
     {
         TryComposite();
-        //TryEnumerables();
+        TryEnumerables();
         TryEnums();
         TryIntrinsic();
         TryNonRecord();
@@ -29,13 +28,14 @@ public class Program
     static private void TryComposite()
     {
         Console.WriteLine("Starting Composite...");
-        Composite source = new(/*new Enumerables(new Int64[] { 42, 69 },
+        Composite source = new(new Enumerables(new Int64[] { 42, 69 },
                                                ImmutableArray.Create(new String[] { "Foo", "Bar" }),
                                                new() { new Vector2D { X = 42, Y = 69 } },
                                                new(new Enums[] { new(AttributeTargets.Delegate, ConsoleColor.Green) }),
                                                new AttributeTargets[] { AttributeTargets.Enum, AttributeTargets.GenericParameter },
                                                ImmutableArray.Create(new Contract { Contents = "MIT License" }),
-                                               new() { new Version(3, 2, 1, 1254) }),*/
+                                               new() { new Version(3, 2, 1, 1254) },
+                                               new() { { 64, 420d } }),
                                new Enums(AttributeTargets.Class,
                                          ConsoleColor.Cyan),
                                new Intrinsic(new DateOnly(2023, 5, 25),
@@ -72,17 +72,18 @@ public class Program
 
         Console.WriteLine(source.Equals(control));
     }
-    /*
+    
     static private void TryEnumerables()
     {
-        Console.WriteLine("Starting Composite...");
+        Console.WriteLine("Starting Enumerables...");
         Enumerables source = new(new Int64[] { 42, 69 },
                                  ImmutableArray.Create(new String[] { "Foo", "Bar" }),
                                  new() { new Vector2D { X = 42, Y = 69 } },
                                  new(new Enums[] { new(AttributeTargets.Delegate, ConsoleColor.Green) }),
                                  new AttributeTargets[] { AttributeTargets.Enum, AttributeTargets.GenericParameter },
                                  ImmutableArray.Create(new Contract { Contents = "MIT License" }),
-                                 new() { new Version(3, 2, 1, 1254) });
+                                 new() { new Version(3, 2, 1, 1254) },
+                                 new() { { 64, 420d } });
 
         Byte[] buffer = ByteSerializer.Serialize(source);
 
@@ -90,7 +91,6 @@ public class Program
 
         Console.WriteLine(source.Equals(control));
     }
-    */
 
     static private void TryCollection()
     {
@@ -160,7 +160,7 @@ public class Program
         Primitive source = new(true,
                                0x90,
                                0x7F,
-                               'Z',
+                               'A',
                                30225,
                                61423,
                                2001426541,

@@ -3,7 +3,7 @@
 namespace Debugging;
 
 [ByteSerializable]
-public sealed partial record class Composite(//Enumerables Enumerables,
+public sealed partial record class Composite(Enumerables Enumerables,
                                              Enums Enums,
                                              Intrinsic Intrinsic,
                                              NonRecord NonRecord,
