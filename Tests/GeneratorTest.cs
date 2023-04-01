@@ -12,7 +12,8 @@ public sealed class GeneratorTest : SourceGeneratorTest<MSTestVerifier>
         {
             TestState =
             {
-                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location.Replace("net6.0", "netstandard2.0") }
+                ReferenceAssemblies = Net7.Assemblies,
+                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location }
             }
         };
         foreach (String source in sources)
@@ -35,7 +36,8 @@ public sealed class GeneratorTest : SourceGeneratorTest<MSTestVerifier>
             TestState =
             {
                 Sources = { source },
-                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location.Replace("net6.0", "netstandard2.0") }
+                ReferenceAssemblies = Net7.Assemblies,
+                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location }
             }
         };
         foreach ((String filename, SourceText content) item in expected)
