@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace Debugging;
 
+#pragma warning disable CS0659
 public sealed class Contract
 {
     public override Boolean Equals(Object? obj)

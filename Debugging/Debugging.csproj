@@ -7,6 +7,10 @@
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<NoWarn>NU1803;1701;1702,0282</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\Narumikazuchi.Generators.ByteSerialization.Core\Narumikazuchi.Generators.ByteSerialization.Core.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\Narumikazuchi.Generators.ByteSerialization\Narumikazuchi.Generators.ByteSerialization.csproj" />

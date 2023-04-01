@@ -3,6 +3,7 @@ using System;
 
 namespace Debugging;
 
+#pragma warning disable CS0659
 [ByteSerializable]
 public sealed partial class NonRecord
 {
