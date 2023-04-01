@@ -75,39 +75,27 @@ static internal class __Shared
         return floatingFields.ToImmutableArray();
     }
 
-    static internal Boolean LinqReferenceRequired(ImmutableArray<IFieldSymbol> fields)
+    static internal String SizeOf(ITypeSymbol type)
     {
-        foreach (IFieldSymbol field in fields)
+        String typename = type.ToFrameworkString();
+        if (type.TypeKind is TypeKind.Enum ||
+            Array.IndexOf(array: s_BuiltInTypes,
+                          value: typename) > -1)
         {
-            if (field.Type.IsEnumerable(out _) &&
-                field.Type.IsSimpleEnumerable())
-            {
-                return true;
-            }
+            return $"sizeof({typename})";
         }
-
-        return false;
+        else
+        {
+            return $"Marshal.SizeOf<{typename}>()";
+        }
     }
 
-    static internal Boolean UnsafeKeywordRequired(Compilation compilation,
-                                                  ImmutableArray<IFieldSymbol> fields)
+    static internal String[] IntrinsicTypes { get; } = new[]
     {
-        if (compilation.Options is not CSharpCompilationOptions compilationOptions ||
-            !compilationOptions.AllowUnsafe)
-        {
-            return false;
-        }
-
-        foreach (IFieldSymbol field in fields)
-        {
-            if (field.Type.IsUnmanagedType)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+        typeof(DateTime).FullName!,
+        typeof(DateTimeOffset).FullName!,
+        nameof(String)
+    };
 
     static private AttributeData[] FetchUsefulAttributes(INamedTypeSymbol symbol,
                                                          Compilation compilation,
@@ -126,7 +114,7 @@ static internal class __Shared
                 }
 
                 INamedTypeSymbol attributeSymbol = constructorSymbol.ContainingType;
-                String fullName = attributeSymbol.ToDisplayString();
+                String fullName = attributeSymbol.ToFrameworkString();
                 if (fullName.StartsWith(Generators.SerializableGenerator.USEBYTESERIALIZATIONSTRATEGY_ATTRIBUTE))
                 {
                     SyntaxReference reference = attributeSyntax.GetReference();
@@ -178,7 +166,7 @@ static internal class __Shared
 
         return !parameter.GetAttributes()
                          .Any(data => data.AttributeClass is not null &&
-                                      data.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
+                                      data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
     }
 
     static private Boolean PropertyOrFieldNotIgnored(IFieldSymbol field)
@@ -191,13 +179,30 @@ static internal class __Shared
         {
             return !field.AssociatedSymbol.GetAttributes()
                                           .Any(data => data.AttributeClass is not null &&
-                                                       data.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
+                                                       data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
         }
         else
         {
             return !field.GetAttributes()
                          .Any(data => data.AttributeClass is not null &&
-                                      data.AttributeClass.ToDisplayString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
+                                      data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
         }
     }
+
+    static private readonly String[] s_BuiltInTypes = new String[]
+    {
+        nameof(Decimal),
+        nameof(Double),
+        nameof(UInt16),
+        nameof(Single),
+        nameof(SByte),
+        nameof(UInt64),
+        nameof(Int16),
+        nameof(Boolean),
+        nameof(Int64),
+        nameof(UInt32),
+        nameof(Byte),
+        nameof(Char),
+        nameof(Int32)
+    };
 }

@@ -2,96 +2,106 @@
 
 static public class SizeHelper
 {
-    static public void WriteKnownTypeSize(ISymbol target,
-                                          StringBuilder builder,
+    static public void WriteKnownTypeSize(StringBuilder builder,
                                           String typename,
                                           String indent,
+                                          String target,
                                           ref Int32 expectedSize)
     {
-        switch (typename)
+        if (typename == typeof(DateTime).FullName! ||
+            typename == typeof(DateTimeOffset).FullName!)
         {
-            case nameof(Boolean):
-            case nameof(Byte):
-            case nameof(SByte):
-                expectedSize++;
-                break;
-            case nameof(Char):
-            case "Half":
-            case nameof(Int16):
-            case nameof(UInt16):
-                expectedSize += 2;
-                break;
-            case "DateOnly":
-            case nameof(Int32):
-            case nameof(Single):
-            case nameof(UInt32):
-                expectedSize += 4;
-                break;
-            case nameof(DateTime):
-            case nameof(DateTimeOffset):
-            case nameof(Double):
-            case nameof(Int64):
-            case "TimeOnly":
-            case nameof(TimeSpan):
-            case nameof(UInt64):
-                expectedSize += 8;
-                break;
-            case nameof(Decimal):
-            case nameof(Guid):
-                expectedSize += 16;
-                break;
-            case nameof(String):
-                builder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>(value.{target.Name});");
-                break;
+            expectedSize += 8;
+        }
+        else if (typename is nameof(String))
+        {
+            builder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>({target});");
         }
     }
 
-    static public void WriteKnownTypeSizeEnumerable(ISymbol target,
-                                                    ITypeSymbol type,
-                                                    StringBuilder builder,
-                                                    String indent,
-                                                    ref Int32 expectedSize)
+    static public void WriteTypeSize(ITypeSymbol type,
+                                     Dictionary<ITypeSymbol, ITypeSymbol> strategies,
+                                     StringBuilder builder,
+                                     String indent,
+                                     String target,
+                                     ref Int32 expectedSize)
     {
-        String typename = type.ToTypename();
-        switch (typename)
+        if (strategies.TryGetValue(key: type,
+                                   value: out ITypeSymbol strategyType))
         {
-            case nameof(Boolean):
-            case nameof(Byte):
-            case nameof(SByte):
-                builder.AppendLine($"{indent}expectedSize += 4 + value.{type.EnumerableCount()};");
-                break;
-            case nameof(Char):
-            case "Half":
-            case nameof(Int16):
-            case nameof(UInt16):
-                builder.AppendLine($"{indent}expectedSize += 4 + 2 * value.{type.EnumerableCount()};");
-                break;
-            case "DateOnly":
-            case nameof(Int32):
-            case nameof(Single):
-            case nameof(UInt32):
-                builder.AppendLine($"{indent}expectedSize += 4 + 4 * value.{type.EnumerableCount()};");
-                break;
-            case nameof(DateTime):
-            case nameof(DateTimeOffset):
-            case nameof(Double):
-            case nameof(Int64):
-            case "TimeOnly":
-            case nameof(TimeSpan):
-            case nameof(UInt64):
-                builder.AppendLine($"{indent}expectedSize += 4 + 8 * value.{type.EnumerableCount()};");
-                break;
-            case nameof(Decimal):
-            case nameof(Guid):
-                builder.AppendLine($"{indent}expectedSize += 4 + 16 * value.{type.EnumerableCount()};");
-                break;
-            case nameof(String):
-                builder.AppendLine($"{indent}expectedSize += 4;");
-                builder.AppendLine($"{indent}foreach (String item in value.{target.Name})");
+            AttributeData attribute = strategyType.GetAttributes().FirstOrDefault(attribute => attribute.AttributeClass is not null &&
+                                                                                               attribute.AttributeClass.ToFrameworkString() is SerializableGenerator.FIXEDSERIALIZATIONSIZE_ATTRIBUTE);
+            if (attribute is null)
+            {
+                builder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize<{type.Name}, {strategyType.ToFrameworkString()}>({target});");
+            }
+            else
+            {
+                expectedSize += (Int32)attribute.ConstructorArguments[0].Value;
+            }
+        }
+        else if (Array.IndexOf(array: __Shared.IntrinsicTypes,
+                               value: type.ToFrameworkString()) > -1)
+        {
+            WriteKnownTypeSize(target: target,
+                               builder: builder,
+                               typename: type.ToFrameworkString(),
+                               indent: indent,
+                               expectedSize: ref expectedSize);
+        }
+        else if (type.IsUnmanagedSerializable())
+        {
+            builder.AppendLine($"{indent}expectedSize += {__Shared.SizeOf(type)};");
+        }
+        else if (type.IsByteSerializable())
+        {
+            builder.AppendLine($"{indent}expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize({target});");
+        }
+        else if (type.IsEnumerableSerializable(strategies))
+        {
+            String trimmed = target.Substring(target.LastIndexOf('.') + 1);
+            builder.AppendLine($"{indent}expectedSize += 4;");
+            if (type.IsDictionaryEnumerable(out INamedTypeSymbol keyValuePair))
+            {
+                builder.AppendLine($"{indent}foreach ({keyValuePair.ToFrameworkString()} {trimmed}_item in {target})");
                 builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    expectedSize += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize<String, Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy>(item);");
-                builder.AppendLine($"{indent}}}");
-                break;
+                indent += "    ";
+                WriteTypeSize(type: keyValuePair.TypeArguments[0],
+                              strategies: strategies,
+                              builder: builder,
+                              indent: indent,
+                              target: $"{trimmed}_item_key",
+                              expectedSize: ref expectedSize);
+                WriteTypeSize(type: keyValuePair.TypeArguments[1],
+                              strategies: strategies,
+                              builder: builder,
+                              indent: indent,
+                              target: $"{trimmed}_item_value",
+                              expectedSize: ref expectedSize);
+            }
+            else if (type.IsEnumerable(out INamedTypeSymbol elementType))
+            {
+                builder.AppendLine($"{indent}foreach ({elementType.ToFrameworkString()} {trimmed}_item in {target})");
+                builder.AppendLine($"{indent}{{");
+                indent += "    ";
+                WriteTypeSize(type: elementType,
+                              strategies: strategies,
+                              builder: builder,
+                              indent: indent,
+                              target: $"{trimmed}_item",
+                              expectedSize: ref expectedSize);
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            indent = indent.Substring(4);
+            builder.AppendLine($"{indent}}}");
+        }
+        else
+        {
+            throw new Exception();
         }
     }
 }

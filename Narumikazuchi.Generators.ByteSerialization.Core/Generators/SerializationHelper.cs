@@ -2,155 +2,95 @@
 
 static public class SerializationHelper
 {
-    static public void WriteKnownTypeSerialization(IFieldSymbol field,
-                                                    ISymbol target,
-                                                    StringBuilder builder,
-                                                    String indent)
+    static public void WriteKnownTypeSerialization(ITypeSymbol type,
+                                                   StringBuilder builder,
+                                                   String indent,
+                                                   String target)
     {
-        String typename = field.Type.ToTypename();
-        switch (typename)
+        String typename = type.ToFrameworkString();
+        if (typename == typeof(DateTime).FullName! ||
+            typename == typeof(DateTimeOffset).FullName!)
         {
-            case nameof(Boolean):
-                builder.AppendLine($"{indent}buffer[pointer++] = value.{target.Name} ? (Byte)0x1 : (Byte)0x0;");
-                break;
-            case nameof(Byte):
-                builder.AppendLine($"{indent}buffer[pointer++] = value.{target.Name};");
-                break;
-            case nameof(Char):
-            case nameof(Decimal):
-            case nameof(Double):
-            case nameof(Int16):
-            case nameof(Int32):
-            case nameof(Int64):
-            case nameof(Single):
-            case nameof(UInt16):
-            case nameof(UInt32):
-            case nameof(UInt64):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, {typename}>(ref buffer[pointer]) = value.{target.Name};");
-                builder.AppendLine($"{indent}pointer += sizeof({typename});");
-                break;
-            case "DateOnly":
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int16>(ref buffer[pointer]) = (Int16)value.{target.Name}.Year;");
-                builder.AppendLine($"{indent}pointer += 2;");
-                builder.AppendLine($"{indent}buffer[pointer++] = (Byte)value.{target.Name}.Month;");
-                builder.AppendLine($"{indent}buffer[pointer++] = (Byte)value.{target.Name}.Day;");
-                break;
-            case nameof(DateTime):
-            case nameof(DateTimeOffset):
-            case "TimeOnly":
-            case nameof(TimeSpan):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int64>(ref buffer[pointer]) = value.{target.Name}.Ticks;");
-                builder.AppendLine($"{indent}pointer += 8;");
-                break;
-            case nameof(Guid):
-                builder.AppendLine($"{indent}_ = value.{target.Name}.TryWriteBytes(buffer[pointer..(pointer + 16)]);");
-                builder.AppendLine($"{indent}pointer += 16;");
-                break;
-            case "Half":
-                builder.AppendLine($"{indent}Unsafe.As<Byte, {typename}>(ref buffer[pointer]) = value.{target.Name};");
-                builder.AppendLine($"{indent}pointer += Marshal.SizeOf<{typename}>();");
-                break;
-            case nameof(SByte):
-                builder.AppendLine($"{indent}buffer[pointer++] = (Byte)value.{target.Name};");
-                break;
-            case nameof(String):
-                builder.AppendLine($"{indent}pointer += Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Serialize(buffer[pointer..], value.{target.Name});");
-                break;
+            builder.AppendLine($"{indent}Unsafe.As<Byte, Int64>(ref buffer[pointer]) = {target}.Ticks;");
+            builder.AppendLine($"{indent}pointer += 8;");
+        }
+        else if (typename is nameof(String))
+        {
+            builder.AppendLine($"{indent}pointer += Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Serialize(buffer[pointer..], {target});");
         }
     }
 
-    static public void WriteEnumerableKnownTypeSerialization(ITypeSymbol enumerableType,
-                                                             ITypeSymbol elementType,
-                                                             ISymbol target,
-                                                             StringBuilder builder,
-                                                             String indent)
+    static public void WriteTypeSerialization(ITypeSymbol type,
+                                              Dictionary<ITypeSymbol, ITypeSymbol> strategies,
+                                              StringBuilder builder,
+                                              String indent,
+                                              String target)
     {
-        String typename = elementType.ToTypename();
-        switch (typename)
+        if (strategies.TryGetValue(key: type,
+                                   value: out ITypeSymbol strategyType))
         {
-            case nameof(Boolean):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
+            builder.AppendLine($"{indent}pointer += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize<{type.ToFrameworkString()}, {strategyType.ToFrameworkString()}>(buffer[pointer..], {target});");
+        }
+        else if (Array.IndexOf(array: __Shared.IntrinsicTypes,
+                               value: type.ToFrameworkString()) > -1)
+        {
+            WriteKnownTypeSerialization(type: type,
+                                        builder: builder,
+                                        indent: indent,
+                                        target: target);
+        }
+        else if (type.IsUnmanagedSerializable())
+        {
+            builder.AppendLine($"{indent}Unsafe.As<Byte, {type.ToFrameworkString()}>(ref buffer[pointer]) = {target};");
+            builder.AppendLine($"{indent}pointer += {__Shared.SizeOf(type)};");
+        }
+        else if (type.IsByteSerializable())
+        {
+            builder.AppendLine($"{indent}pointer += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize(buffer[pointer..], {target});");
+        }
+        else if (type.IsEnumerableSerializable(strategies))
+        {
+            String trimmed = target.Substring(target.LastIndexOf('.') + 1);
+            builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = {target}{type.EnumerableCount()};");
+            builder.AppendLine($"{indent}pointer += 4;");
+            if (type.IsDictionaryEnumerable(out INamedTypeSymbol keyValuePair))
+            {
+                builder.AppendLine($"{indent}foreach ({keyValuePair.ToFrameworkString()} {trimmed}_item in {target})");
                 builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    buffer[pointer++] = item ? (Byte)0x1 : (Byte)0x0;");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case nameof(Byte):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
+                indent += "    ";
+                WriteTypeSerialization(type: keyValuePair.TypeArguments[0],
+                                       strategies: strategies,
+                                       builder: builder,
+                                       indent: indent,
+                                       target: $"{trimmed}_item.Key");
+                WriteTypeSerialization(type: keyValuePair.TypeArguments[1],
+                                       strategies: strategies,
+                                       builder: builder,
+                                       indent: indent,
+                                       target: $"{trimmed}_item.Value");
+            }
+            else if (type.IsEnumerable(out INamedTypeSymbol elementType))
+            {
+                builder.AppendLine($"{indent}foreach ({elementType.ToFrameworkString()} {trimmed}_item in {target})");
                 builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    buffer[pointer++] = item;");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case nameof(Char):
-            case nameof(Decimal):
-            case nameof(Double):
-            case "Half":
-            case nameof(Int16):
-            case nameof(Int32):
-            case nameof(Int64):
-            case nameof(Single):
-            case nameof(UInt16):
-            case nameof(UInt32):
-            case nameof(UInt64):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
-                builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    Unsafe.As<Byte, {typename}>(ref buffer[pointer]) = item;");
-                builder.AppendLine($"{indent}    pointer += sizeof({typename});");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case "DateOnly":
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
-                builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    Unsafe.As<Byte, Int16>(ref buffer[pointer]) = (Int16)item.Year;");
-                builder.AppendLine($"{indent}    pointer += 2;");
-                builder.AppendLine($"{indent}    buffer[pointer++] = (Byte)item.Month;");
-                builder.AppendLine($"{indent}    buffer[pointer++] = (Byte)item.Day;");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case nameof(DateTime):
-            case nameof(DateTimeOffset):
-            case "TimeOnly":
-            case nameof(TimeSpan):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
-                builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    Unsafe.As<Byte, Int64>(ref buffer[pointer]) = item.Ticks;");
-                builder.AppendLine($"{indent}    pointer += 8;");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case nameof(Guid):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
-                builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    Unsafe.As<Byte, Guid>(ref buffer[pointer]) = item;");
-                builder.AppendLine($"{indent}    pointer += 16;");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case nameof(SByte):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
-                builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    buffer[pointer++] = (Byte)item;");
-                builder.AppendLine($"{indent}}}");
-                break;
-            case nameof(String):
-                builder.AppendLine($"{indent}Unsafe.As<Byte, Int32>(ref buffer[pointer]) = value.{target.Name}{enumerableType.EnumerableCount()};");
-                builder.AppendLine($"{indent}pointer += 4;");
-                builder.AppendLine($"{indent}foreach ({typename} item in value.{target.Name})");
-                builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}    pointer += Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Serialize(buffer[pointer..], item);");
-                builder.AppendLine($"{indent}}}");
-                break;
+                indent += "    ";
+                WriteTypeSerialization(type: elementType,
+                                       strategies: strategies,
+                                       builder: builder,
+                                       indent: indent,
+                                       target: $"{trimmed}_item");
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            indent = indent.Substring(4);
+            builder.AppendLine($"{indent}}}");
+        }
+        else
+        {
+            throw new Exception();
         }
     }
 }

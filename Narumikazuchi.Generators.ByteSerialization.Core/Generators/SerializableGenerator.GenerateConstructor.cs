@@ -7,7 +7,7 @@ public partial class SerializableGenerator
                                                     SourceProductionContext context)
     {
         StringBuilder builder = new();
-        builder.Append($"public delegate {symbol.ToDisplayString()} ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}(");
+        builder.Append($"public delegate {symbol.ToFrameworkString()} ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}(");
 
         GenerateConstructorMediatorParameters(fields: fields,
                                               builder: builder);
@@ -63,7 +63,7 @@ namespace Narumikazuchi.Generated;
                 target = field.AssociatedSymbol;
             }
 
-            builder.Append($"{field.Type.ToTypename()} {target.Name}");
+            builder.Append($"{field.Type.ToFrameworkString()} {target.Name}");
         }
     }
 
@@ -77,13 +77,13 @@ namespace Narumikazuchi.Generated;
         String indent = "    ";
         builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[CompilerGenerated]");
-        builder.AppendLine($"{indent}static public ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}");
+        builder.AppendLine($"{indent}static public ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")} ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
         builder.AppendLine($"{indent}get");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
-        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}.Value;");
+        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}.Value;");
 
         indent = indent.Substring(4);
         builder.AppendLine($"{indent}}}");
@@ -93,7 +93,7 @@ namespace Narumikazuchi.Generated;
 
         builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[CompilerGenerated]");
-        builder.AppendLine($"{indent}static private ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} GenerateConstructorFor_{symbol.ToDisplayString().Replace(".", "")}()");
+        builder.AppendLine($"{indent}static private ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")} GenerateConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}()");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
 
@@ -107,7 +107,7 @@ namespace Narumikazuchi.Generated;
         builder.AppendLine();
 
         builder.AppendLine();
-        builder.AppendLine($"{indent}static private Lazy<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}> s_ConstructorFor_{symbol.ToDisplayString().Replace(".", "")} = new Lazy<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}>(GenerateConstructorFor_{symbol.ToDisplayString().Replace(".", "")}, LazyThreadSafetyMode.ExecutionAndPublication);");
+        builder.AppendLine($"{indent}static private Lazy<ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}> s_ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")} = new Lazy<ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}>(GenerateConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}, LazyThreadSafetyMode.ExecutionAndPublication);");
         builder.Append('}');
 
         String meta = $@"//------------------------------------------------------------------------------
@@ -157,43 +157,43 @@ namespace Narumikazuchi.Generated;
                 builder.Append(", ");
             }
 
-            builder.Append($"typeof({field.Type.ToTypename()})");
+            builder.Append($"typeof({field.Type.ToFrameworkString()})");
         }
         builder.AppendLine(" };");
 
-        builder.AppendLine($"{indent}DynamicMethod method = new(\"<Generated>_Constructor\", typeof({symbol.ToDisplayString()}), parameters, typeof({symbol.ToDisplayString()}));");
+        builder.AppendLine($"{indent}DynamicMethod method = new(\"<Generated>_Constructor\", typeof({symbol.ToFrameworkString()}), parameters, typeof({symbol.ToFrameworkString()}));");
         builder.AppendLine($"{indent}ILGenerator generator = method.GetILGenerator();");
-        builder.AppendLine($"{indent}generator.DeclareLocal(typeof({symbol.ToDisplayString()}));");
+        builder.AppendLine($"{indent}generator.DeclareLocal(typeof({symbol.ToFrameworkString()}));");
         if (symbol.IsValueType)
         {
             builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldloca_S, 0);");
-            builder.AppendLine($"{indent}generator.Emit(OpCodes.Initobj, typeof({symbol.ToDisplayString()}));");
+            builder.AppendLine($"{indent}generator.Emit(OpCodes.Initobj, typeof({symbol.ToFrameworkString()}));");
             Int32 argumentIndex = 0;
             foreach (IFieldSymbol field in fields)
             {
                 builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldloca_S, 0);");
                 builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldarg, {argumentIndex++});");
-                builder.AppendLine($"{indent}generator.Emit(OpCodes.Stfld, typeof({field.ContainingType.ToDisplayString()}).GetField(\"{field.Name}\", BindingFlags.NonPublic | BindingFlags.Instance)!);");
+                builder.AppendLine($"{indent}generator.Emit(OpCodes.Stfld, typeof({field.ContainingType.ToFrameworkString()}).GetField(\"{field.Name}\", BindingFlags.NonPublic | BindingFlags.Instance)!);");
             }
         }
         else
         {
-            builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldtoken, typeof({symbol.ToDisplayString()}));");
+            builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldtoken, typeof({symbol.ToFrameworkString()}));");
             builder.AppendLine($"{indent}generator.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!);");
             builder.AppendLine($"{indent}generator.Emit(OpCodes.Call, typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GetUninitializedObject))!);");
-            builder.AppendLine($"{indent}generator.Emit(OpCodes.Castclass, typeof({symbol.ToDisplayString()}));");
+            builder.AppendLine($"{indent}generator.Emit(OpCodes.Castclass, typeof({symbol.ToFrameworkString()}));");
             builder.AppendLine($"{indent}generator.Emit(OpCodes.Stloc_0);");
             Int32 argumentIndex = 0;
             foreach (IFieldSymbol field in fields)
             {
                 builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldloc_0);");
                 builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldarg, {argumentIndex++});");
-                builder.AppendLine($"{indent}generator.Emit(OpCodes.Stfld, typeof({field.ContainingType.ToDisplayString()}).GetField(\"{field.Name}\", BindingFlags.NonPublic | BindingFlags.Instance)!);");
+                builder.AppendLine($"{indent}generator.Emit(OpCodes.Stfld, typeof({field.ContainingType.ToFrameworkString()}).GetField(\"{field.Name}\", BindingFlags.NonPublic | BindingFlags.Instance)!);");
             }
         }
 
         builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldloc_0);");
         builder.AppendLine($"{indent}generator.Emit(OpCodes.Ret);");
-        builder.AppendLine($"{indent}return method.CreateDelegate<ConstructorFor_{symbol.ToDisplayString().Replace(".", "")}>();");
+        builder.AppendLine($"{indent}return method.CreateDelegate<ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}>();");
     }
 }

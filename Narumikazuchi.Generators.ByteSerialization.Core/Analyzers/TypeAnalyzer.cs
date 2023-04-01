@@ -35,7 +35,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        if (!typeSymbol.IsSerializable())
+        if (!typeSymbol.IsByteSerializable())
         {
             return;
         }
@@ -62,7 +62,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
                     SyntaxReference reference = attribute.ApplicationSyntaxReference!;
                     AttributeSyntax syntax = (AttributeSyntax)reference.GetSyntax();
                     context.ReportDiagnostic(CreateDuplicateStrategyForTypeDiagnostic(attribute: syntax,
-                                                                                      typename: kv.Key.ToTypename()));
+                                                                                      typename: kv.Key.ToFrameworkString()));
                 }
             }
         }
@@ -71,37 +71,10 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
 
         foreach (IFieldSymbol field in fields)
         {
-            if (strategies.ContainsKey(field.Type))
+            if (field.Type.CanBeSerialized(strategies))
             {
                 continue;
             }
-            else if (Array.IndexOf(array: IntrinsicTypes.SerializedTypes,
-                                   value: field.Type.ToTypename()) > -1)
-            {
-                continue;
-            }
-            else if (field.Type.IsUnmanagedType &&
-                     field.Type.TypeKind is not TypeKind.Pointer &&
-                     field.Type.Name is not "IntPtr"
-                                     and not "UIntPtr")
-            {
-                continue;
-            }
-            else if (field.Type.IsSerializable())
-            {
-                continue;
-            }
-            /*
-            else if (field.Type.IsEnumerable(out ITypeSymbol elementType) &&
-                     (strategies.ContainsKey(elementType!) ||
-                     Array.IndexOf(array: IntrinsicTypes.SerializedTypes,
-                                   value: elementType!.ToTypename()) > -1 ||
-                     elementType!.IsSerializable() ||
-                     elementType!.IsUnmanagedType))
-            {
-                continue;
-            }
-            */
             else
             {
                 ISymbol target = field;
@@ -112,7 +85,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
 
                 context.ReportDiagnostic(CreateNoSerializationForTypeDiagnostic(type: type,
                                                                                 membername: target.Name,
-                                                                                typename: field.Type.ToTypename()));
+                                                                                typename: field.Type.ToFrameworkString()));
             }
         }
     }

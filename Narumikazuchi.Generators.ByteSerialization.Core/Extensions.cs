@@ -2,152 +2,143 @@
 
 static public class Extensions
 {
-    static public String ToTypename(this ITypeSymbol type)
+    static public String ToFrameworkString(this ITypeSymbol type)
     {
-        if (type.ContainingNamespace is null &&
-            type is IArrayTypeSymbol array)
-        {
-            return array.ElementType.ToTypename() + "[]";
-        }
-        else if (type.ContainingNamespace is not null &&
-                 type.ContainingNamespace.ToDisplayString() is "System")
-        {
-            return type.Name;
-        }
-        else
-        {
-            return type.ToDisplayString();
-        }
-    }
+        String result = type.ToDisplayString();
 
-    static public Int32 UnmanagedSize(this ITypeSymbol type)
-    {
-        if (type.TypeKind is TypeKind.Enum)
+        foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
         {
-            if (type is INamedTypeSymbol named)
-            {
-                return named.EnumUnderlyingType.UnmanagedSize();
-            }
-            else
-            {
-                return 4;
-            }
+            result = result.Replace(kv.Key, kv.Value);
         }
 
-        String typename = type.ToTypename();
-        return typename switch
-        {
-            nameof(Boolean) or 
-            nameof(Byte) or 
-            nameof(SByte) => 1,
-
-            nameof(Char) or 
-            nameof(Int16) or 
-            nameof(UInt16) => 2,
-
-            nameof(Int32) or 
-            nameof(Single) or 
-            nameof(UInt32) => 4,
-
-            nameof(Double) or 
-            nameof(Int64) or 
-            nameof(UInt64) => 8,
-
-            nameof(Decimal) => 16,
-
-            _ => type.GetMembers()
-                     .OfType<IFieldSymbol>()
-                     .Sum(field => field.Type.UnmanagedSize()),
-        };
+        return result;
     }
 
     static public String EnumerableCount(this ITypeSymbol type)
     {
         if (type is IArrayTypeSymbol ||
-            type.ToTypename().StartsWith("System.Collections.Immutable.ImmutableArray<"))
+            type.ToFrameworkString().StartsWith("System.Collections.Immutable.ImmutableArray<"))
         {
             return ".Length";
         }
-        else if (type.AllInterfaces.Any(@interface => @interface.ToDisplayString()
-                                                                .StartsWith("System.Collections.Generic.ICollection<") ||
-                                                      @interface.ToDisplayString()
-                                                                .StartsWith("System.Collections.Generic.IReadOnlyCollection<")))
+        else
         {
             return ".Count";
         }
+    }
+
+    static public Boolean CanBeSerialized(this ITypeSymbol type,
+                                          Dictionary<ITypeSymbol, ITypeSymbol> strategies = default)
+    {
+        if (strategies is not null &&
+            strategies.ContainsKey(type))
+        {
+            return true;
+        }
+        else if (type.IsIntrinsicallySerializable())
+        {
+            return true;
+        }
+        else if (type.IsUnmanagedSerializable())
+        {
+            return true;
+        }
+        else if (type.IsByteSerializable())
+        {
+            return true;
+        }
+        else if (type.IsEnumerableSerializable(strategies))
+        {
+            return true;
+        }
         else
         {
-            return ".Count()";
+            return false;
         }
     }
 
-    static public Boolean IsSerializable(this ITypeSymbol type)
+    static public Boolean IsIntrinsicallySerializable(this ITypeSymbol type)
+    {
+        if (Array.IndexOf(array: __Shared.IntrinsicTypes,
+                          value: type.ToFrameworkString()) > -1)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    static public Boolean IsUnmanagedSerializable(this ITypeSymbol type)
+    {
+        if (type.IsUnmanagedType &&
+            type.TypeKind is not TypeKind.Pointer &&
+            type.Name is not "IntPtr"
+                      and not "UIntPtr")
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    static public Boolean IsByteSerializable(this ITypeSymbol type)
     {
         return type.GetAttributes().Any(attribute => attribute.AttributeClass is not null &&
-                                                     attribute.AttributeClass.ToDisplayString() is Generators.SerializableGenerator.BYTESERIALIZABLE_ATTRIBUTE);
+                                                     attribute.AttributeClass.ToFrameworkString() is Generators.SerializableGenerator.BYTESERIALIZABLE_ATTRIBUTE);
     }
 
-    static public ImmutableArray<ISymbol> AllMembers(this ITypeSymbol type)
+    static public Boolean IsEnumerableSerializable(this ITypeSymbol type,
+                                                   Dictionary<ITypeSymbol, ITypeSymbol> strategies = default)
     {
-        ImmutableArray<ISymbol>.Builder builder = ImmutableArray.CreateBuilder<ISymbol>();
-        ITypeSymbol symbol = type;
-        while (symbol is not null)
+        if (type.IsDictionaryEnumerable(out INamedTypeSymbol keyValuePair))
         {
-            foreach (ISymbol member in symbol.GetMembers())
+            ITypeSymbol key = keyValuePair.TypeArguments[0];
+            ITypeSymbol value = keyValuePair.TypeArguments[1];
+            if (!key.CanBeSerialized(strategies))
             {
-                builder.Add(member);
+                return false;
             }
-
-            symbol = symbol.BaseType;
-        }
-
-        if (type.BaseType is null)
-        {
-            foreach (ITypeSymbol @interface in type.AllInterfaces)
+            else if (!value.CanBeSerialized(strategies))
             {
-                foreach (ISymbol member in @interface.GetMembers())
-                {
-                    builder.Add(member);
-                }
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
-
-        return builder.ToImmutable();
+        else if (type.IsEnumerable(out INamedTypeSymbol elementType))
+        {
+            return elementType.CanBeSerialized(strategies);
+        }
+        else
+        {
+            return false;
+        }
     }
 
     static public Boolean IsEnumerable(this ITypeSymbol type,
-                                       out ITypeSymbol elementType)
+                                       out INamedTypeSymbol elementType)
     {
         if (type is IArrayTypeSymbol array)
         {
-            elementType = array.ElementType;
+            elementType = (INamedTypeSymbol)array.ElementType;
             return true;
         }
         else
         {
-            ImmutableArray<IMethodSymbol> methods = type.AllMembers()
-                                                        .OfType<IMethodSymbol>()
-                                                        .Where(method => method.Name.Contains(nameof(IEnumerable.GetEnumerator)))
-                                                        .Where(method => method.Parameters.Length is 0)
-                                                        .Where(method => !method.ReturnsVoid)
-                                                        .ToImmutableArray();
-            foreach (IMethodSymbol method in methods)
+            foreach (String enumerableType in s_EnumerableTypes)
             {
-                if (method.MethodKind is MethodKind.ExplicitInterfaceImplementation)
+                if (type.ToFrameworkString()
+                        .StartsWith(enumerableType))
                 {
-                    continue;
-                }
-
-                if (method.ReturnType.IsEnumerator(out elementType))
-                {
-                    return true;
-                }
-            }
-
-            foreach (IMethodSymbol method in methods)
-            {
-                if (method.ReturnType.IsEnumerator(out elementType))
-                {
+                    elementType = (INamedTypeSymbol)type.AllInterfaces.First(@interface => @interface.ToFrameworkString()
+                                                                                                     .StartsWith("System.Collections.Generic.IEnumerable<"))
+                                                                      .TypeArguments[0];
                     return true;
                 }
             }
@@ -157,48 +148,68 @@ static public class Extensions
         }
     }
 
-    static public Boolean IsSimpleEnumerable(this ITypeSymbol type)
+    static public Boolean IsDictionaryEnumerable(this ITypeSymbol type,
+                                                 out INamedTypeSymbol keyValuePair)
     {
-        if (type is IArrayTypeSymbol ||
-            type.ToTypename().StartsWith("System.Collections.Immutable.ImmutableArray<"))
+        foreach (String enumerableType in s_DictionaryTypes)
         {
-            return false;
-        }
-        else if (type.AllInterfaces.Any(@interface => @interface.ToDisplayString()
-                                                                .StartsWith("System.Collections.Generic.ICollection<") ||
-                                                      @interface.ToDisplayString()
-                                                                .StartsWith("System.Collections.Generic.IReadOnlyCollection<")))
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-    static public Boolean IsEnumerator(this ITypeSymbol type,
-                                       out ITypeSymbol elementType)
-    {
-        IMethodSymbol moveNext = type.AllMembers()
-                                     .OfType<IMethodSymbol>()
-                                     .Where(method => method.Name.Contains(nameof(IEnumerator.MoveNext)))
-                                     .Where(method => method.ReturnType.ToTypename() is "Boolean")
-                                     .FirstOrDefault();
-        IPropertySymbol current = type.AllMembers()
-                                      .OfType<IPropertySymbol>()
-                                      .Where(property => property.Name.Contains(nameof(IEnumerator.Current)))
-                                      .FirstOrDefault();
-        if (current is not null)
-        {
-            elementType = current.Type;
-        }
-        else
-        {
-            elementType = null;
+            if (type.ToFrameworkString()
+                    .StartsWith(enumerableType))
+            {
+                keyValuePair = (INamedTypeSymbol)type.AllInterfaces.First(@interface => @interface.ToFrameworkString()
+                                                                                                  .StartsWith("System.Collections.Generic.IEnumerable<"))
+                                                                   .TypeArguments[0];
+                return true;
+            }
         }
 
-        return moveNext is not null &&
-               current is not null;
+        keyValuePair = null;
+        return false;
     }
+
+    static private readonly String[] s_EnumerableTypes = new String[]
+    {
+        "System.Collections.Generic.Dictionary<",
+        "System.Collections.Generic.HashSet<",
+        "System.Collections.Generic.List<",
+        "System.Collections.Generic.SortedDictionary<",
+        "System.Collections.Generic.SortedList<",
+        "System.Collections.Generic.SortedSet<",
+        "System.Collections.Immutable.ImmutableArray<",
+        "System.Collections.Immutable.ImmutableDictionary<",
+        "System.Collections.Immutable.ImmutableHashSet<",
+        "System.Collections.Immutable.ImmutableList<",
+        "System.Collections.Immutable.ImmutableSortedDictionary<",
+        "System.Collections.Immutable.ImmutableSortedSet<",
+    };
+
+    static private readonly String[] s_DictionaryTypes = new String[]
+    {
+        "System.Collections.Generic.Dictionary<",
+        "System.Collections.Generic.SortedDictionary<",
+        "System.Collections.Generic.SortedList<",
+        "System.Collections.Immutable.ImmutableDictionary<",
+        "System.Collections.Immutable.ImmutableSortedDictionary<"
+    };
+
+    static private readonly Dictionary<String, String> s_BuiltInTypes = new()
+    {
+        { "decimal", "Decimal" },
+        { "double", "Double" },
+        { "ushort", "UInt16" },
+        { "object", "Object" },
+        { "string", "String" },
+        { "float", "Single" },
+        { "sbyte", "SByte" },
+        { "nuint", "UIntPtr" },
+        { "ulong", "UInt64" },
+        { "short", "Int16" },
+        { "bool", "Boolean" },
+        { "long", "Int64" },
+        { "nint", "IntPtr" },
+        { "uint", "UInt32" },
+        { "byte", "Byte" },
+        { "char", "Char" },
+        { "int", "Int32" },
+    };
 }

@@ -44,7 +44,7 @@ public partial class SerializableGenerator
                 }
 
                 INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                String fullName = attributeContainingTypeSymbol.ToDisplayString();
+                String fullName = attributeContainingTypeSymbol.ToFrameworkString();
                 if (fullName is BYTESERIALIZABLE_ATTRIBUTE)
                 {
                     return type;
