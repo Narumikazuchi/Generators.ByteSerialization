@@ -3,63 +3,71 @@
 /// <summary>
 /// Provides methods to serialize runtime objects into and from <see cref="Byte"/>[] arrays or streams.
 /// </summary>
-/// <remarks>
-/// To make a runtime object serializable you can either decorate it with the <see cref="ByteSerializableAttribute"/>, in which case
-/// the serialization code will be generated automatically, or write a <see cref="IByteSerializationStrategy{TSerializable}"/> for
-/// the type.
-/// </remarks>
 static public partial class ByteSerializer
 {
+    static ByteSerializer()
+    {
+        Type[] types = AppDomain.CurrentDomain.GetAssemblies()
+                                              .SelectMany(a => a.GetTypes())
+                                              .Where(t => !t.IsInterface && t.IsAssignableTo(typeof(IByteSerializer)))
+                                              .ToArray();
+        IByteSerializer? instance = default;
+        foreach (Type type in types)
+        {
+            IByteSerializer candidate = (IByteSerializer)Activator.CreateInstance(type)!;
+            if (instance is null ||
+                candidate.Variant > instance.Variant)
+            {
+                instance = candidate;
+            }
+        }
+
+        if (instance is null)
+        {
+            throw new Exception();
+        }
+
+        Handlers = instance!;
+        s_PolymorphicDeserializerMethod = typeof(ByteSerializer).GetMethods()
+                                                                .Where(method => method.Name is nameof(Deserialize))
+                                                                .Where(method => method.IsStatic)
+                                                                .Where(method => method.IsPublic)
+                                                                .First(method => method.GetParameters()[0].ParameterType == typeof(Byte).MakePointerType());
+    }
+
     /// <summary>
     /// Calculates the expected size of the <see cref="Byte"/>[] array after serialization of the sepcified runtime object.
     /// </summary>
     /// <param name="graph">The runtime object to calculate the expected size of.</param>
     /// <returns>The expected size of the <see cref="Byte"/>[] array after serialization.</returns>
-    static public Int32 GetExpectedSerializedSize<TSerializable>(TSerializable graph)
-        where TSerializable : IByteSerializable<TSerializable>
+    /// <remarks>
+    /// This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+    /// If you encounter an exception it would help if you could contact me for a timely fix.
+    /// </remarks>
+    /// <exception cref="TypeNotSerializable"/>
+    static public Int32 GetExpectedSerializedSize<TSerializable>(TSerializable? graph)
     {
-        return TSerializable.GetExpectedByteSize(graph);
-    }
-    /// <summary>
-    /// Calculates the expected size of the <see cref="Byte"/>[] array after serialization of the sepcified runtime object.
-    /// </summary>
-    /// <param name="graph">The runtime object to calculate the expected size of.</param>
-    /// <returns>The expected size of the <see cref="Byte"/>[] array after serialization.</returns>
-    static public Int32 GetExpectedSerializedSize<TSerializable>(IEnumerable<TSerializable> graph)
-        where TSerializable : IByteSerializable<TSerializable>
-    {
-        Int32 expectedSize = sizeof(Int32);
-        foreach (TSerializable element in graph)
+        if (graph is null)
         {
-            expectedSize += TSerializable.GetExpectedByteSize(element);
+            return 20;
         }
-
-        return expectedSize;
-    }
-    /// <summary>
-    /// Calculates the expected size of the <see cref="Byte"/>[] array after serialization of the sepcified runtime object using the specified <typeparamref name="TStrategy"/>.
-    /// </summary>
-    /// <param name="graph">The runtime object to calculate the expected size of.</param>
-    /// <returns>The expected size of the <see cref="Byte"/>[] array after serialization.</returns>
-    static public Int32 GetExpectedSerializedSize<TSerializable, TStrategy>(TSerializable graph)
-        where TStrategy : IByteSerializationStrategy<TSerializable>
-    {
-        return TStrategy.GetExpectedByteSize(graph);
-    }
-    /// <summary>
-    /// Calculates the expected size of the <see cref="Byte"/>[] array after serialization of the sepcified runtime object using the specified <typeparamref name="TStrategy"/>.
-    /// </summary>
-    /// <param name="graph">The runtime object to calculate the expected size of.</param>
-    /// <returns>The expected size of the <see cref="Byte"/>[] array after serialization.</returns>
-    static public Int32 GetExpectedSerializedSize<TSerializable, TStrategy>(IEnumerable<TSerializable> graph)
-        where TStrategy : IByteSerializationStrategy<TSerializable>
-    {
-        Int32 expectedSize = sizeof(Int32);
-        foreach (TSerializable element in graph)
+        else
         {
-            expectedSize += TStrategy.GetExpectedByteSize(element);
+            if (graph.GetType()
+                     .IsUnmanagedStruct())
+            {
+                return Unsafe.SizeOf<TSerializable>();
+            }
+            else if (Handlers is ISerializationHandler<TSerializable> handler)
+            {
+                return handler.GetExpectedSize(graph) + 20;
+            }
+            else
+            {
+                throw new TypeNotSerializable(graph.GetType());
+            }
         }
-
-        return expectedSize;
     }
+
+    static private IByteSerializer Handlers { get; }
 }

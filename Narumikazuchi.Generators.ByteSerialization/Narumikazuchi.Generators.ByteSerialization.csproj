@@ -5,6 +5,7 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<PlatformTarget>x64</PlatformTarget>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -76,18 +77,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Narumikazuchi.InputOutput" Version="0.3.5-beta" />
+		<PackageReference Include="Narumikazuchi.InputOutput" Version="2023.4.13.1-prerelease" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Using Include="System" />
+		<Using Include="System.Buffers" />
 		<Using Include="System.Collections" />
 		<Using Include="System.Collections.Generic" />
 		<Using Include="System.Collections.Immutable" />
 		<Using Include="System.IO" />
 		<Using Include="System.Linq" />
+		<Using Include="System.Reflection" />
+		<Using Include="System.Reflection.Emit" />
 		<Using Include="System.Runtime.CompilerServices" />
 		<Using Include="System.Runtime.InteropServices" />
+		<Using Include="System.Security.Cryptography" />
 		<Using Include="System.Text" />
 		<Using Include="System.Threading" />
 		<Using Include="System.Threading.Tasks" />

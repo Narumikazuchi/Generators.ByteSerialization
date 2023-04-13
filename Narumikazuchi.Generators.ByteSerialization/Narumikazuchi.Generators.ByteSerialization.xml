@@ -4,25 +4,25 @@
         <name>Narumikazuchi.Generators.ByteSerialization</name>
     </assembly>
     <members>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute">
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.AsynchronousDeserializationResult`1">
             <summary>
-            Generates serialization code for this type.
+            Contains the result of an asynchronous deserialization operation.
             </summary>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute.#ctor">
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.AsynchronousDeserializationResult`1.BytesRead">
             <summary>
-            Generates serialization code for this type.
+            The amount of bytes read during the operation.
+            </summary>
+        </member>
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.AsynchronousDeserializationResult`1.Result">
+            <summary>
+            The result of the deserialization operation.
             </summary>
         </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializer">
             <summary>
             Provides methods to serialize runtime objects into and from <see cref="T:System.Byte"/>[] arrays or streams.
             </summary>
-            <remarks>
-            To make a runtime object serializable you can either decorate it with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute"/>, in which case
-            the serialization code will be generated automatically, or write a <see cref="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1"/> for
-            the type.
-            </remarks>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``1(``0)">
             <summary>
@@ -30,27 +30,11 @@
             </summary>
             <param name="graph">The runtime object to calculate the expected size of.</param>
             <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``1(System.Collections.Generic.IEnumerable{``0})">
-            <summary>
-            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object.
-            </summary>
-            <param name="graph">The runtime object to calculate the expected size of.</param>
-            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``2(``0)">
-            <summary>
-            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="graph">The runtime object to calculate the expected size of.</param>
-            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``2(System.Collections.Generic.IEnumerable{``0})">
-            <summary>
-            Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="graph">The runtime object to calculate the expected size of.</param>
-            <returns>The expected size of the <see cref="T:System.Byte"/>[] array after serialization.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},``0@)">
             <summary>
@@ -59,30 +43,24 @@
             <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
             <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
             <returns>The number of bytes read from the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},System.Collections.Immutable.ImmutableArray{``0}@)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.Byte*,``0@)">
             <summary>
             Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
             </summary>
             <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
-            <param name="result">The runtime collection of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
-            <returns>The number of bytes read from the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.ReadOnlySpan{System.Byte},``0@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified strategy <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
             <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
             <returns>The number of bytes read from the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.ReadOnlySpan{System.Byte},System.Collections.Immutable.ImmutableArray{``0}@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified strategy <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
-            <param name="result">The runtime collection of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
-            <returns>The number of bytes read from the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.IO.Stream,``0@)">
             <summary>
@@ -91,30 +69,11 @@
             <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
             <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
             <returns>The number of bytes read from the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.IO.Stream,System.Collections.Immutable.ImmutableArray{``0}@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
-            <returns>The number of bytes read from the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.IO.Stream,``0@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
-            <returns>The number of bytes read from the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(System.IO.Stream,System.Collections.Immutable.ImmutableArray{``0}@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.IO.Stream"/> contains.</param>
-            <returns>The number of bytes read from the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(``0,``1@)">
             <summary>
@@ -123,30 +82,37 @@
             <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
             <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
             <returns>The number of bytes read from the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``2(``0,System.Collections.Immutable.ImmutableArray{``1}@)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.DeserializeAsynchronously``1(System.IO.Stream,System.Threading.CancellationToken)">
             <summary>
             Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
             </summary>
             <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
-            <returns>The number of bytes read from the buffer.</returns>
+            <param name="cancellationToken">The token used to cancel the operation.</param>
+            <returns>The result of the deserialization.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``3(``0,``1@)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.DeserializeAsynchronously``2(``0,System.Threading.CancellationToken)">
             <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
             </summary>
             <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
-            <returns>The number of bytes read from the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``3(``0,System.Collections.Immutable.ImmutableArray{``1}@)">
-            <summary>
-            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/> using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream containing the raw <see cref="T:System.Byte"/>[] array.</param>
-            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <typeparamref name="TStream"/> contains.</param>
-            <returns>The number of bytes read from the buffer.</returns>
+            <param name="cancellationToken">The token used to cancel the operation.</param>
+            <returns>The result of the deserialization.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(``0)">
             <summary>
@@ -154,13 +120,11 @@
             </summary>
             <param name="graph">The runtime object to serialize.</param>
             <returns>The <see cref="T:System.Byte"/>-representation of the specified runtime object.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Collections.Generic.IEnumerable{``0})">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
-            </summary>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The <see cref="T:System.Byte"/>-representation of the specified runtime object.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Span{System.Byte},``0)">
             <summary>
@@ -169,30 +133,24 @@
             <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Span{System.Byte},System.Collections.Generic.IEnumerable{``0})">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Byte*,``0)">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
             </summary>
             <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.Span{System.Byte},``0)">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.Span{System.Byte},System.Collections.Generic.IEnumerable{``0})">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The amount bytes written to the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.IO.Stream,``0)">
             <summary>
@@ -201,30 +159,11 @@
             <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.IO.Stream,System.Collections.Generic.IEnumerable{``0})">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
-            </summary>
-            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.IO.Stream,``0)">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(System.IO.Stream,System.Collections.Generic.IEnumerable{``0})">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The amount bytes written to the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(``0,``1)">
             <summary>
@@ -233,431 +172,122 @@
             <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
             <param name="graph">The runtime object to serialize.</param>
             <returns>The amount bytes written to the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``2(``0,System.Collections.Generic.IEnumerable{``1})">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.SerializeAsynchronously``1(System.IO.Stream,``0,System.Threading.CancellationToken)">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
             </summary>
             <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
             <param name="graph">The runtime object to serialize.</param>
+            <param name="cancellationToken">The token used to cancel the operation.</param>
             <returns>The amount bytes written to the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``3(``0,``1)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.SerializeAsynchronously``2(``0,``1,System.Threading.CancellationToken)">
             <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
             </summary>
             <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
             <param name="graph">The runtime object to serialize.</param>
+            <param name="cancellationToken">The token used to cancel the operation.</param>
             <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``3(``0,System.Collections.Generic.IEnumerable{``1})">
-            <summary>
-            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation using the specified <typeparamref name="TStrategy"/>.
-            </summary>
-            <param name="stream">The stream into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be written.</param>
-            <param name="graph">The runtime object to serialize.</param>
-            <returns>The amount bytes written to the buffer.</returns>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.FixedSerializationSizeAttribute">
-            <summary>
-            Tells the code generator that this strategy will always occupy the same amount of bytes after serialization.
-            </summary>
             <remarks>
-            Mark <see cref="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1"/> implementations with this attribute to
-            optimize the generated serialization code. Has no effect on any other class or struct.
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
             </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.FixedSerializationSizeAttribute.#ctor(System.Int32)">
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializer">
             <summary>
-            Tells the code generator that this strategy will always occupy the same amount of bytes after serialization.
+            -- Used for internal code generation. --
             </summary>
-            <remarks>
-            Mark <see cref="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1"/> implementations with this attribute to
-            optimize the generated serialization code. Has no effect on any other class or struct.
-            </remarks>
         </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1">
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.IByteSerializer.Variant">
             <summary>
-            Provides methods necessary for serialization of the type <typeparamref name="TSerializable"/>.
+            -- Used for internal code generation. --
             </summary>
-            <remarks>
-            While you can implement this interface yourself and you can then use it with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializer"/>
-            methods, this interface is mainly used by the code generator. The code generator is really efficient in 
-            writing serialization code, so try to use the code generator if possible.
-            </remarks>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.IgnoreForSerializationAttribute">
             <summary>
-            Deserializes the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.
+            Ignores this member when serializing this object.
             </summary>
-            <param name="buffer">The buffer to read the bytes from.</param>
-            <param name="read">The amount of bytes read from the buffer.</param>
-            <returns>The runtime object represented by the buffer.</returns>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.GetExpectedByteSize(`0)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.IgnoreForSerializationAttribute.#ctor">
             <summary>
-            Calculates the expected size of the serialized object.
+            Ignores this member when serializing this object.
             </summary>
-            <param name="value">The object the calculation is based on.</param>
-            <returns>The expected size of the serialized object.</returns>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializable`1.Serialize(System.Span{System.Byte},`0)">
-            <summary>
-            Serializes a runtime object of type <typeparamref name="TSerializable"/> into it's <see cref="T:System.Byte"/>-representation.
-            </summary>
-            <param name="buffer">The buffer to serialize the value into.</param>
-            <param name="value">The value to serialize.</param>
-            <returns>The amount of bytes written to the buffer.</returns>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1">
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.ISerializationHandler`1">
             <summary>
             Provides Methods to serialize a runtime object of type <typeparamref name="TSerializable"/>.
             </summary>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ISerializationHandler`1.Deserialize(System.ReadOnlySpan{System.Byte},`0@)">
             <summary>
             Deserializes the contents of the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.
             </summary>
             <param name="buffer">The buffer to read from.</param>
-            <param name="read">The amount of bytes read from the buffer.</param>
-            <returns>The <typeparamref name="TSerializable"/> represented by the buffer.</returns>
+            <param name="result">The <typeparamref name="TSerializable"/> represented by the buffer.</param>
+            <returns>The amount of bytes read from the buffer.</returns>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1.GetExpectedByteSize(`0)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ISerializationHandler`1.GetExpectedSize(`0)">
             <summary>
-            Calculatees the expected amount of bytes the specified <paramref name="value"/> will occupy once serialized. 
+            Calculates the expected amount of bytes the specified <paramref name="graph"/> will occupy once serialized. 
             </summary>
-            <param name="value">The value to use as base for calculation.</param>
+            <param name="graph">The value to use as base for calculation.</param>
             <returns>The expected amount of bytes the value will occupy in it's serialized state.</returns>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IByteSerializationStrategy`1.Serialize(System.Span{System.Byte},`0)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ISerializationHandler`1.Serialize(System.Span{System.Byte},`0)">
             <summary>
-            Serializes the specified <paramref name="value"/> into the <paramref name="buffer"/>.
+            Serializes the specified <paramref name="graph"/> into the <paramref name="buffer"/>.
             </summary>
             <param name="buffer">The buffer into which to store the serialized value.</param>
-            <param name="value">The value to serialize.</param>
+            <param name="graph">The value to serialize.</param>
             <returns>The amount of bytes written to the buffer.</returns>
         </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute">
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.TypeCache">
             <summary>
-            Ignores this member when serializing this object.
+            Caches unique ids for every serializable type.
             </summary>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute.#ctor">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeCache.GetIdOfType``1">
             <summary>
-            Ignores this member when serializing this object.
+            Gets the semi-unique id for the type <typeparamref name="TType"/>.
+            </summary>
+            <returns>The semi-unique id for the type <typeparamref name="TType"/>.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeCache.GetIdOfType(System.Type)">
+            <summary>
+            Gets the semi-unique id for <paramref name="type"/>.
+            </summary>
+            <returns>The semi-unique id for the passed type.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeCache.GetTypeCandidatesForId(System.Guid)">
+            <summary>
+            Gets all type candidates for the specified <paramref name="id"/>.
+            </summary>
+            <param name="id">The semi-unique id to lookup.</param>
+            <returns>All type candidates for the specified <paramref name="id"/>.</returns>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable">
+            <summary>
+            Represents the failure of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializer"/> to serialize or deserialize a type.
             </summary>
         </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable.#ctor(System.Type)">
             <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Boolean"/>.
+            Initializes a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/> exception.
             </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy.GetExpectedByteSize(System.Boolean)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.BooleanStrategy.Serialize(System.Span{System.Byte},System.Boolean)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Byte"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy.GetExpectedByteSize(System.Byte)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.ByteStrategy.Serialize(System.Span{System.Byte},System.Byte)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Char"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy.GetExpectedByteSize(System.Char)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.CharStrategy.Serialize(System.Span{System.Byte},System.Char)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.DateOnly"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy.GetExpectedByteSize(System.DateOnly)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateOnlyStrategy.Serialize(System.Span{System.Byte},System.DateOnly)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.DateTimeOffset"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy.GetExpectedByteSize(System.DateTimeOffset)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeOffsetStrategy.Serialize(System.Span{System.Byte},System.DateTimeOffset)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.DateTime"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy.GetExpectedByteSize(System.DateTime)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DateTimeStrategy.Serialize(System.Span{System.Byte},System.DateTime)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Decimal"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy.GetExpectedByteSize(System.Decimal)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DecimalStrategy.Serialize(System.Span{System.Byte},System.Decimal)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Double"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy.GetExpectedByteSize(System.Double)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.DoubleStrategy.Serialize(System.Span{System.Byte},System.Double)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Guid"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy.GetExpectedByteSize(System.Guid)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.GuidStrategy.Serialize(System.Span{System.Byte},System.Guid)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Half"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy.GetExpectedByteSize(System.Half)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.HalfStrategy.Serialize(System.Span{System.Byte},System.Half)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Int16"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy.GetExpectedByteSize(System.Int16)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int16Strategy.Serialize(System.Span{System.Byte},System.Int16)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Int32"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy.GetExpectedByteSize(System.Int32)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int32Strategy.Serialize(System.Span{System.Byte},System.Int32)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Int64"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy.GetExpectedByteSize(System.Int64)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.Int64Strategy.Serialize(System.Span{System.Byte},System.Int64)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.SByte"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy.GetExpectedByteSize(System.SByte)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SByteStrategy.Serialize(System.Span{System.Byte},System.SByte)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.Single"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy.GetExpectedByteSize(System.Single)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.SingleStrategy.Serialize(System.Span{System.Byte},System.Single)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.String"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.GetExpectedByteSize(System.String)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Serialize(System.Span{System.Byte},System.String)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.TimeOnly"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy.GetExpectedByteSize(System.TimeOnly)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeOnlyStrategy.Serialize(System.Span{System.Byte},System.TimeOnly)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.TimeSpan"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy.GetExpectedByteSize(System.TimeSpan)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.TimeSpanStrategy.Serialize(System.Span{System.Byte},System.TimeSpan)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.UInt16"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy.GetExpectedByteSize(System.UInt16)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt16Strategy.Serialize(System.Span{System.Byte},System.UInt16)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.UInt32"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy.GetExpectedByteSize(System.UInt32)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt32Strategy.Serialize(System.Span{System.Byte},System.UInt32)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy">
-            <summary>
-            Provides Methods to serialize a runtime object of type <see cref="T:System.UInt64"/>.
-            </summary>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy.Deserialize(System.ReadOnlySpan{System.Byte},System.Int32@)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy.GetExpectedByteSize(System.UInt64)">
-            <inheritdoc/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.Strategies.UInt64Strategy.Serialize(System.Span{System.Byte},System.UInt64)">
-            <inheritdoc/>
-        </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.UseByteSerializationStrategyAttribute`2">
-            <summary>
-            Tells the serialization code generator to use the <typeparamref name="TStrategy"/> when serializing and
-            deserializing members of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <remarks>
-            This attribute will only be effective on types that are decorated with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute"/>.
-            </remarks>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.UseByteSerializationStrategyAttribute`2.#ctor">
-            <summary>
-            Tells the serialization code generator to use the <typeparamref name="TStrategy"/> when serializing and
-            deserializing members of type <typeparamref name="TSerializable"/>.
-            </summary>
-            <remarks>
-            This attribute will only be effective on types that are decorated with the <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializableAttribute"/>.
-            </remarks>
+            <param name="type">The type that failed to serialize.</param>
         </member>
     </members>
 </doc>
