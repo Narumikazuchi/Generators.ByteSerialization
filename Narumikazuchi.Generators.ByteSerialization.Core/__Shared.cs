@@ -2,49 +2,6 @@
 
 static internal class __Shared
 {
-    static internal Dictionary<ITypeSymbol, ITypeSymbol> GetStrategiesFromAttributes(INamedTypeSymbol symbol,
-                                                                                     Compilation compilation,
-                                                                                     TypeDeclarationSyntax type,
-                                                                                     out Dictionary<ITypeSymbol, List<AttributeData>> duplicates)
-    {
-        AttributeData[] attributes = FetchUsefulAttributes(symbol: symbol,
-                                                           compilation: compilation,
-                                                           type: type);
-        Dictionary<ITypeSymbol, ITypeSymbol> strategies = new(SymbolEqualityComparer.Default);
-        duplicates = new(SymbolEqualityComparer.Default);
-
-        foreach (AttributeData data in attributes)
-        {
-            ITypeSymbol targetType = data.AttributeClass!.TypeArguments[0];
-            ITypeSymbol strategyType = data.AttributeClass!.TypeArguments[1];
-            try
-            {
-                strategies.Add(targetType, strategyType);
-            }
-            catch
-            {
-                if (duplicates.TryGetValue(key: targetType,
-                                           value: out List<AttributeData> values))
-                {
-                    values.Add(data);
-                }
-                else
-                {
-                    values = new()
-                    {
-                        data
-                    };
-                    AttributeData second = attributes.First(attribute => SymbolEqualityComparer.Default.Equals(targetType, attribute.AttributeClass!.TypeArguments[0]));
-                    values.Add(second);
-                    duplicates.Add(key: targetType,
-                                   value: values);
-                }
-            }
-        }
-
-        return strategies;
-    }
-
     static internal ImmutableArray<IFieldSymbol> GetFieldsToSerialize(INamedTypeSymbol symbol)
     {
         Boolean RecordParameterNotIgnored(IFieldSymbol field)
@@ -53,15 +10,68 @@ static internal class __Shared
                                        field: field);
         }
 
-        ITypeSymbol fieldHost = symbol.BaseType;
         IEnumerable<IFieldSymbol> floatingFields = symbol.GetMembers()
                                                          .OfType<IFieldSymbol>()
+                                                         .Where(field => !field.IsStatic)
+                                                         .Where(field => (field.AssociatedSymbol is null &&
+                                                                         field.DeclaredAccessibility is Accessibility.Public
+                                                                                                     or Accessibility.Internal) ||
+                                                                         (field.AssociatedSymbol is not null &&
+                                                                         field.AssociatedSymbol.DeclaredAccessibility is Accessibility.Public
+                                                                                                                      or Accessibility.Internal))
+                                                         .Where(field => field.Type.SpecialType is SpecialType.None
+                                                                                                or SpecialType.System_Array
+                                                                                                or SpecialType.System_Boolean
+                                                                                                or SpecialType.System_Byte
+                                                                                                or SpecialType.System_Char
+                                                                                                or SpecialType.System_DateTime
+                                                                                                or SpecialType.System_Decimal
+                                                                                                or SpecialType.System_Double
+                                                                                                or SpecialType.System_Enum
+                                                                                                or SpecialType.System_Int16
+                                                                                                or SpecialType.System_Int32
+                                                                                                or SpecialType.System_Int64
+                                                                                                or SpecialType.System_Nullable_T
+                                                                                                or SpecialType.System_SByte
+                                                                                                or SpecialType.System_Single
+                                                                                                or SpecialType.System_String
+                                                                                                or SpecialType.System_UInt16
+                                                                                                or SpecialType.System_UInt32
+                                                                                                or SpecialType.System_UInt64)
                                                          .Where(PropertyOrFieldNotIgnored)
                                                          .Where(RecordParameterNotIgnored);
+
+        INamedTypeSymbol fieldHost = symbol.BaseType;
         while (fieldHost is not null)
         {
             IEnumerable<IFieldSymbol> baseFields = fieldHost.GetMembers()
                                                             .OfType<IFieldSymbol>()
+                                                            .Where(field => !field.IsStatic)
+                                                            .Where(field => (field.AssociatedSymbol is null &&
+                                                                            field.DeclaredAccessibility is Accessibility.Public
+                                                                                                        or Accessibility.Internal) ||
+                                                                            (field.AssociatedSymbol is not null &&
+                                                                            field.AssociatedSymbol.DeclaredAccessibility is Accessibility.Public
+                                                                                                                         or Accessibility.Internal))
+                                                            .Where(field => field.Type.SpecialType is SpecialType.None
+                                                                                                   or SpecialType.System_Array
+                                                                                                   or SpecialType.System_Boolean
+                                                                                                   or SpecialType.System_Byte
+                                                                                                   or SpecialType.System_Char
+                                                                                                   or SpecialType.System_DateTime
+                                                                                                   or SpecialType.System_Decimal
+                                                                                                   or SpecialType.System_Double
+                                                                                                   or SpecialType.System_Enum
+                                                                                                   or SpecialType.System_Int16
+                                                                                                   or SpecialType.System_Int32
+                                                                                                   or SpecialType.System_Int64
+                                                                                                   or SpecialType.System_Nullable_T
+                                                                                                   or SpecialType.System_SByte
+                                                                                                   or SpecialType.System_Single
+                                                                                                   or SpecialType.System_String
+                                                                                                   or SpecialType.System_UInt16
+                                                                                                   or SpecialType.System_UInt32
+                                                                                                   or SpecialType.System_UInt64)
                                                             .Where(PropertyOrFieldNotIgnored)
                                                             .Where(RecordParameterNotIgnored);
             if (baseFields.Any())
@@ -86,67 +96,23 @@ static internal class __Shared
         }
         else
         {
-            return $"Marshal.SizeOf<{typename}>()";
+            return $"Unsafe.SizeOf<{typename}>()";
         }
     }
 
-    static internal String[] IntrinsicTypes { get; } = new[]
+    static internal String[] IntrinsicTypes { get; } = new String[]
     {
         typeof(DateTime).FullName!,
         typeof(DateTimeOffset).FullName!,
         nameof(String)
     };
 
-    static private AttributeData[] FetchUsefulAttributes(INamedTypeSymbol symbol,
-                                                         Compilation compilation,
-                                                         TypeDeclarationSyntax type)
+    static internal Dictionary<String, Int32> IntrinsicTypeFixedSize { get; } = new()
     {
-        SemanticModel semanticModel = compilation.GetSemanticModel(type.SyntaxTree);
-        List<AttributeData> attributes = new();
-        foreach (AttributeListSyntax attributeListSyntax in type.AttributeLists)
-        {
-            foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
-            {
-                if (semanticModel.GetSymbolInfo(attributeSyntax: attributeSyntax)
-                                 .Symbol is not IMethodSymbol constructorSymbol)
-                {
-                    continue;
-                }
-
-                INamedTypeSymbol attributeSymbol = constructorSymbol.ContainingType;
-                String fullName = attributeSymbol.ToFrameworkString();
-                if (fullName.StartsWith(Generators.SerializableGenerator.USEBYTESERIALIZATIONSTRATEGY_ATTRIBUTE))
-                {
-                    SyntaxReference reference = attributeSyntax.GetReference();
-                    AttributeData data = symbol.GetAttributes()
-                                                   .Single(x => reference.SyntaxTree == x.ApplicationSyntaxReference?.SyntaxTree &&
-                                                                reference.Span == x.ApplicationSyntaxReference?.Span);
-                    attributes.Add(data);
-                }
-            }
-        }
-
-        if (symbol.BaseType is null)
-        {
-            return attributes.ToArray();
-        }
-        else
-        {
-            foreach (SyntaxReference reference in symbol.BaseType.DeclaringSyntaxReferences)
-            {
-                TypeDeclarationSyntax typeDeclaration = (TypeDeclarationSyntax)reference.GetSyntax();
-                if (typeDeclaration is ClassDeclarationSyntax
-                                    or RecordDeclarationSyntax)
-                {
-                    attributes.AddRange(FetchUsefulAttributes(symbol: symbol.BaseType,
-                                                              compilation: compilation,
-                                                              type: typeDeclaration));
-                }
-            }
-        }
-
-        return attributes.ToArray();
-    }
+        { typeof(DateTime).FullName!, 8 },
+        { typeof(DateTimeOffset).FullName!, 8 },
+        { nameof(String), -1 }
+    };
 
     static private Boolean ParameterNotIgnored(INamedTypeSymbol symbol,
                                                IFieldSymbol field)

@@ -4,7 +4,8 @@ static public class Extensions
 {
     static public String ToFrameworkString(this ITypeSymbol type)
     {
-        String result = type.ToDisplayString();
+        String result = type.ToDisplayString()
+                            .Replace("*", "");
 
         foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
         {
@@ -12,6 +13,146 @@ static public class Extensions
         }
 
         return result;
+    }
+
+    static public String ToFileString(this ITypeSymbol type)
+    {
+        String result = String.Empty;
+
+        if (type is IArrayTypeSymbol array)
+        {
+            result = $"Array[{array.ElementType.ToFileString()}+{array.Rank}]";
+        }
+        else if (type is INamedTypeSymbol namedType)
+        {
+            if (namedType.IsGenericType)
+            {
+                result = namedType.ToDisplayString();
+                result = result.Substring(0, result.IndexOf('<'));
+                result += $"`{namedType.Arity}[";
+                Boolean first = true;
+                foreach (ITypeSymbol typeArgument in namedType.TypeArguments)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        result += "+";
+                    }
+
+                    result += typeArgument.ToFileString();
+                }
+
+                result += "]";
+            }
+            else
+            {
+                result = namedType.ToDisplayString();
+            }
+        }
+
+        foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
+        {
+            result = result.Replace(kv.Key, kv.Value);
+        }
+
+        return result;
+    }
+
+    static public String ToNameString(this ITypeSymbol type)
+    {
+        String result = String.Empty;
+
+        if (type is IArrayTypeSymbol array)
+        {
+            if (array.ElementType is IArrayTypeSymbol)
+            {
+                result += $"[{new String(Enumerable.Repeat(',', array.Rank - 1).ToArray())}]";
+                ITypeSymbol element = array.ElementType;
+                while (element is IArrayTypeSymbol elementArray)
+                {
+                    result += $"[{new String(Enumerable.Repeat(',', elementArray.Rank - 1).ToArray())}]";
+                    element = elementArray.ElementType;
+                }
+
+                result = $"{element.ToNameString()}{result}";
+            }
+            else
+            {
+                result = $"{array.ElementType.ToNameString()}[{new String(Enumerable.Repeat(',', array.Rank - 1).ToArray())}]";
+            }
+        }
+        else if (type is INamedTypeSymbol namedType)
+        {
+            result = namedType.ToDisplayString()
+                              .Replace("?", "")
+                              .Replace("<", "_")
+                              .Replace(">", "_");
+        }
+
+        foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
+        {
+            result = result.Replace(kv.Key, kv.Value);
+        }
+
+        return result.Replace(".", "");
+    }
+
+    static public String CreateArray(this IArrayTypeSymbol array,
+                                     params String[] sizes)
+    {
+        StringBuilder builder = new();
+        if (array.ElementType is IArrayTypeSymbol elementArray)
+        {
+            Int32 bracketCount = 1;
+            ITypeSymbol rootElement = elementArray.ElementType;
+            while (rootElement is IArrayTypeSymbol rootElementArray)
+            {
+                rootElement = rootElementArray.ElementType;
+                bracketCount++;
+            }
+
+            builder.Append($"new {rootElement.ToFrameworkString()}[");
+            for (Int32 index = 0;
+                 index < array.Rank;
+                 index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(sizes[index]);
+            }
+
+            builder.Append(']');
+            while (bracketCount > 0)
+            {
+                builder.Append("[]");
+                bracketCount--;
+            }
+        }
+        else
+        {
+            builder.Append($"new {array.ElementType.ToFrameworkString()}[");
+            for (Int32 index = 0;
+                 index < array.Rank;
+                 index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(sizes[index]);
+            }
+
+            builder.Append(']');
+        }
+
+        return builder.ToString();
     }
 
     static public String EnumerableCount(this ITypeSymbol type)
@@ -27,15 +168,94 @@ static public class Extensions
         }
     }
 
-    static public Boolean CanBeSerialized(this ITypeSymbol type,
-                                          Dictionary<ITypeSymbol, ITypeSymbol> strategies = default)
+    static public Boolean ImplementsInterface(this ITypeSymbol type,
+                                              ITypeSymbol @interface)
     {
-        if (strategies is not null &&
-            strategies.ContainsKey(type))
+        return type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(@interface, i));
+    }
+
+    static public Boolean ExtendsClass(this ITypeSymbol type,
+                                       ITypeSymbol @base)
+    {
+        ITypeSymbol baseType = type.BaseType;
+        while (baseType is not null)
         {
-            return true;
+            if (SymbolEqualityComparer.Default.Equals(baseType, @base))
+            {
+                return true;
+            }
+
+            baseType = baseType.BaseType;
         }
-        else if (type.IsIntrinsicallySerializable())
+
+        return false;
+    }
+
+    static public ImmutableArray<INamedTypeSymbol> GetDerivedTypes(this ITypeSymbol type)
+    {
+        IAssemblySymbol assembly = type.ContainingAssembly;
+        List<INamedTypeSymbol> builder = new();
+
+        void ScanNamespace(INamespaceSymbol @namespace)
+        {
+            foreach (INamespaceOrTypeSymbol member in @namespace.GetMembers())
+            {
+                if (member is INamespaceSymbol namespaceSymbol)
+                {
+                    ScanNamespace(namespaceSymbol);
+                }
+                else if (member is INamedTypeSymbol typeSymbol)
+                {
+                    if (type.BaseType is null &&
+                        typeSymbol.ImplementsInterface(type))
+                    {
+                        builder.Add(typeSymbol);
+                    }
+                    else if (typeSymbol.ExtendsClass(type))
+                    {
+                        builder.Add(typeSymbol);
+                    }
+                }
+            }
+        }
+
+        Int32 SortBySealed(ITypeSymbol left,
+                           ITypeSymbol right)
+        {
+            if (left.IsValueType &&
+                !right.IsValueType)
+            {
+                return -1;
+            }
+            else if (!left.IsValueType &&
+                     right.IsValueType)
+            {
+                return 1;
+            }
+            else if (left.IsSealed &&
+                     !right.IsSealed)
+            {
+                return -1;
+            }
+            else if (!left.IsSealed &&
+                     right.IsSealed)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        ScanNamespace(assembly.GlobalNamespace);
+        builder.Sort(SortBySealed);
+        return builder.ToImmutableArray();
+    }
+
+    static public Boolean CanBeSerialized(this ITypeSymbol type)
+    {
+        if (type.IsIntrinsicallySerializable(out _))
         {
             return true;
         }
@@ -43,11 +263,7 @@ static public class Extensions
         {
             return true;
         }
-        else if (type.IsByteSerializable())
-        {
-            return true;
-        }
-        else if (type.IsEnumerableSerializable(strategies))
+        else if (type.IsEnumerableSerializable())
         {
             return true;
         }
@@ -57,15 +273,19 @@ static public class Extensions
         }
     }
 
-    static public Boolean IsIntrinsicallySerializable(this ITypeSymbol type)
+    static public Boolean IsIntrinsicallySerializable(this ITypeSymbol type,
+                                                      out Int32 fixedSize)
     {
+        String typename = type.ToFrameworkString();
         if (Array.IndexOf(array: __Shared.IntrinsicTypes,
-                          value: type.ToFrameworkString()) > -1)
+                          value: typename) > -1)
         {
+            fixedSize = __Shared.IntrinsicTypeFixedSize[typename];
             return true;
         }
         else
         {
+            fixedSize = -1;
             return false;
         }
     }
@@ -84,113 +304,6 @@ static public class Extensions
             return false;
         }
     }
-
-    static public Boolean IsByteSerializable(this ITypeSymbol type)
-    {
-        return type.GetAttributes().Any(attribute => attribute.AttributeClass is not null &&
-                                                     attribute.AttributeClass.ToFrameworkString() is Generators.SerializableGenerator.BYTESERIALIZABLE_ATTRIBUTE);
-    }
-
-    static public Boolean IsEnumerableSerializable(this ITypeSymbol type,
-                                                   Dictionary<ITypeSymbol, ITypeSymbol> strategies = default)
-    {
-        if (type.IsDictionaryEnumerable(out INamedTypeSymbol keyValuePair))
-        {
-            ITypeSymbol key = keyValuePair.TypeArguments[0];
-            ITypeSymbol value = keyValuePair.TypeArguments[1];
-            if (!key.CanBeSerialized(strategies))
-            {
-                return false;
-            }
-            else if (!value.CanBeSerialized(strategies))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        else if (type.IsEnumerable(out INamedTypeSymbol elementType))
-        {
-            return elementType.CanBeSerialized(strategies);
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    static public Boolean IsEnumerable(this ITypeSymbol type,
-                                       out INamedTypeSymbol elementType)
-    {
-        if (type is IArrayTypeSymbol array)
-        {
-            elementType = (INamedTypeSymbol)array.ElementType;
-            return true;
-        }
-        else
-        {
-            foreach (String enumerableType in s_EnumerableTypes)
-            {
-                if (type.ToFrameworkString()
-                        .StartsWith(enumerableType))
-                {
-                    elementType = (INamedTypeSymbol)type.AllInterfaces.First(@interface => @interface.ToFrameworkString()
-                                                                                                     .StartsWith("System.Collections.Generic.IEnumerable<"))
-                                                                      .TypeArguments[0];
-                    return true;
-                }
-            }
-
-            elementType = null;
-            return false;
-        }
-    }
-
-    static public Boolean IsDictionaryEnumerable(this ITypeSymbol type,
-                                                 out INamedTypeSymbol keyValuePair)
-    {
-        foreach (String enumerableType in s_DictionaryTypes)
-        {
-            if (type.ToFrameworkString()
-                    .StartsWith(enumerableType))
-            {
-                keyValuePair = (INamedTypeSymbol)type.AllInterfaces.First(@interface => @interface.ToFrameworkString()
-                                                                                                  .StartsWith("System.Collections.Generic.IEnumerable<"))
-                                                                   .TypeArguments[0];
-                return true;
-            }
-        }
-
-        keyValuePair = null;
-        return false;
-    }
-
-    static private readonly String[] s_EnumerableTypes = new String[]
-    {
-        "System.Collections.Generic.Dictionary<",
-        "System.Collections.Generic.HashSet<",
-        "System.Collections.Generic.List<",
-        "System.Collections.Generic.SortedDictionary<",
-        "System.Collections.Generic.SortedList<",
-        "System.Collections.Generic.SortedSet<",
-        "System.Collections.Immutable.ImmutableArray<",
-        "System.Collections.Immutable.ImmutableDictionary<",
-        "System.Collections.Immutable.ImmutableHashSet<",
-        "System.Collections.Immutable.ImmutableList<",
-        "System.Collections.Immutable.ImmutableSortedDictionary<",
-        "System.Collections.Immutable.ImmutableSortedSet<",
-    };
-
-    static private readonly String[] s_DictionaryTypes = new String[]
-    {
-        "System.Collections.Generic.Dictionary<",
-        "System.Collections.Generic.SortedDictionary<",
-        "System.Collections.Generic.SortedList<",
-        "System.Collections.Immutable.ImmutableDictionary<",
-        "System.Collections.Immutable.ImmutableSortedDictionary<"
-    };
 
     static private readonly Dictionary<String, String> s_BuiltInTypes = new()
     {

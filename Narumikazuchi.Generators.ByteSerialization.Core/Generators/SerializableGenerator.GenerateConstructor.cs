@@ -2,12 +2,12 @@
 
 public partial class SerializableGenerator
 {
-    static private void GenerateConstructorMediator(INamedTypeSymbol symbol,
-                                                    ImmutableArray<IFieldSymbol> fields,
-                                                    SourceProductionContext context)
+    static private void GenerateConstructorMediatorSource(INamedTypeSymbol symbol,
+                                                          ImmutableArray<IFieldSymbol> fields,
+                                                          SourceProductionContext context)
     {
         StringBuilder builder = new();
-        builder.Append($"public delegate {symbol.ToFrameworkString()} ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}(");
+        builder.Append($"public delegate {symbol.ToFrameworkString()} __Internal_ConstructorFor_{symbol.ToNameString()}(");
 
         GenerateConstructorMediatorParameters(fields: fields,
                                               builder: builder);
@@ -36,10 +36,18 @@ namespace Narumikazuchi.Generated;
 ";
         String source = meta + builder.ToString();
 
-        SourceText text = SourceText.From(text: source,
-                                          encoding: Encoding.UTF8);
-        context.AddSource(hintName: $"{symbol.Name}.IByteSerializable.Constructor.g.cs",
-                          sourceText: text);
+#if OUTPUT
+        System.IO.File.WriteAllText($@"D:\Sources\Narumikazuchi.Generated.Constructor.{symbol.ToFileString()}.g.cs", source);
+#else
+        try
+        {
+            SourceText text = SourceText.From(text: source,
+                                              encoding: Encoding.UTF8);
+            context.AddSource(hintName: $"Narumikazuchi.Generated.Constructor.{symbol.ToFileString()}.g.cs",
+                              sourceText: text);
+        }
+        catch { }
+#endif
     }
 
     static private void GenerateConstructorMediatorParameters(ImmutableArray<IFieldSymbol> fields,
@@ -67,23 +75,19 @@ namespace Narumikazuchi.Generated;
         }
     }
 
-    static private void GenerateSuitableConstructor(INamedTypeSymbol symbol,
-                                                    ImmutableArray<IFieldSymbol> fields,
-                                                    SourceProductionContext context)
+    static private void GenerateConstructorSource(INamedTypeSymbol symbol,
+                                                  ImmutableArray<IFieldSymbol> fields,
+                                                  SourceProductionContext context)
     {
         StringBuilder builder = new();
-        builder.AppendLine("static public partial class ConstructorGenerator");
-        builder.AppendLine("{");
         String indent = "    ";
-        builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
-        builder.AppendLine($"{indent}[CompilerGenerated]");
-        builder.AppendLine($"{indent}static public ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")} ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}");
+        builder.AppendLine($"{indent}static public __Internal_ConstructorFor_{symbol.ToNameString()} ConstructorFor_{symbol.ToNameString()}");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
         builder.AppendLine($"{indent}get");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
-        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}.Value;");
+        builder.AppendLine($"{indent}return s_ConstructorFor_{symbol.ToNameString()}.Value;");
 
         indent = indent.Substring(4);
         builder.AppendLine($"{indent}}}");
@@ -93,7 +97,7 @@ namespace Narumikazuchi.Generated;
 
         builder.AppendLine($"{indent}[EditorBrowsable(EditorBrowsableState.Never)]");
         builder.AppendLine($"{indent}[CompilerGenerated]");
-        builder.AppendLine($"{indent}static private ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")} GenerateConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}()");
+        builder.AppendLine($"{indent}static private __Internal_ConstructorFor_{symbol.ToNameString()} GenerateConstructorFor_{symbol.ToNameString()}()");
         builder.AppendLine($"{indent}{{");
         indent += "    ";
 
@@ -104,13 +108,12 @@ namespace Narumikazuchi.Generated;
 
         indent = indent.Substring(4);
         builder.AppendLine($"{indent}}}");
-        builder.AppendLine();
 
         builder.AppendLine();
-        builder.AppendLine($"{indent}static private Lazy<ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}> s_ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")} = new Lazy<ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}>(GenerateConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}, LazyThreadSafetyMode.ExecutionAndPublication);");
+        builder.AppendLine($"{indent}static private Lazy<__Internal_ConstructorFor_{symbol.ToNameString()}> s_ConstructorFor_{symbol.ToNameString()} = new Lazy<__Internal_ConstructorFor_{symbol.ToNameString()}>(GenerateConstructorFor_{symbol.ToNameString()}, LazyThreadSafetyMode.ExecutionAndPublication);");
         builder.Append('}');
 
-        String meta = $@"//------------------------------------------------------------------------------
+        String meta = @"//------------------------------------------------------------------------------
 // <auto-generated>
 //     This code was generated by a tool.
 //
@@ -130,13 +133,25 @@ using System.Threading;
 
 namespace Narumikazuchi.Generated;
 
+static public partial class __Internal_ConstructorGenerator
+{
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [CompilerGenerated]
 ";
         String source = meta + builder.ToString();
 
-        SourceText text = SourceText.From(text: source,
-                                          encoding: Encoding.UTF8);
-        context.AddSource(hintName: $"{symbol.Name}.IByteSerializable.ConstructorGenerator.g.cs",
-                          sourceText: text);
+#if OUTPUT
+        System.IO.File.WriteAllText($@"D:\Sources\Narumikazuchi.Generated.ConstructorGenerator.{symbol.ToFileString()}.g.cs", source);
+#else
+        try
+        {
+            SourceText text = SourceText.From(text: source,
+                                              encoding: Encoding.UTF8);
+            context.AddSource(hintName: $"Narumikazuchi.Generated.ConstructorGenerator.{symbol.ToFileString()}.g.cs",
+                              sourceText: text);
+        }
+        catch { }
+#endif
     }
 
     static private void GenerateConstructorBody(INamedTypeSymbol symbol,
@@ -194,6 +209,6 @@ namespace Narumikazuchi.Generated;
 
         builder.AppendLine($"{indent}generator.Emit(OpCodes.Ldloc_0);");
         builder.AppendLine($"{indent}generator.Emit(OpCodes.Ret);");
-        builder.AppendLine($"{indent}return method.CreateDelegate<ConstructorFor_{symbol.ToFrameworkString().Replace(".", "")}>();");
+        builder.AppendLine($"{indent}return method.CreateDelegate<__Internal_ConstructorFor_{symbol.ToNameString()}>();");
     }
 }

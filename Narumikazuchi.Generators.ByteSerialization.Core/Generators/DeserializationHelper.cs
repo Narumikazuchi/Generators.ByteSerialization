@@ -2,6 +2,68 @@
 
 static public class DeserializationHelper
 {
+    static public void GenerateDeserializeMethod(INamedTypeSymbol symbol,
+                                                 ImmutableArray<IFieldSymbol> fields,
+                                                 StringBuilder builder,
+                                                 String indent)
+    {
+        builder.AppendLine($"{indent}[CompilerGenerated]");
+        if (symbol.IsValueType)
+        {
+            builder.AppendLine($"{indent}Int32 Narumikazuchi.Generators.ByteSerialization.ISerializationHandler<{symbol.ToFrameworkString()}>.Deserialize(ReadOnlySpan<Byte> buffer, out {symbol.ToFrameworkString()} result)");
+        }
+        else
+        {
+            builder.AppendLine($"{indent}Int32 Narumikazuchi.Generators.ByteSerialization.ISerializationHandler<{symbol.ToFrameworkString()}>.Deserialize(ReadOnlySpan<Byte> buffer, out {symbol.ToFrameworkString()}? result)");
+        }
+
+        builder.AppendLine($"{indent}{{");
+        indent += "    ";
+
+        builder.AppendLine($"{indent}Int32 read = 0;");
+        builder.AppendLine($"{indent}Int32 bytesRead;");
+        builder.AppendLine($"{indent}Guid typeId;");
+
+        GenerateDeserializationBody(symbol: symbol,
+                                    fields: fields,
+                                    builder: builder,
+                                    indent: indent);
+
+        builder.AppendLine($"{indent}return read;");
+
+        indent = indent.Substring(4);
+        builder.AppendLine($"{indent}}}");
+    }
+
+    static public void GenerateDeserializationBody(INamedTypeSymbol symbol,
+                                                   ImmutableArray<IFieldSymbol> fields,
+                                                   StringBuilder builder,
+                                                   String indent)
+    {
+        StringBuilder constructBuilder = new();
+        constructBuilder.Append($"{indent}result = Narumikazuchi.Generated.__Internal_ConstructorGenerator.ConstructorFor_{symbol.ToNameString()}.Invoke(");
+
+        Boolean first = true;
+        foreach (IFieldSymbol field in fields)
+        {
+            ISymbol target = field;
+            if (field.AssociatedSymbol is not null)
+            {
+                target = field.AssociatedSymbol;
+            }
+
+            WriteTypeDeserialization(type: field.Type,
+                                     builder: builder,
+                                     constructBuilder: constructBuilder,
+                                     indent: indent,
+                                     target: target.Name,
+                                     first: ref first);
+        }
+
+        constructBuilder.AppendLine(");");
+        builder.Append(constructBuilder.ToString());
+    }
+
     static public void WriteKnownTypeDeserialization(ITypeSymbol type,
                                                      StringBuilder builder,
                                                      String indent,
@@ -20,42 +82,24 @@ static public class DeserializationHelper
         }
         else if (typename is nameof(String))
         {
-            builder.AppendLine($"{indent}String _{target} = Narumikazuchi.Generators.ByteSerialization.Strategies.StringStrategy.Deserialize(buffer[read..], out bytesRead);");
-            builder.AppendLine($"{indent}read += bytesRead;");
+            builder.AppendLine($"{indent}read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize(buffer[read..], out String? _{target});");
         }
     }
 
+    /**
+     * Just copy the memory for arrays of unmanaged types
+     * MemoryMarshal.Cast<byte, Vector3>(buffer).CopyTo(dest);
+     */
+
     static public void WriteTypeDeserialization(ITypeSymbol type,
-                                                Dictionary<ITypeSymbol, ITypeSymbol> strategies,
                                                 StringBuilder builder,
                                                 String indent,
                                                 String target,
                                                 ref Boolean first,
                                                 StringBuilder constructBuilder = default)
     {
-        if (strategies.TryGetValue(key: type,
-                                   value: out ITypeSymbol strategyType))
-        {
-            builder.AppendLine($"{indent}read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize<{type.ToFrameworkString()}, {strategyType.ToFrameworkString()}>(buffer[read..], out {type.ToFrameworkString()} _{target});");
-            
-            if (constructBuilder is null)
-            {
-                return;
-            }
-
-            if (first)
-            {
-                first = false;
-            }
-            else
-            {
-                constructBuilder.Append(", ");
-            }
-
-            constructBuilder.Append($"_{target}");
-        }
-        else if (Array.IndexOf(array: __Shared.IntrinsicTypes,
-                               value: type.ToFrameworkString()) > -1)
+        if (Array.IndexOf(array: __Shared.IntrinsicTypes,
+                          value: type.ToFrameworkString()) > -1)
         {
             WriteKnownTypeDeserialization(type: type,
                                           builder: builder,
@@ -99,104 +143,50 @@ static public class DeserializationHelper
 
             constructBuilder.Append($"_{target}");
         }
-        else if (type.IsByteSerializable())
+        else
         {
-            builder.AppendLine($"{indent}read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize(buffer[read..], out {type.ToFrameworkString()} _{target});");
-
-            if (constructBuilder is null)
+            if (type.IsValueType ||
+                type.IsSealed)
             {
-                return;
-            }
-
-            if (first)
-            {
-                first = false;
+                builder.AppendLine($"{indent}read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize(buffer[read..], out {type.ToFrameworkString()} _{target});");
             }
             else
             {
-                constructBuilder.Append(", ");
-            }
-
-            constructBuilder.Append($"_{target}");
-        }
-        else if (type.IsEnumerableSerializable(strategies))
-        {
-            Boolean immutable;
-            builder.AppendLine($"{indent}Int32 {target}_count = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[read..]));");
-            builder.AppendLine($"{indent}read += 4;");
-            if (type.IsDictionaryEnumerable(out INamedTypeSymbol keyValuePair))
-            {
-                immutable = WriteEnumerableBuilderType(type: type,
-                                                       keyType: keyValuePair.TypeArguments[0],
-                                                       valueType: keyValuePair.TypeArguments[1],
-                                                       builder: builder,
-                                                       indent: indent,
-                                                       target: target);
-                builder.AppendLine($"{indent}for (Int32 {target}_index = 0; {target}_index < {target}_count; {target}_index++)");
-                builder.AppendLine($"{indent}{{");
-                indent += "    ";
-                WriteTypeDeserialization(type: keyValuePair.TypeArguments[0],
-                                         strategies: strategies,
-                                         builder: builder,
-                                         indent: indent,
-                                         target: $"{target}_item_key",
-                                         first: ref first);
-                WriteTypeDeserialization(type: keyValuePair.TypeArguments[1],
-                                         strategies: strategies,
-                                         builder: builder,
-                                         indent: indent,
-                                         target: $"{target}_item_value",
-                                         first: ref first);
-
-                if (immutable)
+                builder.AppendLine($"{indent}typeId = Unsafe.As<Byte, Guid>(ref MemoryMarshal.GetReference(buffer[(read + 4)..]));");
+                builder.AppendLine($"{indent}{type.ToFrameworkString()} _{target};");
+                Boolean firstType = true;
+                foreach (ITypeSymbol derivedType in type.GetDerivedTypes())
                 {
-                    builder.AppendLine($"{indent}{target}_builder.Add(_{target}_item_key, _{target}_item_value);");
+                    if (firstType)
+                    {
+                        firstType = false;
+                        builder.AppendLine($"{indent}if (typeId == typeof({derivedType.ToFrameworkString()}).GUID)");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"{indent}else if (typeId == typeof({derivedType.ToFrameworkString()}).GUID)");
+                    }
+
+                    builder.AppendLine($"{indent}{{");
+                    builder.AppendLine($"{indent}    read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize(buffer[read..], out {derivedType.ToFrameworkString()} _{derivedType.ToNameString()});");
+                    builder.AppendLine($"{indent}    _{target} = _{derivedType.ToNameString()};");
+                    builder.AppendLine($"{indent}}}");
+                }
+
+                if (type.IsAbstract)
+                {
+                    builder.AppendLine($"{indent}else");
+                    builder.AppendLine($"{indent}{{");
+                    builder.AppendLine($"{indent}    throw new Exception();");
+                    builder.AppendLine($"{indent}}}");
                 }
                 else
                 {
-                    builder.AppendLine($"{indent}_{target}.Add(_{target}_item_key, _{target}_item_value);");
+                    builder.AppendLine($"{indent}else");
+                    builder.AppendLine($"{indent}{{");
+                    builder.AppendLine($"{indent}    read += Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize(buffer[read..], out _{target});");
+                    builder.AppendLine($"{indent}}}");
                 }
-            }
-            else if (type.IsEnumerable(out INamedTypeSymbol elementType))
-            {
-                immutable = WriteEnumerableBuilderType(type: type,
-                                                       elementType: elementType,
-                                                       builder: builder,
-                                                       indent: indent,
-                                                       target: target);
-                builder.AppendLine($"{indent}for (Int32 {target}_index = 0; {target}_index < {target}_count; {target}_index++)");
-                builder.AppendLine($"{indent}{{");
-                indent += "    ";
-                WriteTypeDeserialization(type: elementType,
-                                         strategies: strategies,
-                                         builder: builder,
-                                         indent: indent,
-                                         target: $"{target}_item",
-                                         first: ref first);
-
-                if (type is IArrayTypeSymbol)
-                {
-                    builder.AppendLine($"{indent}_{target}[{target}_index] = _{target}_item;");
-                }
-                else if (immutable)
-                {
-                    builder.AppendLine($"{indent}{target}_builder.Add(_{target}_item);");
-                }
-                else
-                {
-                    builder.AppendLine($"{indent}_{target}.Add(_{target}_item);");
-                }
-            }
-            else
-            {
-                throw new Exception();
-            }
-
-            indent = indent.Substring(4);
-            builder.AppendLine($"{indent}}}");
-            if (immutable)
-            {
-                builder.AppendLine($"{indent}{type.ToFrameworkString()} _{target} = {target}_builder.ToImmutable();");
             }
 
             if (constructBuilder is null)
@@ -214,54 +204,6 @@ static public class DeserializationHelper
             }
 
             constructBuilder.Append($"_{target}");
-        }
-        else
-        {
-            throw new Exception();
-        }
-    }
-
-    static private Boolean WriteEnumerableBuilderType(ITypeSymbol type,
-                                                      INamedTypeSymbol elementType,
-                                                      StringBuilder builder,
-                                                      String indent,
-                                                      String target)
-    {
-        String typename = type.ToFrameworkString();
-        if (type is IArrayTypeSymbol)
-        {
-            builder.AppendLine($"{indent}{typename} _{target} = new {typename.Substring(0, typename.IndexOf('['))}[{target}_count];");
-            return false;
-        }
-        else if (typename.StartsWith("System.Collections.Immutable"))
-        {
-            builder.AppendLine($"{indent}{typename}.Builder {target}_builder = {typename.Substring(0, typename.IndexOf('<'))}.CreateBuilder<{elementType.ToFrameworkString()}>();");
-            return true;
-        }
-        else
-        {
-            builder.AppendLine($"{indent}{typename} _{target} = new {typename}();");
-            return false;
-        }
-    }
-
-    static private Boolean WriteEnumerableBuilderType(ITypeSymbol type,
-                                                      ITypeSymbol keyType,
-                                                      ITypeSymbol valueType,
-                                                      StringBuilder builder,
-                                                      String indent,
-                                                      String target)
-    {
-        String typename = type.ToFrameworkString();
-        if (typename.StartsWith("System.Collections.Immutable"))
-        {
-            builder.AppendLine($"{indent}{typename}.Builder {target}_builder = {typename.Substring(0, typename.IndexOf('<'))}.CreateBuilder<{keyType.ToFrameworkString()}, {valueType.ToFrameworkString()}>();");
-            return true;
-        }
-        else
-        {
-            builder.AppendLine($"{indent}{typename} _{target} = new {typename}();");
-            return false;
         }
     }
 }
