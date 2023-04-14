@@ -8,15 +8,23 @@ static public class TypeCache
     static TypeCache()
     {
         s_TypeIds = new();
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            foreach (Type type in assembly.GetExportedTypes())
-            {
-                _ = GetIdOfType(type);
-            }
-        }
-
-        AppDomain.CurrentDomain.AssemblyLoad += AddTypes;
+        _ = GetIdOfType<Boolean>();
+        _ = GetIdOfType<Byte>();
+        _ = GetIdOfType<Char>();
+        _ = GetIdOfType<DateOnly>();
+        _ = GetIdOfType<DateTime>();
+        _ = GetIdOfType<DateTimeOffset>();
+        _ = GetIdOfType<Decimal>();
+        _ = GetIdOfType<Double>();
+        _ = GetIdOfType<Int16>();
+        _ = GetIdOfType<Int32>();
+        _ = GetIdOfType<Int64>();
+        _ = GetIdOfType<SByte>();
+        _ = GetIdOfType<Single>();
+        _ = GetIdOfType<String>();
+        _ = GetIdOfType<UInt16>();
+        _ = GetIdOfType<UInt32>();
+        _ = GetIdOfType<UInt64>();
     }
 
     /// <summary>
@@ -71,15 +79,6 @@ static public class TypeCache
                         .Select(kv => Type.GetType(kv.Key)!)
                         .Where(type => type is not null)
                         .ToImmutableArray();
-    }
-
-    static private void AddTypes(Object? sender,
-                                 AssemblyLoadEventArgs eventArgs)
-    {
-        foreach (Type type in eventArgs.LoadedAssembly.GetTypes())
-        {
-            _ = GetIdOfType(type);
-        }
     }
 
     static private readonly Dictionary<String, Guid> s_TypeIds;
