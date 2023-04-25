@@ -9,7 +9,14 @@ public readonly struct Vector2D
     public Double Y { get; init; }
 }
 
-[ByteSerializable]
 public sealed partial record class Unmanaged(Half Half,
                                              Guid Id,
-                                             Vector2D Vector2D);
+                                             Vector2D Vector2D,
+                                             Int32? Int)
+{
+    public DateTime DateTime
+    {
+        get;
+        set;
+    }
+};

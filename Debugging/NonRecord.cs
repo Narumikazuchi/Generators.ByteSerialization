@@ -1,10 +1,8 @@
-﻿using Narumikazuchi.Generators.ByteSerialization;
-using System;
+﻿using System;
 
 namespace Debugging;
 
 #pragma warning disable CS0659
-[ByteSerializable]
 public sealed partial class NonRecord
 {
     public override Boolean Equals(Object? obj)
@@ -16,5 +14,9 @@ public sealed partial class NonRecord
 
     public Guid Id { get; init; }
 
-    public Int32 Value { get; init; }
+    public Int32 Value { get; set; }
+
+    static public Double Dont { get; set; }
+
+    public Int64 m_Flags = 64L;
 }

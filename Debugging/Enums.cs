@@ -1,8 +1,6 @@
-﻿using Narumikazuchi.Generators.ByteSerialization;
-using System;
+﻿using System;
 
 namespace Debugging;
 
-[ByteSerializable]
 public sealed partial record class Enums(AttributeTargets AttributeTargets,
                                          ConsoleColor ConsoleColor);

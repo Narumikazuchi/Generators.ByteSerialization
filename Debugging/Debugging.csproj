@@ -5,6 +5,7 @@
 		<TargetFrameworks>net7.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<PlatformTarget>x64</PlatformTarget>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<PropertyGroup>
