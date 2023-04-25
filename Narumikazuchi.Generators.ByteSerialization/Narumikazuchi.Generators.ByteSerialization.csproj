@@ -37,7 +37,7 @@
 		<DocumentationFile>Narumikazuchi.Generators.ByteSerialization.xml</DocumentationFile>
 		<Authors>Narumikazuchi</Authors>
 		<Copyright>©2023 Narumikazuchi</Copyright>
-		<Version>2023.3.30.1-prerelease</Version>
+		<Version>2023.4.25.1-prerelease</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
