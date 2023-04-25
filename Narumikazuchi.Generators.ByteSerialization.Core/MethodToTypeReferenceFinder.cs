@@ -6,52 +6,8 @@ namespace Narumikazuchi.Generators.ByteSerialization;
 
 static public class MethodToTypeReferenceFinder
 {
-    static public Boolean IsByteSerializerMethod(IMethodSymbol method,
-                                                 Compilation compilation)
-    {
-        if (s_ByteSerializer is null)
-        {
-            IAssemblySymbol generatorAssembly = compilation.References.Select(compilation.GetAssemblyOrModuleSymbol)
-                                                                      .OfType<IAssemblySymbol>()
-                                                                      .First(a => a.Name is GlobalNames.NAMESPACE);
-
-            s_ByteSerializer = generatorAssembly.GetTypeByMetadataName(GlobalNames.BYTESERIALIZER);
-        }
-
-        if (s_MethodSymbols.Length is 0)
-        {
-            s_MethodSymbols = s_ByteSerializer.GetMembers()
-                                              .OfType<IMethodSymbol>()
-                                              .Where(method => method.Name is "Deserialize"
-                                                                           or "DeserializeAsynchronously"
-                                                                           or "GetExpectedSerializedSize"
-                                                                           or "Serialize"
-                                                                           or "SerializeAsynchronously")
-                                              .ToImmutableArray();
-        }
-
-        if (!method.IsGenericMethod ||
-            !SymbolEqualityComparer.Default.Equals(s_ByteSerializer, method.ContainingType))
-        {
-            return false;
-        }
-        else
-        {
-            IMethodSymbol genericMethod = method.ConstructedFrom;
-            foreach (IMethodSymbol serializerMethod in s_MethodSymbols)
-            {
-                if (SymbolEqualityComparer.Default.Equals(genericMethod, serializerMethod))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-    }
-
     static public ImmutableArray<ITypeSymbol> FindTypes(Compilation compilation,
-                                                        MethodDeclarationSyntax methodSyntax)
+                                                        InvocationExpressionSyntax invocation)
     {
         if (s_ByteSerializer is null)
         {
@@ -97,38 +53,43 @@ static public class MethodToTypeReferenceFinder
                                               .ToImmutableArray();
         }
 
-        ImmutableArray<ITypeSymbol> eligableTypes;
-        if (methodSyntax.Body is not null)
+        SymbolInfo symbolInfo = compilation.GetSemanticModel(invocation.SyntaxTree)
+                                           .GetSymbolInfo(invocation);
+        IMethodSymbol method = (IMethodSymbol)symbolInfo.Symbol;
+        if (method is null ||
+            !method.IsGenericMethod ||
+            !SymbolEqualityComparer.Default.Equals(s_ByteSerializer, method.ContainingType))
         {
-            eligableTypes = ReferenceFinder.FindInStatement(statement: methodSyntax.Body,
-                                                            semanticModel: compilation.GetSemanticModel(methodSyntax.SyntaxTree),
-                                                            filter: ExtractReferencedTypesFromMethod);
-        }
-        else if (methodSyntax.ExpressionBody is not null)
-        {
-            eligableTypes = ReferenceFinder.FindInExpression(expression: methodSyntax.ExpressionBody.Expression,
-                                                             semanticModel: compilation.GetSemanticModel(methodSyntax.SyntaxTree),
-                                                             filter: ExtractReferencedTypesFromMethod);
+            return ImmutableArray<ITypeSymbol>.Empty;
         }
 
-        ImmutableArray<ITypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<ITypeSymbol>();
-        foreach (ITypeSymbol type in eligableTypes)
+        ITypeSymbol type = default;
+        IMethodSymbol genericMethod = method.ConstructedFrom;
+        foreach (IMethodSymbol serializerMethod in s_MethodSymbols)
         {
+            if (SymbolEqualityComparer.Default.Equals(genericMethod, serializerMethod))
+            {
+                type = method.TypeArguments.Last();
+                break;
+            }
+        }
+
+        if (type is null)
+        {
+            return ImmutableArray<ITypeSymbol>.Empty;
+        }
+        else
+        {
+            ImmutableArray<ITypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<ITypeSymbol>();
             if (type is INamedTypeSymbol named &&
                 named.IsOpenGenericType())
             {
-                continue;
+                return ImmutableArray<ITypeSymbol>.Empty;
             }
 
             if (!RequiresGeneration(type))
             {
-                continue;
-            }
-
-            if (builder.Contains(value: type,
-                                 comparer: SymbolEqualityComparer.Default))
-            {
-                continue;
+                return ImmutableArray<ITypeSymbol>.Empty;
             }
 
             builder.Add(type);
@@ -152,58 +113,6 @@ static public class MethodToTypeReferenceFinder
                 }
 
                 builder.Add(dependent);
-            }
-        }
-
-        return builder.ToImmutable();
-    }
-
-    static private ImmutableArray<ITypeSymbol> ExtractReferencedTypesFromMethod(SymbolInfo symbolInfo)
-    {
-        if (symbolInfo.Symbol is IMethodSymbol method)
-        {
-            if (!method.IsGenericMethod ||
-                !SymbolEqualityComparer.Default.Equals(s_ByteSerializer, method.ContainingType))
-            {
-                return ImmutableArray<ITypeSymbol>.Empty;
-            }
-
-            ImmutableArray<ITypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<ITypeSymbol>();
-            IMethodSymbol genericMethod = method.ConstructedFrom;
-            foreach (IMethodSymbol serializerMethod in s_MethodSymbols)
-            {
-                if (SymbolEqualityComparer.Default.Equals(genericMethod, serializerMethod))
-                {
-                    ITypeSymbol candidate = method.TypeArguments.Last();
-                    builder.Add(candidate);
-                    break;
-                }
-            }
-
-            return builder.ToImmutable();
-        }
-        else
-        {
-            ImmutableArray<ITypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<ITypeSymbol>();
-
-            foreach (IMethodSymbol methodSymbol in symbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
-            {
-                if (!methodSymbol.IsGenericMethod ||
-                    !SymbolEqualityComparer.Default.Equals(s_ByteSerializer, methodSymbol.ContainingType))
-                {
-                    return builder.ToImmutable();
-                }
-
-                IMethodSymbol genericMethod = methodSymbol.ConstructedFrom;
-                foreach (IMethodSymbol serializerMethod in s_MethodSymbols)
-                {
-                    if (SymbolEqualityComparer.Default.Equals(genericMethod, serializerMethod))
-                    {
-                        ITypeSymbol candidate = methodSymbol.TypeArguments.Last();
-                        builder.Add(candidate);
-                        break;
-                    }
-                }
             }
 
             return builder.ToImmutable();

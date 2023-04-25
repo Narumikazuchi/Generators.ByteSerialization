@@ -11,14 +11,14 @@ public sealed partial class SerializableGenerator
     static private Boolean IsEligableTypeSyntax(SyntaxNode syntaxNode,
                                                 CancellationToken cancellationToken = default)
     {
-        return syntaxNode is MethodDeclarationSyntax;
+        return syntaxNode is InvocationExpressionSyntax;
     }
 
     static private ImmutableArray<ITypeSymbol> TransformToType(GeneratorSyntaxContext context,
                                                                CancellationToken cancellationToken)
     {
         return MethodToTypeReferenceFinder.FindTypes(compilation: context.SemanticModel.Compilation,
-                                                     methodSyntax: (MethodDeclarationSyntax)context.Node);
+                                                     invocation: (InvocationExpressionSyntax)context.Node);
     }
 
     static private void GenerateSerializationCode(SourceProductionContext context,
@@ -35,6 +35,7 @@ public sealed partial class SerializableGenerator
                                                      and not SpecialType.System_UIntPtr
                                                      and not SpecialType.System_Delegate
                                                      and not SpecialType.System_MulticastDelegate)
+                     .Distinct((IEqualityComparer<ITypeSymbol>)SymbolEqualityComparer.Default)
                      .ToImmutableArray();
 
         CodeAnalysis.Extensions.ClearCaches();

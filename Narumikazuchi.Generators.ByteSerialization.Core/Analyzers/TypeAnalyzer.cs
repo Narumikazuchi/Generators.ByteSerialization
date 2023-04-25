@@ -14,7 +14,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.RegisterSyntaxNodeAction(action: this.Analyze,
-                                         SyntaxKind.MethodDeclaration);
+                                         SyntaxKind.InvocationExpression);
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = new DiagnosticDescriptor[]
@@ -28,17 +28,9 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
 
     private void Analyze(SyntaxNodeAnalysisContext context)
     {
-        INamedTypeSymbol compilerGenerated = context.SemanticModel.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.CompilerGeneratedAttribute");
-
-        MethodDeclarationSyntax method = (MethodDeclarationSyntax)context.Node;
-        if (method.AttributeLists.SelectMany(list => list.Attributes)
-                                 .Any(attribute => SymbolEqualityComparer.Default.Equals(compilerGenerated, context.SemanticModel.GetSymbolInfo(attribute).Symbol.ContainingType)))
-        {
-            return;
-        }
-
+        InvocationExpressionSyntax invocation = (InvocationExpressionSyntax)context.Node;
         ImmutableArray<ITypeSymbol> types = MethodToTypeReferenceFinder.FindTypes(compilation: context.SemanticModel.Compilation,
-                                                                                  methodSyntax: method);
+                                                                                  invocation: invocation);
         if (types.IsEmpty)
         {
             return;
@@ -46,16 +38,9 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
 
         foreach (INamedTypeSymbol type in types.OfType<INamedTypeSymbol>())
         {
-            ImmutableArray<InvocationExpressionSyntax> invocations = FindInvocationsForType(parent: method,
-                                                                                            semanticModel: context.SemanticModel,
-                                                                                            type: type);
-
             if (type.IsOpenGenericType())
             {
-                foreach (InvocationExpressionSyntax invocation in invocations)
-                {
-                    context.ReportDiagnostic(CreateOpenGenericsUnsupportedDiagnostic(invocation));
-                }
+                context.ReportDiagnostic(CreateOpenGenericsUnsupportedDiagnostic(invocation));
             }
 
             if (type.SpecialType is SpecialType.System_IntPtr
@@ -63,10 +48,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
                                  or SpecialType.System_Delegate
                                  or SpecialType.System_MulticastDelegate)
             {
-                foreach (InvocationExpressionSyntax invocation in invocations)
-                {
-                    context.ReportDiagnostic(CreatePointerNotSerializableDiagnostic(invocation));
-                }
+                context.ReportDiagnostic(CreatePointerNotSerializableDiagnostic(invocation));
             }
 
             ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
@@ -76,19 +58,13 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
             {
                 if (type.IsAbstract)
                 {
-                    foreach (InvocationExpressionSyntax invocation in invocations)
-                    {
-                        context.ReportDiagnostic(CreateNoInterfaceMembersDiagnostic(method: invocation,
-                                                                                    typename: type.Name));
-                    }
+                    context.ReportDiagnostic(CreateNoInterfaceMembersDiagnostic(method: invocation,
+                                                                                typename: type.Name));
                 }
                 else
                 {
-                    foreach (InvocationExpressionSyntax invocation in invocations)
-                    {
-                        context.ReportDiagnostic(CreateNoPublicMemberDiagnostic(method: invocation,
-                                                                                typename: type.Name));
-                    }
+                    context.ReportDiagnostic(CreateNoPublicMemberDiagnostic(method: invocation,
+                                                                            typename: type.Name));
                 }
             }
 
@@ -101,74 +77,9 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
                 members.Length > 0 &&
                 members.All(MemberIsUnmanaged))
             {
-                foreach (InvocationExpressionSyntax invocation in invocations)
-                {
-                    context.ReportDiagnostic(CreateConsiderUnmanagedDiagnostic(method: invocation,
-                                                                               typename: type.Name));
-                }
+                context.ReportDiagnostic(CreateConsiderUnmanagedDiagnostic(method: invocation,
+                                                                           typename: type.Name));
             }
-        }
-    }
-
-    static private ImmutableArray<InvocationExpressionSyntax> FindInvocationsForType(INamedTypeSymbol type,
-                                                                                     SemanticModel semanticModel,
-                                                                                     SyntaxNode parent)
-    {
-        ImmutableArray<InvocationExpressionSyntax>.Builder builder = ImmutableArray.CreateBuilder<InvocationExpressionSyntax>();
-        foreach (SyntaxNode child in parent.ChildNodes())
-        {
-            if (child is InvocationExpressionSyntax invocation)
-            {
-                IMethodSymbol method = (IMethodSymbol)semanticModel.GetSymbolInfo(invocation).Symbol;
-                if (MethodToTypeReferenceFinder.IsByteSerializerMethod(method: method,
-                                                                       compilation: semanticModel.Compilation))
-                {
-                    ITypeSymbol methodType = method.TypeArguments.Last();
-                    if (TypeContainsType(parentType: methodType,
-                                         type: type))
-                    {
-                        builder.Add(invocation);
-                    }
-                }
-            }
-
-            ImmutableArray<InvocationExpressionSyntax> result = FindInvocationsForType(type: type,
-                                                                                       semanticModel: semanticModel,
-                                                                                       parent: child);
-            builder.AddRange(result);
-        }
-
-        return builder.ToImmutable();
-    }
-
-    static private Boolean TypeContainsType(ITypeSymbol parentType,
-                                            ITypeSymbol type)
-    {
-        if (SymbolEqualityComparer.Default.Equals(parentType, type))
-        {
-            return true;
-        }
-        else if (parentType is INamedTypeSymbol named &&
-                 named.IsGenericType)
-        {
-            foreach (ITypeSymbol typeArgument in named.TypeArguments)
-            {
-                if (SymbolEqualityComparer.Default.Equals(type, typeArgument))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        else if (parentType is IArrayTypeSymbol array)
-        {
-            return TypeContainsType(parentType: array.ElementType,
-                                    type: type);
-        }
-        else
-        {
-            return false;
         }
     }
 
