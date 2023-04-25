@@ -1,4 +1,10 @@
-﻿namespace Narumikazuchi.Generators.ByteSerialization.Analyzers;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Narumikazuchi.CodeAnalysis;
+
+namespace Narumikazuchi.Generators.ByteSerialization.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
@@ -8,85 +14,177 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.RegisterSyntaxNodeAction(action: this.Analyze,
-                                         SyntaxKind.ClassDeclaration,
-                                         SyntaxKind.StructDeclaration,
-                                         SyntaxKind.RecordDeclaration,
-                                         SyntaxKind.RecordStructDeclaration);
+                                         SyntaxKind.MethodDeclaration);
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = new DiagnosticDescriptor[]
     {
-        s_NoSerializationForTypeDescriptor,
-        s_DuplicateStrategyForTypeDescriptor
+        s_PointerNotSerializableDescriptor,
+        s_OpenGenericsUnsupportedDescriptor,
+        s_NoPublicMembersDescriptor,
+        s_NoInterfaceMembersDescriptor,
+        s_ConsiderUnmanagedDescriptor
     }.ToImmutableArray();
 
     private void Analyze(SyntaxNodeAnalysisContext context)
     {
-        if (context.Node is not TypeDeclarationSyntax type ||
-            context.SemanticModel.Compilation.Options.SyntaxTreeOptionsProvider!.IsGenerated(type.SyntaxTree, CancellationToken.None) is GeneratedKind.MarkedGenerated)
+        INamedTypeSymbol compilerGenerated = context.SemanticModel.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.CompilerGeneratedAttribute");
+
+        MethodDeclarationSyntax method = (MethodDeclarationSyntax)context.Node;
+        if (method.AttributeLists.SelectMany(list => list.Attributes)
+                                 .Any(attribute => SymbolEqualityComparer.Default.Equals(compilerGenerated, context.SemanticModel.GetSymbolInfo(attribute).Symbol.ContainingType)))
         {
             return;
         }
 
-        SemanticModel semanticModel = context.SemanticModel;
-        INamedTypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(type);
-        if (typeSymbol is null)
+        ImmutableArray<ITypeSymbol> types = MethodToTypeReferenceFinder.FindTypes(compilation: context.SemanticModel.Compilation,
+                                                                                  methodSyntax: method);
+        if (types.IsEmpty)
         {
             return;
         }
 
-        if (!typeSymbol.IsByteSerializable())
+        foreach (INamedTypeSymbol type in types.OfType<INamedTypeSymbol>())
         {
-            return;
-        }
+            ImmutableArray<InvocationExpressionSyntax> invocations = FindInvocationsForType(parent: method,
+                                                                                            semanticModel: context.SemanticModel,
+                                                                                            type: type);
 
-        this.AnalyzeMembers(context: context,
-                            type: type,
-                            typeSymbol: typeSymbol);
+            if (type.IsOpenGenericType())
+            {
+                foreach (InvocationExpressionSyntax invocation in invocations)
+                {
+                    context.ReportDiagnostic(CreateOpenGenericsUnsupportedDiagnostic(invocation));
+                }
+            }
+
+            if (type.SpecialType is SpecialType.System_IntPtr
+                                 or SpecialType.System_UIntPtr
+                                 or SpecialType.System_Delegate
+                                 or SpecialType.System_MulticastDelegate)
+            {
+                foreach (InvocationExpressionSyntax invocation in invocations)
+                {
+                    context.ReportDiagnostic(CreatePointerNotSerializableDiagnostic(invocation));
+                }
+            }
+
+            ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
+            if (members.IsEmpty &&
+                !type.IsCollection(out _) &&
+                !type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<"))
+            {
+                if (type.IsAbstract)
+                {
+                    foreach (InvocationExpressionSyntax invocation in invocations)
+                    {
+                        context.ReportDiagnostic(CreateNoInterfaceMembersDiagnostic(method: invocation,
+                                                                                    typename: type.Name));
+                    }
+                }
+                else
+                {
+                    foreach (InvocationExpressionSyntax invocation in invocations)
+                    {
+                        context.ReportDiagnostic(CreateNoPublicMemberDiagnostic(method: invocation,
+                                                                                typename: type.Name));
+                    }
+                }
+            }
+
+            members = type.GetMembers()
+                          .Where(member => member is IFieldSymbol
+                                                  or IPropertySymbol)
+                          .ToImmutableArray();
+            if (!type.ToFrameworkString().StartsWith("System.") &&
+                !type.IsValueType &&
+                members.Length > 0 &&
+                members.All(MemberIsUnmanaged))
+            {
+                foreach (InvocationExpressionSyntax invocation in invocations)
+                {
+                    context.ReportDiagnostic(CreateConsiderUnmanagedDiagnostic(method: invocation,
+                                                                               typename: type.Name));
+                }
+            }
+        }
     }
 
-    private void AnalyzeMembers(SyntaxNodeAnalysisContext context,
-                                TypeDeclarationSyntax type,
-                                INamedTypeSymbol typeSymbol)
+    static private ImmutableArray<InvocationExpressionSyntax> FindInvocationsForType(INamedTypeSymbol type,
+                                                                                     SemanticModel semanticModel,
+                                                                                     SyntaxNode parent)
     {
-        Dictionary<ITypeSymbol, ITypeSymbol> strategies = __Shared.GetStrategiesFromAttributes(symbol: typeSymbol,
-                                                                                               compilation: context.Compilation,
-                                                                                               type: type,
-                                                                                               duplicates: out Dictionary<ITypeSymbol, List<AttributeData>> duplicates);
-        if (duplicates.Count > 0)
+        ImmutableArray<InvocationExpressionSyntax>.Builder builder = ImmutableArray.CreateBuilder<InvocationExpressionSyntax>();
+        foreach (SyntaxNode child in parent.ChildNodes())
         {
-            foreach (KeyValuePair<ITypeSymbol, List<AttributeData>> kv in duplicates)
+            if (child is InvocationExpressionSyntax invocation)
             {
-                foreach (AttributeData attribute in kv.Value)
+                IMethodSymbol method = (IMethodSymbol)semanticModel.GetSymbolInfo(invocation).Symbol;
+                if (MethodToTypeReferenceFinder.IsByteSerializerMethod(method: method,
+                                                                       compilation: semanticModel.Compilation))
                 {
-                    SyntaxReference reference = attribute.ApplicationSyntaxReference!;
-                    AttributeSyntax syntax = (AttributeSyntax)reference.GetSyntax();
-                    context.ReportDiagnostic(CreateDuplicateStrategyForTypeDiagnostic(attribute: syntax,
-                                                                                      typename: kv.Key.ToFrameworkString()));
+                    ITypeSymbol methodType = method.TypeArguments.Last();
+                    if (TypeContainsType(parentType: methodType,
+                                         type: type))
+                    {
+                        builder.Add(invocation);
+                    }
                 }
             }
+
+            ImmutableArray<InvocationExpressionSyntax> result = FindInvocationsForType(type: type,
+                                                                                       semanticModel: semanticModel,
+                                                                                       parent: child);
+            builder.AddRange(result);
         }
 
-        ImmutableArray<IFieldSymbol> fields = __Shared.GetFieldsToSerialize(typeSymbol);
+        return builder.ToImmutable();
+    }
 
-        foreach (IFieldSymbol field in fields)
+    static private Boolean TypeContainsType(ITypeSymbol parentType,
+                                            ITypeSymbol type)
+    {
+        if (SymbolEqualityComparer.Default.Equals(parentType, type))
         {
-            if (field.Type.CanBeSerialized(strategies))
+            return true;
+        }
+        else if (parentType is INamedTypeSymbol named &&
+                 named.IsGenericType)
+        {
+            foreach (ITypeSymbol typeArgument in named.TypeArguments)
             {
-                continue;
-            }
-            else
-            {
-                ISymbol target = field;
-                if (field.AssociatedSymbol is not null)
+                if (SymbolEqualityComparer.Default.Equals(type, typeArgument))
                 {
-                    target = field.AssociatedSymbol;
+                    return true;
                 }
-
-                context.ReportDiagnostic(CreateNoSerializationForTypeDiagnostic(type: type,
-                                                                                membername: target.Name,
-                                                                                typename: field.Type.ToFrameworkString()));
             }
+
+            return false;
+        }
+        else if (parentType is IArrayTypeSymbol array)
+        {
+            return TypeContainsType(parentType: array.ElementType,
+                                    type: type);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    static private Boolean MemberIsUnmanaged(ISymbol member)
+    {
+        if (member is IFieldSymbol field)
+        {
+            return field.Type.IsUnmanagedSerializable();
+        }
+        else if (member is IPropertySymbol property)
+        {
+            return property.Type.IsUnmanagedSerializable();
+        }
+        else
+        {
+            return false;
         }
     }
 }
