@@ -1,4 +1,6 @@
-﻿namespace Narumikazuchi.Generators.ByteSerialization.Generators;
+﻿using Microsoft.CodeAnalysis;
+
+namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 public partial class SerializableGenerator : IIncrementalGenerator
 {

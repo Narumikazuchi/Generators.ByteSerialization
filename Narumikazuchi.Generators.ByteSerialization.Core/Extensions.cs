@@ -1,103 +1,104 @@
-﻿namespace Narumikazuchi.Generators.ByteSerialization;
+﻿using Microsoft.CodeAnalysis;
+using Narumikazuchi.CodeAnalysis;
+
+namespace Narumikazuchi.Generators.ByteSerialization;
 
 static public class Extensions
 {
-    static public String ToFrameworkString(this ITypeSymbol type)
+    static Extensions()
     {
-        String result = type.ToDisplayString()
-                            .Replace("*", "");
-
-        foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
-        {
-            result = result.Replace(kv.Key, kv.Value);
-        }
-
-        return result;
+        s_BuiltInTypes = new();
+        s_BuiltInTypes.GetOrAdd(key: "decimal",
+                                value: "Decimal");
+        s_BuiltInTypes.GetOrAdd(key: "double",
+                                value: "Double");
+        s_BuiltInTypes.GetOrAdd(key: "ushort",
+                                value: "UInt16");
+        s_BuiltInTypes.GetOrAdd(key: "object",
+                                value: "Object");
+        s_BuiltInTypes.GetOrAdd(key: "string",
+                                value: "String");
+        s_BuiltInTypes.GetOrAdd(key: "float",
+                                value: "Single");
+        s_BuiltInTypes.GetOrAdd(key: "sbyte",
+                                value: "SByte");
+        s_BuiltInTypes.GetOrAdd(key: "ulong",
+                                value: "UInt64");
+        s_BuiltInTypes.GetOrAdd(key: "short",
+                                value: "Int16");
+        s_BuiltInTypes.GetOrAdd(key: "bool",
+                                value: "Boolean");
+        s_BuiltInTypes.GetOrAdd(key: "long",
+                                value: "Int64");
+        s_BuiltInTypes.GetOrAdd(key: "uint",
+                                value: "UInt32");
+        s_BuiltInTypes.GetOrAdd(key: "byte",
+                                value: "Byte");
+        s_BuiltInTypes.GetOrAdd(key: "char",
+                                value: "Char");
+        s_BuiltInTypes.GetOrAdd(key: "int",
+                                value: "Int32");
     }
 
     static public String ToFileString(this ITypeSymbol type)
     {
-        String result = String.Empty;
-
-        if (type is IArrayTypeSymbol array)
+        if (s_FileStringCache.TryGetValue(key: type,
+                                          value: out String result))
         {
-            result = $"Array[{array.ElementType.ToFileString()}+{array.Rank}]";
+            return result;
         }
-        else if (type is INamedTypeSymbol namedType)
+        else
         {
-            if (namedType.IsGenericType)
+            result = String.Empty;
+
+            if (type is IArrayTypeSymbol array)
             {
-                result = namedType.ToDisplayString();
-                result = result.Substring(0, result.IndexOf('<'));
-                result += $"`{namedType.Arity}[";
-                Boolean first = true;
-                foreach (ITypeSymbol typeArgument in namedType.TypeArguments)
+                result = $"Array[{array.ElementType.ToFileString()}+{array.Rank}]";
+            }
+            else if (type is INamedTypeSymbol namedType)
+            {
+                if (namedType.IsGenericType)
                 {
-                    if (first)
+                    result = namedType.ToDisplayString();
+                    result = result.Substring(0, result.IndexOf('<'));
+                    result += $"`{namedType.Arity}";
+                    if (namedType.TypeArguments[0].TypeKind is not TypeKind.TypeParameter)
                     {
-                        first = false;
-                    }
-                    else
-                    {
-                        result += "+";
-                    }
+                        result += "[";
+                        Boolean first = true;
+                        foreach (ITypeSymbol typeArgument in namedType.TypeArguments)
+                        {
+                            if (first)
+                            {
+                                first = false;
+                            }
+                            else
+                            {
+                                result += "+";
+                            }
 
-                    result += typeArgument.ToFileString();
+                            result += typeArgument.ToFileString();
+                        }
+
+                        result += "]";
+                    }
                 }
-
-                result += "]";
-            }
-            else
-            {
-                result = namedType.ToDisplayString();
-            }
-        }
-
-        foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
-        {
-            result = result.Replace(kv.Key, kv.Value);
-        }
-
-        return result;
-    }
-
-    static public String ToNameString(this ITypeSymbol type)
-    {
-        String result = String.Empty;
-
-        if (type is IArrayTypeSymbol array)
-        {
-            if (array.ElementType is IArrayTypeSymbol)
-            {
-                result += $"[{new String(Enumerable.Repeat(',', array.Rank - 1).ToArray())}]";
-                ITypeSymbol element = array.ElementType;
-                while (element is IArrayTypeSymbol elementArray)
+                else
                 {
-                    result += $"[{new String(Enumerable.Repeat(',', elementArray.Rank - 1).ToArray())}]";
-                    element = elementArray.ElementType;
+                    result = namedType.ToDisplayString();
                 }
-
-                result = $"{element.ToNameString()}{result}";
             }
-            else
+
+            foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
             {
-                result = $"{array.ElementType.ToNameString()}[{new String(Enumerable.Repeat(',', array.Rank - 1).ToArray())}]";
+                result = result.Replace(kv.Key, kv.Value);
             }
-        }
-        else if (type is INamedTypeSymbol namedType)
-        {
-            result = namedType.ToDisplayString()
-                              .Replace("?", "")
-                              .Replace("<", "_")
-                              .Replace(">", "_");
-        }
 
-        foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
-        {
-            result = result.Replace(kv.Key, kv.Value);
-        }
+            s_FileStringCache.GetOrAdd(key: type,
+                                       value: result);
 
-        return result.Replace(".", "");
+            return result;
+        }
     }
 
     static public String CreateArray(this IArrayTypeSymbol array,
@@ -106,12 +107,10 @@ static public class Extensions
         StringBuilder builder = new();
         if (array.ElementType is IArrayTypeSymbol elementArray)
         {
-            Int32 bracketCount = 1;
             ITypeSymbol rootElement = elementArray.ElementType;
             while (rootElement is IArrayTypeSymbol rootElementArray)
             {
                 rootElement = rootElementArray.ElementType;
-                bracketCount++;
             }
 
             builder.Append($"new {rootElement.ToFrameworkString()}[");
@@ -128,10 +127,13 @@ static public class Extensions
             }
 
             builder.Append(']');
-            while (bracketCount > 0)
+            rootElement = array.ElementType;
+            while (rootElement is IArrayTypeSymbol rootElementArray)
             {
-                builder.Append("[]");
-                bracketCount--;
+                builder.Append("[");
+                builder.Append(new String(Enumerable.Repeat(',', rootElementArray.Rank - 1).ToArray()));
+                builder.Append("]");
+                rootElement = rootElementArray.ElementType;
             }
         }
         else
@@ -155,117 +157,51 @@ static public class Extensions
         return builder.ToString();
     }
 
-    static public String EnumerableCount(this ITypeSymbol type)
+    static public Boolean HasDefaultConstructor(this INamedTypeSymbol type)
     {
-        if (type is IArrayTypeSymbol ||
-            type.ToFrameworkString().StartsWith("System.Collections.Immutable.ImmutableArray<"))
+        if (s_HasDefaultConstructorCache.TryGetValue(key: type,
+                                                     value: out Boolean result))
         {
-            return ".Length";
+            return result;
         }
         else
         {
-            return ".Count";
+            result = type.InstanceConstructors.Any(method => method.DeclaredAccessibility is Accessibility.Public &&
+                                                             method.Parameters.Length is 0);
+            s_HasDefaultConstructorCache.GetOrAdd(key: type,
+                                                  value: result);
+            return result;
         }
-    }
-
-    static public Boolean ImplementsInterface(this ITypeSymbol type,
-                                              ITypeSymbol @interface)
-    {
-        return type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(@interface, i));
-    }
-
-    static public Boolean ExtendsClass(this ITypeSymbol type,
-                                       ITypeSymbol @base)
-    {
-        ITypeSymbol baseType = type.BaseType;
-        while (baseType is not null)
-        {
-            if (SymbolEqualityComparer.Default.Equals(baseType, @base))
-            {
-                return true;
-            }
-
-            baseType = baseType.BaseType;
-        }
-
-        return false;
-    }
-
-    static public ImmutableArray<INamedTypeSymbol> GetDerivedTypes(this ITypeSymbol type)
-    {
-        IAssemblySymbol assembly = type.ContainingAssembly;
-        List<INamedTypeSymbol> builder = new();
-
-        void ScanNamespace(INamespaceSymbol @namespace)
-        {
-            foreach (INamespaceOrTypeSymbol member in @namespace.GetMembers())
-            {
-                if (member is INamespaceSymbol namespaceSymbol)
-                {
-                    ScanNamespace(namespaceSymbol);
-                }
-                else if (member is INamedTypeSymbol typeSymbol)
-                {
-                    if (type.BaseType is null &&
-                        typeSymbol.ImplementsInterface(type))
-                    {
-                        builder.Add(typeSymbol);
-                    }
-                    else if (typeSymbol.ExtendsClass(type))
-                    {
-                        builder.Add(typeSymbol);
-                    }
-                }
-            }
-        }
-
-        Int32 SortBySealed(ITypeSymbol left,
-                           ITypeSymbol right)
-        {
-            if (left.IsValueType &&
-                !right.IsValueType)
-            {
-                return -1;
-            }
-            else if (!left.IsValueType &&
-                     right.IsValueType)
-            {
-                return 1;
-            }
-            else if (left.IsSealed &&
-                     !right.IsSealed)
-            {
-                return -1;
-            }
-            else if (!left.IsSealed &&
-                     right.IsSealed)
-            {
-                return 1;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        ScanNamespace(assembly.GlobalNamespace);
-        builder.Sort(SortBySealed);
-        return builder.ToImmutableArray();
     }
 
     static public Boolean CanBeSerialized(this ITypeSymbol type)
     {
-        if (type.IsIntrinsicallySerializable(out _))
+        if (s_CanBeSerializedCache.TryGetValue(key: type,
+                                               value: out Boolean result))
         {
+            return result;
+        }
+        else if (type.SpecialType is SpecialType.System_String ||
+                 type.IsUnmanagedSerializable())
+        {
+            s_CanBeSerializedCache.GetOrAdd(key: type,
+                                            value: true);
             return true;
         }
-        else if (type.IsUnmanagedSerializable())
+        else
         {
-            return true;
+            s_CanBeSerializedCache.GetOrAdd(key: type,
+                                            value: false);
+            return false;
         }
-        else if (type.IsEnumerableSerializable())
+    }
+
+    static public Boolean IsInterface(this ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol named)
         {
-            return true;
+            return named.IsAbstract &&
+                   named.BaseType is null;
         }
         else
         {
@@ -273,56 +209,330 @@ static public class Extensions
         }
     }
 
-    static public Boolean IsIntrinsicallySerializable(this ITypeSymbol type,
-                                                      out Int32 fixedSize)
+    static public Boolean IsSerializationHandler(this INamedTypeSymbol type)
     {
-        String typename = type.ToFrameworkString();
-        if (Array.IndexOf(array: __Shared.IntrinsicTypes,
-                          value: typename) > -1)
+        if (s_IsSerializationHandlerCache.TryGetValue(key: type,
+                                                      value: out Boolean result))
         {
-            fixedSize = __Shared.IntrinsicTypeFixedSize[typename];
+            return result;
+        }
+        else if (type.BaseType is null &&
+                 (type.ToFrameworkString().StartsWith($"{GlobalNames.NAMESPACE}.ISimpleSerializationHandler<") ||
+                 type.ToFrameworkString().StartsWith($"{GlobalNames.NAMESPACE}.IComplexSerializationHandler<")))
+        {
+            s_IsSerializationHandlerCache.GetOrAdd(key: type,
+                                                   value: true);
             return true;
         }
         else
         {
-            fixedSize = -1;
+            s_IsSerializationHandlerCache.GetOrAdd(key: type,
+                                                   value: false);
             return false;
         }
     }
 
     static public Boolean IsUnmanagedSerializable(this ITypeSymbol type)
     {
-        if (type.IsUnmanagedType &&
-            type.TypeKind is not TypeKind.Pointer &&
-            type.Name is not "IntPtr"
-                      and not "UIntPtr")
+        if (s_IsUnmanagedCache.TryGetValue(key: type,
+                                           value: out Boolean result))
+        {
+            return result;
+        }
+        else if (type.IsUnmanagedType &&
+                 type.TypeKind is not TypeKind.Pointer &&
+                 type.Name is not "IntPtr"
+                           and not "UIntPtr")
+        {
+            s_IsUnmanagedCache.GetOrAdd(key: type,
+                                        value: true);
+            return true;
+        }
+        else
+        {
+            s_IsUnmanagedCache.GetOrAdd(key: type,
+                                        value: false);
+            return false;
+        }
+    }
+
+    static public Boolean IsCollection(this INamedTypeSymbol type,
+                                       out ITypeSymbol elementType)
+    {
+        if (s_IsCollectionCache.TryGetValue(key: type,
+                                            value: out elementType))
+        {
+            return elementType is not null;
+        }
+        else
+        {
+            INamedTypeSymbol collection = type.AllInterfaces.FirstOrDefault(@interface => @interface.ToFrameworkString()
+                                                                                                    .StartsWith("System.Collections.Generic.ICollection<"));
+            if (collection is null)
+            {
+                elementType = null;
+                s_IsCollectionCache.GetOrAdd(key: type,
+                                              value: null);
+                return false;
+            }
+            else
+            {
+                elementType = collection.TypeArguments[0];
+                s_IsCollectionCache.GetOrAdd(key: type,
+                                             value: collection.TypeArguments[0]);
+                return true;
+            }
+        }
+    }
+    
+    static internal ImmutableArray<ISymbol> GetMembersToSerialize(this INamedTypeSymbol type)
+    {
+        Boolean RecordParameterNotIgnored(IFieldSymbol field)
+        {
+            return ParameterNotIgnored(symbol: type,
+                                       field: field);
+        }
+
+        if (s_MemberCache.TryGetValue(key: type,
+                                      value: out ImmutableArray<ISymbol> result))
+        {
+            return result;
+        }
+
+        IEnumerable<IFieldSymbol> floatingFields = type.GetMembers()
+                                                       .OfType<IFieldSymbol>()
+                                                       .Where(field => !field.IsStatic)
+                                                       .Where(field => !field.IsReadOnly)
+                                                       .Where(field => field.DeclaredAccessibility is Accessibility.Public)
+                                                       .Where(field => field.Type.SpecialType is not SpecialType.System_ArgIterator
+                                                                                              and not SpecialType.System_AsyncCallback
+                                                                                              and not SpecialType.System_Collections_Generic_ICollection_T
+                                                                                              and not SpecialType.System_Collections_Generic_IEnumerable_T
+                                                                                              and not SpecialType.System_Collections_Generic_IEnumerator_T
+                                                                                              and not SpecialType.System_Collections_Generic_IList_T
+                                                                                              and not SpecialType.System_Collections_Generic_IReadOnlyCollection_T
+                                                                                              and not SpecialType.System_Collections_Generic_IReadOnlyList_T
+                                                                                              and not SpecialType.System_Collections_IEnumerable
+                                                                                              and not SpecialType.System_Collections_IEnumerator
+                                                                                              and not SpecialType.System_Delegate
+                                                                                              and not SpecialType.System_IAsyncResult
+                                                                                              and not SpecialType.System_IDisposable
+                                                                                              and not SpecialType.System_IntPtr
+                                                                                              and not SpecialType.System_MulticastDelegate
+                                                                                              and not SpecialType.System_Object
+                                                                                              and not SpecialType.System_Runtime_CompilerServices_IsVolatile
+                                                                                              and not SpecialType.System_Runtime_CompilerServices_PreserveBaseOverridesAttribute
+                                                                                              and not SpecialType.System_Runtime_CompilerServices_RuntimeFeature
+                                                                                              and not SpecialType.System_RuntimeArgumentHandle
+                                                                                              and not SpecialType.System_RuntimeFieldHandle
+                                                                                              and not SpecialType.System_RuntimeMethodHandle
+                                                                                              and not SpecialType.System_RuntimeTypeHandle
+                                                                                              and not SpecialType.System_TypedReference
+                                                                                              and not SpecialType.System_UIntPtr
+                                                                                              and not SpecialType.System_ValueType
+                                                                                              and not SpecialType.System_Void)
+                                                       .Where(PropertyOrFieldNotIgnored)
+                                                       .Where(RecordParameterNotIgnored);
+
+        IEnumerable<IPropertySymbol> floatingProperties = type.GetMembers()
+                                                              .OfType<IPropertySymbol>()
+                                                              .Where(property => !property.IsStatic)
+                                                              .Where(property => property.DeclaredAccessibility is Accessibility.Public)
+                                                              .Where(property => property.Parameters.Length is 0)
+                                                              .Where(property => property.Type.SpecialType is not SpecialType.System_ArgIterator
+                                                                                                           and not SpecialType.System_AsyncCallback
+                                                                                                           and not SpecialType.System_Collections_Generic_ICollection_T
+                                                                                                           and not SpecialType.System_Collections_Generic_IEnumerable_T
+                                                                                                           and not SpecialType.System_Collections_Generic_IEnumerator_T
+                                                                                                           and not SpecialType.System_Collections_Generic_IList_T
+                                                                                                           and not SpecialType.System_Collections_Generic_IReadOnlyCollection_T
+                                                                                                           and not SpecialType.System_Collections_Generic_IReadOnlyList_T
+                                                                                                           and not SpecialType.System_Collections_IEnumerable
+                                                                                                           and not SpecialType.System_Collections_IEnumerator
+                                                                                                           and not SpecialType.System_Delegate
+                                                                                                           and not SpecialType.System_IAsyncResult
+                                                                                                           and not SpecialType.System_IDisposable
+                                                                                                           and not SpecialType.System_IntPtr
+                                                                                                           and not SpecialType.System_MulticastDelegate
+                                                                                                           and not SpecialType.System_Object
+                                                                                                           and not SpecialType.System_Runtime_CompilerServices_IsVolatile
+                                                                                                           and not SpecialType.System_Runtime_CompilerServices_PreserveBaseOverridesAttribute
+                                                                                                           and not SpecialType.System_Runtime_CompilerServices_RuntimeFeature
+                                                                                                           and not SpecialType.System_RuntimeArgumentHandle
+                                                                                                           and not SpecialType.System_RuntimeFieldHandle
+                                                                                                           and not SpecialType.System_RuntimeMethodHandle
+                                                                                                           and not SpecialType.System_RuntimeTypeHandle
+                                                                                                           and not SpecialType.System_TypedReference
+                                                                                                           and not SpecialType.System_UIntPtr
+                                                                                                           and not SpecialType.System_ValueType
+                                                                                                           and not SpecialType.System_Void)
+                                                               .Where(PropertyNotIgnored);
+
+        INamedTypeSymbol baseType = type.BaseType;
+        while (baseType is not null)
+        {
+            IEnumerable<IFieldSymbol> baseFields = baseType.GetMembers()
+                                                           .OfType<IFieldSymbol>()
+                                                           .Where(field => !field.IsStatic)
+                                                           .Where(field => !field.IsReadOnly)
+                                                           .Where(field => field.DeclaredAccessibility is Accessibility.Public)
+                                                           .Where(field => field.Type.SpecialType is not SpecialType.System_ArgIterator
+                                                                                                  and not SpecialType.System_AsyncCallback
+                                                                                                  and not SpecialType.System_Collections_Generic_ICollection_T
+                                                                                                  and not SpecialType.System_Collections_Generic_IEnumerable_T
+                                                                                                  and not SpecialType.System_Collections_Generic_IEnumerator_T
+                                                                                                  and not SpecialType.System_Collections_Generic_IList_T
+                                                                                                  and not SpecialType.System_Collections_Generic_IReadOnlyCollection_T
+                                                                                                  and not SpecialType.System_Collections_Generic_IReadOnlyList_T
+                                                                                                  and not SpecialType.System_Collections_IEnumerable
+                                                                                                  and not SpecialType.System_Collections_IEnumerator
+                                                                                                  and not SpecialType.System_Delegate
+                                                                                                  and not SpecialType.System_IAsyncResult
+                                                                                                  and not SpecialType.System_IDisposable
+                                                                                                  and not SpecialType.System_IntPtr
+                                                                                                  and not SpecialType.System_MulticastDelegate
+                                                                                                  and not SpecialType.System_Object
+                                                                                                  and not SpecialType.System_Runtime_CompilerServices_IsVolatile
+                                                                                                  and not SpecialType.System_Runtime_CompilerServices_PreserveBaseOverridesAttribute
+                                                                                                  and not SpecialType.System_Runtime_CompilerServices_RuntimeFeature
+                                                                                                  and not SpecialType.System_RuntimeArgumentHandle
+                                                                                                  and not SpecialType.System_RuntimeFieldHandle
+                                                                                                  and not SpecialType.System_RuntimeMethodHandle
+                                                                                                  and not SpecialType.System_RuntimeTypeHandle
+                                                                                                  and not SpecialType.System_TypedReference
+                                                                                                  and not SpecialType.System_UIntPtr
+                                                                                                  and not SpecialType.System_ValueType
+                                                                                                  and not SpecialType.System_Void)
+                                                           .Where(PropertyOrFieldNotIgnored)
+                                                           .Where(RecordParameterNotIgnored);
+            if (baseFields.Any())
+            {
+                floatingFields = floatingFields.Concat(baseFields);
+            }
+
+            IEnumerable<IPropertySymbol> baseProperties = baseType.GetMembers()
+                                                                  .OfType<IPropertySymbol>()
+                                                                  .Where(property => !property.IsStatic)
+                                                                  .Where(property => property.DeclaredAccessibility is Accessibility.Public)
+                                                                  .Where(property => property.Parameters.Length is 0)
+                                                                  .Where(property => property.Type.SpecialType is not SpecialType.System_ArgIterator
+                                                                                                               and not SpecialType.System_AsyncCallback
+                                                                                                               and not SpecialType.System_Collections_Generic_ICollection_T
+                                                                                                               and not SpecialType.System_Collections_Generic_IEnumerable_T
+                                                                                                               and not SpecialType.System_Collections_Generic_IEnumerator_T
+                                                                                                               and not SpecialType.System_Collections_Generic_IList_T
+                                                                                                               and not SpecialType.System_Collections_Generic_IReadOnlyCollection_T
+                                                                                                               and not SpecialType.System_Collections_Generic_IReadOnlyList_T
+                                                                                                               and not SpecialType.System_Collections_IEnumerable
+                                                                                                               and not SpecialType.System_Collections_IEnumerator
+                                                                                                               and not SpecialType.System_Delegate
+                                                                                                               and not SpecialType.System_IAsyncResult
+                                                                                                               and not SpecialType.System_IDisposable
+                                                                                                               and not SpecialType.System_IntPtr
+                                                                                                               and not SpecialType.System_MulticastDelegate
+                                                                                                               and not SpecialType.System_Object
+                                                                                                               and not SpecialType.System_Runtime_CompilerServices_IsVolatile
+                                                                                                               and not SpecialType.System_Runtime_CompilerServices_PreserveBaseOverridesAttribute
+                                                                                                               and not SpecialType.System_Runtime_CompilerServices_RuntimeFeature
+                                                                                                               and not SpecialType.System_RuntimeArgumentHandle
+                                                                                                               and not SpecialType.System_RuntimeFieldHandle
+                                                                                                               and not SpecialType.System_RuntimeMethodHandle
+                                                                                                               and not SpecialType.System_RuntimeTypeHandle
+                                                                                                               and not SpecialType.System_TypedReference
+                                                                                                               and not SpecialType.System_UIntPtr
+                                                                                                               and not SpecialType.System_ValueType
+                                                                                                               and not SpecialType.System_Void)
+                                                                  .Where(PropertyNotIgnored);
+            if (baseProperties.Any())
+            {
+                floatingProperties = floatingProperties.Concat(baseProperties);
+            }
+
+            baseType = baseType.BaseType;
+        }
+
+        result = floatingFields.Where(field => field.AssociatedSymbol is null)
+                               .Cast<ISymbol>()
+                               .Concat(floatingProperties.Where(property => property.GetMethod is not null &&
+                                                                            property.SetMethod is not null))
+                               .ToImmutableArray();
+        s_MemberCache.GetOrAdd(key: type,
+                               value: result);
+        return result;
+    }
+
+    static public void ClearCaches()
+    {
+        s_CanBeSerializedCache.Clear();
+        s_FileStringCache.Clear();
+        s_HasDefaultConstructorCache.Clear();
+        s_IsCollectionCache.Clear();
+        s_IsSerializationHandlerCache.Clear();
+        s_IsUnmanagedCache.Clear();
+        s_MemberCache.Clear();
+    }
+
+    static private Boolean ParameterNotIgnored(INamedTypeSymbol symbol,
+                                               IFieldSymbol field)
+    {
+        if (!symbol.IsRecord ||
+            field.AssociatedSymbol is null)
+        {
+            return true;
+        }
+
+        IMethodSymbol constructor = symbol.InstanceConstructors[0];
+        IParameterSymbol parameter = constructor.Parameters.FirstOrDefault(parameter => parameter.Name == field.AssociatedSymbol.Name);
+        if (parameter is null)
+        {
+            return true;
+        }
+
+        return !parameter.GetAttributes()
+                         .Any(data => data.AttributeClass is not null &&
+                                      data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
+    }
+
+    static private Boolean PropertyNotIgnored(IPropertySymbol property)
+    {
+        if (property.IsStatic)
         {
             return true;
         }
         else
         {
-            return false;
+            return !property.GetAttributes()
+                            .Any(data => data.AttributeClass is not null &&
+                                         data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
         }
     }
 
-    static private readonly Dictionary<String, String> s_BuiltInTypes = new()
+    static private Boolean PropertyOrFieldNotIgnored(IFieldSymbol field)
     {
-        { "decimal", "Decimal" },
-        { "double", "Double" },
-        { "ushort", "UInt16" },
-        { "object", "Object" },
-        { "string", "String" },
-        { "float", "Single" },
-        { "sbyte", "SByte" },
-        { "nuint", "UIntPtr" },
-        { "ulong", "UInt64" },
-        { "short", "Int16" },
-        { "bool", "Boolean" },
-        { "long", "Int64" },
-        { "nint", "IntPtr" },
-        { "uint", "UInt32" },
-        { "byte", "Byte" },
-        { "char", "Char" },
-        { "int", "Int32" },
-    };
+        if (field.IsStatic)
+        {
+            return true;
+        }
+        else if (field.AssociatedSymbol is not null)
+        {
+            return !field.AssociatedSymbol.GetAttributes()
+                                          .Any(data => data.AttributeClass is not null &&
+                                                       data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
+        }
+        else
+        {
+            return !field.GetAttributes()
+                         .Any(data => data.AttributeClass is not null &&
+                                      data.AttributeClass.ToFrameworkString() is "Narumikazuchi.Generators.ByteSerialization.IngoreForSerializationAttribute");
+        }
+    }
+
+    static private readonly ConcurrentDictionary<ITypeSymbol, String> s_FileStringCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_CanBeSerializedCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_IsUnmanagedCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_HasDefaultConstructorCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_IsSerializationHandlerCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<INamedTypeSymbol, ITypeSymbol> s_IsCollectionCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<INamedTypeSymbol, ImmutableArray<ISymbol>> s_MemberCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<String, String> s_BuiltInTypes;
 }

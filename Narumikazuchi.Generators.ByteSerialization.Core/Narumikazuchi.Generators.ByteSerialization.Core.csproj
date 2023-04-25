@@ -9,9 +9,9 @@
 
 	<PropertyGroup>
 		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-		<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
 		<IsRoslynComponent>true</IsRoslynComponent>
 		<RootNamespace>Narumikazuchi.Generators.ByteSerialization</RootNamespace>
+		<!--<DefineConstants>OUTPUT</DefineConstants>-->
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -45,13 +45,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Using Include="Microsoft.CodeAnalysis" />
-		<Using Include="Microsoft.CodeAnalysis.CSharp" />
-		<Using Include="Microsoft.CodeAnalysis.CSharp.Syntax" />
-		<Using Include="Microsoft.CodeAnalysis.Diagnostics" />
-		<Using Include="Microsoft.CodeAnalysis.Text" />
 		<Using Include="System" />
 		<Using Include="System.Collections" />
+		<Using Include="System.Collections.Concurrent" />
 		<Using Include="System.Collections.Generic" />
 		<Using Include="System.Collections.Immutable" />
 		<Using Include="System.Diagnostics" />
