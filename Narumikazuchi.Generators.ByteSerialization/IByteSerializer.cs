@@ -9,4 +9,9 @@ public partial interface IByteSerializer
     /// -- Used for internal code generation. --
     /// </summary>
     public UInt32 Variant { get; }
+
+    /// <summary>
+    /// -- Used for internal code generation. --
+    /// </summary>
+    public MirroredMap<TypeIdentifier, Type> Types { get; }
 }
