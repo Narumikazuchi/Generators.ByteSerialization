@@ -172,13 +172,32 @@ static public class SizeCodeWriter
                     builder.AppendLine($"{indent}size += sizeof(Int32) + ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){target}).Count * sizeof({elementType.ToFrameworkString()});");
                 }
             }
-            else
+            else if (elementType is IArrayTypeSymbol elementArray)
             {
                 String targetNormalized = target.Replace('.', '_');
                 builder.AppendLine($"{indent}size += sizeof(Int32);");
                 builder.AppendLine($"{indent}foreach (var {targetNormalized}_element in {target})");
                 builder.AppendLine($"{indent}{{");
-                builder.AppendLine($"{indent}   size += {GlobalNames.BYTESERIALIZER}.GetExpectedSerializedSize(element);");
+
+                WriteMethodBody(array: elementArray,
+                                builder: builder,
+                                indent: indent + "    ",
+                                target: $"{targetNormalized}_element");
+
+                builder.AppendLine($"{indent}}}");
+            }
+            else if (elementType is INamedTypeSymbol elementNamedType)
+            {
+                String targetNormalized = target.Replace('.', '_');
+                builder.AppendLine($"{indent}size += sizeof(Int32);");
+                builder.AppendLine($"{indent}foreach (var {targetNormalized}_element in {target})");
+                builder.AppendLine($"{indent}{{");
+
+                WriteMethodBody(type: elementNamedType,
+                                builder: builder,
+                                indent: indent + "    ",
+                                target: $"{targetNormalized}_element");
+
                 builder.AppendLine($"{indent}}}");
             }
         }

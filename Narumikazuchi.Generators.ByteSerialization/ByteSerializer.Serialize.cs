@@ -16,66 +16,30 @@ public partial class ByteSerializer
     /// <exception cref="TypeNotSerializable"/>
     static public unsafe Byte[] Serialize<TSerializable>(TSerializable? graph)
     {
-        Type? type = graph?.GetType();
-        if (type is null)
+        if (typeof(TSerializable).IsUnmanagedStruct())
         {
-            Byte[] buffer = new Byte[21];
-            Unsafe.As<Byte, Int32>(ref buffer[0]) = 0;
-            Unsafe.As<Byte, TypeIdentifier>(ref buffer[4]) = Handlers.Types.GetLeftPartner(typeof(TSerializable));
-            buffer[36] = 0x0;
+            Byte[] buffer = new Byte[Unsafe.SizeOf<TSerializable>()];
+            Unsafe.As<Byte, TSerializable>(ref buffer[0]) = graph!;
             return buffer;
         }
-        else if (type.IsValueType ||
-                 type.IsSealed)
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            if (type.IsUnmanagedStruct())
+            Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph!));
+            fixed (Byte* pointer = buffer)
             {
-                Byte[] buffer = new Byte[Unsafe.SizeOf<TSerializable>()];
-                Unsafe.As<Byte, TSerializable>(ref buffer[0]) = graph!;
-                return buffer;
-            }
-            else if (Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph!) + 37);
-                fixed (Byte* pointer = buffer)
-                {
-                    UInt32 written = Serialize(buffer: pointer,
-                                               graph: graph);
-                    Byte[] result = new Byte[written];
-                    Array.Copy(sourceArray: buffer,
-                               destinationArray: result,
-                               length: written);
-                    ArrayPool<Byte>.Shared.Return(buffer);
-                    return result;
-                }
-            }
-            else
-            {
-                throw new TypeNotSerializable(type);
+                UInt32 written = Serialize(buffer: pointer,
+                                           graph: graph);
+                Byte[] result = new Byte[written];
+                Array.Copy(sourceArray: buffer,
+                           destinationArray: result,
+                           length: written);
+                ArrayPool<Byte>.Shared.Return(buffer);
+                return result;
             }
         }
         else
         {
-            if (type == typeof(TSerializable) &&
-                Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph!) + 37);
-                fixed (Byte* pointer = buffer)
-                {
-                    UInt32 written = Serialize(buffer: pointer,
-                                               graph: graph);
-                    Byte[] result = new Byte[written];
-                    Array.Copy(sourceArray: buffer,
-                               destinationArray: result,
-                               length: written);
-                    ArrayPool<Byte>.Shared.Return(buffer);
-                    return result;
-                }
-            }
-            else
-            {
-                return SerializeAs(graph!);
-            }
+            throw new TypeNotSerializable(graph?.GetType() ?? typeof(TSerializable));
         }
     }
     /// <summary>
@@ -90,20 +54,10 @@ public partial class ByteSerializer
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
     static public unsafe UInt32 Serialize<TSerializable>(Span<Byte> buffer,
-                                                        TSerializable? graph)
+                                                         TSerializable? graph)
     {
-        if (graph is null)
-        {
-            Unsafe.As<Byte, Int32>(ref buffer[0]) = 0;
-            Unsafe.As<Byte, TypeIdentifier>(ref buffer[4]) = Handlers.Types.GetLeftPartner(typeof(TSerializable));
-            buffer[36] = 0x0;
-            return 37;
-        }
-        else
-        {
-            return Serialize(buffer: (Byte*)Unsafe.AsPointer(ref buffer[0]),
-                             graph: graph);
-        }
+        return Serialize(buffer: (Byte*)Unsafe.AsPointer(ref buffer[0]),
+                         graph: graph);
     }
     /// <summary>
     /// Serializes the specified runtime object into it's raw <see cref="Byte"/>-representation.
@@ -119,55 +73,20 @@ public partial class ByteSerializer
     static public unsafe UInt32 Serialize<TSerializable>(Byte* buffer,
                                                          TSerializable? graph)
     {
-        Type? type = graph?.GetType();
-        if (type is null)
+        if (typeof(TSerializable).IsUnmanagedStruct())
         {
-            *(Int32*)buffer = 0;
-            *(TypeIdentifier*)(buffer + 4) = Handlers.Types.GetLeftPartner(typeof(TSerializable));
-            *(buffer + 36) = 0x0;
-            return 37;
+            Unsafe.As<Byte, TSerializable>(ref Unsafe.AsRef<Byte>(buffer)) = graph!;
+            return (UInt32)Unsafe.SizeOf<TSerializable>();
         }
-        else if (type.IsValueType ||
-                 type.IsSealed)
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            if (type.IsUnmanagedStruct())
-            {
-                Unsafe.As<Byte, TSerializable>(ref Unsafe.AsRef<Byte>(buffer)) = graph!;
-                return (UInt32)Unsafe.SizeOf<TSerializable>();
-            }
-            else if (Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                *(TypeIdentifier*)(buffer + 4) = Handlers.Types.GetLeftPartner(typeof(TSerializable));
-                *(buffer + 36) = 0x1;
-                Int32 expectedSize = GetExpectedSerializedSize(graph);
-                UInt32 written = handler.Serialize(buffer: buffer + 37,
-                                                   graph: graph!);
-                *(UInt32*)buffer = written;
-                return written + 37;
-            }
-            else
-            {
-                throw new TypeNotSerializable(type);
-            }
+            UInt32 written = handler.Serialize(buffer: buffer,
+                                               graph: graph!);
+            return written;
         }
         else
         {
-            if (type == typeof(TSerializable) &&
-                Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                *(TypeIdentifier*)(buffer + 4) = Handlers.Types.GetLeftPartner(typeof(TSerializable));
-                *(buffer + 36) = 0x1;
-                Int32 expectedSize = GetExpectedSerializedSize(graph);
-                UInt32 written = handler.Serialize(buffer: buffer + 37,
-                                                   graph: graph!);
-                *(UInt32*)buffer = written;
-                return written + 37;
-            }
-            else
-            {
-                return SerializeAs(buffer: (IntPtr)buffer,
-                                   graph: graph!);
-            }
+            throw new TypeNotSerializable(graph?.GetType() ?? typeof(TSerializable));
         }
     }
     /// <summary>
@@ -249,87 +168,4 @@ public partial class ByteSerializer
                                          cancellationToken: cancellationToken);
         return buffer.Length;
     }
-
-    static private Byte[] SerializeAs(Object graph)
-    {
-        Type type = graph.GetType();
-        if (s_PolymorphicSimpleSerializers.TryGetValue(key: type,
-                                                       value: out DynamicMethod? method))
-        {
-            return (Byte[])method.Invoke(obj: null,
-                                         parameters: new Object[] { graph })!;
-        }
-        else
-        {
-            method = new DynamicMethod(name: "<Polymorphic_SimpleSerialize_Overload>",
-                                       returnType: typeof(Byte).MakeArrayType(),
-                                       parameterTypes: new Type[] { type },
-                                       owner: typeof(ByteSerializer));
-            ILGenerator generator = method.GetILGenerator();
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Call, s_PolymorphicSimpleSerializerMethod.Value.MakeGenericMethod(type));
-            generator.Emit(OpCodes.Ret);
-
-            s_PolymorphicSimpleSerializers.Add(key: type,
-                                               value: method);
-
-            return (Byte[])method.Invoke(obj: null,
-                                         parameters: new Object[] { graph })!;
-        }
-    }
-
-    static private UInt32 SerializeAs(IntPtr buffer,
-                                      Object graph)
-    {
-        Type type = graph.GetType();
-        if (s_PolymorphicSerializers.TryGetValue(key: type,
-                                                 value: out DynamicMethod? method))
-        {
-            return (UInt32)method.Invoke(obj: null,
-                                        parameters: new Object[] { buffer, graph })!;
-        }
-        else
-        {
-            method = new DynamicMethod(name: "<Polymorphic_Serialize_Overload>",
-                                       returnType: typeof(UInt32),
-                                       parameterTypes: new Type[] { typeof(IntPtr), type },
-                                       owner: typeof(ByteSerializer));
-            ILGenerator generator = method.GetILGenerator();
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Call, s_PolymorphicSerializerMethod.Value.MakeGenericMethod(type));
-            generator.Emit(OpCodes.Ret);
-
-            s_PolymorphicSerializers.Add(key: type,
-                                         value: method);
-
-            return (UInt32)method.Invoke(obj: null,
-                                         parameters: new Object[] { buffer, graph })!;
-        }
-    }
-
-    static private MethodInfo GetPolymorphicSerializerMethod()
-    {
-        return typeof(ByteSerializer).GetMethods()
-                                     .Where(method => method.Name is nameof(Serialize))
-                                     .Where(method => method.IsStatic)
-                                     .Where(method => method.IsPublic)
-                                     .First(method => method.GetParameters()[0].ParameterType == typeof(Byte).MakePointerType());
-    }
-
-    static private MethodInfo GetPolymorphicSimpleSerializerMethod()
-    {
-        return typeof(ByteSerializer).GetMethods()
-                                     .Where(method => method.Name is nameof(Serialize))
-                                     .Where(method => method.IsStatic)
-                                     .Where(method => method.IsPublic)
-                                     .First(method => method.GetParameters().Length is 1);
-    }
-
-    static private readonly Dictionary<Type, DynamicMethod> s_PolymorphicSerializers = new();
-    static private readonly Dictionary<Type, DynamicMethod> s_PolymorphicSimpleSerializers = new();
-    static private readonly Lazy<MethodInfo> s_PolymorphicSerializerMethod = new(valueFactory: GetPolymorphicSerializerMethod,
-                                                                                 mode: LazyThreadSafetyMode.ExecutionAndPublication);
-    static private readonly Lazy<MethodInfo> s_PolymorphicSimpleSerializerMethod = new(valueFactory: GetPolymorphicSimpleSerializerMethod,
-                                                                                       mode: LazyThreadSafetyMode.ExecutionAndPublication);
 }

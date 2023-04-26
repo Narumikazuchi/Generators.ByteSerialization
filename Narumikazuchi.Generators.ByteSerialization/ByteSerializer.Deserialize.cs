@@ -16,63 +16,21 @@ public partial class ByteSerializer
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
     static public unsafe UInt32 Deserialize<TSerializable>(ReadOnlySpan<Byte> buffer,
-                                                          out TSerializable? result)
+                                                           out TSerializable? result)
     {
-        Type type = typeof(TSerializable);
-        if (type.IsUnmanagedStruct())
+        if (typeof(TSerializable).IsUnmanagedStruct())
         {
             result = Unsafe.As<Byte, TSerializable>(ref MemoryMarshal.GetReference(buffer));
             return (UInt32)Unsafe.SizeOf<TSerializable>();
         }
-        else if (type.IsValueType ||
-                 type.IsSealed)
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            TypeIdentifier identifier = Handlers.Types.GetLeftPartner(type);
-
-            Int32 size = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer));
-            TypeIdentifier serialized = Unsafe.As<Byte, TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[4..]));
-            if (buffer[36] is 0x0)
-            {
-                result = default;
-                return 37;
-            }
-            else if (identifier == serialized &&
-                     Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                return 37 + handler.Deserialize(buffer: (Byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(buffer[37..])),
-                                                result: out result);
-            }
-            else
-            {
-                throw new TypeNotSerializable(type);
-            }
+            return handler.Deserialize(buffer: (Byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(buffer)),
+                                       result: out result);
         }
         else
         {
-            TypeIdentifier identifier = Handlers.Types.GetLeftPartner(type);
-
-            Int32 size = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer));
-            TypeIdentifier serialized = Unsafe.As<Byte, TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[4..]));
-
-            if (buffer[36] is 0x0)
-            {
-                result = default;
-                return 37;
-            }
-            else if (identifier == serialized &&
-                     Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                return 37 + handler.Deserialize(buffer: (Byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(buffer[37..])),
-                                                      result: out result);
-            }
-            else
-            {
-                UInt32 read = DeserializeAs(type: Handlers.Types.GetRightPartner(serialized),
-                                            buffer: PointerFromSpan(buffer),
-                                            result: out Object? boxed);
-                result = (TSerializable?)boxed;
-                return read;
-            }
+            throw new TypeNotSerializable(typeof(TSerializable));
         }
     }
     /// <summary>
@@ -89,60 +47,19 @@ public partial class ByteSerializer
     static public unsafe UInt32 Deserialize<TSerializable>(Byte* buffer,
                                                            out TSerializable? result)
     {
-        Type type = typeof(TSerializable);
-        if (type.IsUnmanagedStruct())
+        if (typeof(TSerializable).IsUnmanagedStruct())
         {
             result = Unsafe.As<Byte, TSerializable>(ref Unsafe.AsRef<Byte>(buffer));
             return (UInt32)Unsafe.SizeOf<TSerializable>();
         }
-        else if (type.IsValueType ||
-                 type.IsSealed)
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            TypeIdentifier identifier = Handlers.Types.GetLeftPartner(type);
-
-            Int32 size = *(Int32*)buffer;
-            TypeIdentifier serialized = *(TypeIdentifier*)(buffer + 4);
-            if (buffer[36] is 0x0)
-            {
-                result = default;
-                return 37;
-            }
-            else if (identifier == serialized &&
-                     Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                return 37 + handler.Deserialize(buffer: buffer + 37,
-                                                      result: out result);
-            }
-            else
-            {
-                throw new TypeNotSerializable(type);
-            }
+            return handler.Deserialize(buffer: buffer,
+                                       result: out result);
         }
         else
         {
-            TypeIdentifier identifier = Handlers.Types.GetLeftPartner(type);
-
-            Int32 size = *(Int32*)buffer;
-            TypeIdentifier serialized = *(TypeIdentifier*)(buffer + 4);
-            if (buffer[36] is 0x0)
-            {
-                result = default;
-                return 37;
-            }
-            else if (identifier == serialized &&
-                     Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                return 37 + handler.Deserialize(buffer: buffer + 37,
-                                                      result: out result);
-            }
-            else
-            {
-                UInt32 read = DeserializeAs(type: Handlers.Types.GetRightPartner(serialized),
-                                            buffer: (IntPtr)buffer,
-                                            result: out Object? boxed);
-                result = (TSerializable?)boxed;
-                return read;
-            }
+            throw new TypeNotSerializable(typeof(TSerializable));
         }
     }
     /// <summary>
@@ -185,7 +102,6 @@ public partial class ByteSerializer
         stream.Read(buffer.AsSpan()[4..]);
         UInt32 read = Deserialize(buffer: buffer,
                                   result: out result);
-        read += sizeof(Int32);
         return read;
     }
 
@@ -231,67 +147,10 @@ public partial class ByteSerializer
                                         cancellationToken: cancellationToken);
         UInt32 read = Deserialize(buffer: buffer,
                                   result: out TSerializable? result);
-        read += sizeof(Int32);
         return new AsynchronousDeserializationResult<TSerializable?>
         {
             BytesRead = read,
             Result = result
         };
     }
-
-    static private unsafe IntPtr PointerFromSpan(ReadOnlySpan<Byte> buffer)
-    {
-        ref Byte first = ref MemoryMarshal.GetReference(buffer);
-        return (IntPtr)Unsafe.AsPointer(ref first);
-    }
-
-    static private UInt32 DeserializeAs(Type type,
-                                        IntPtr buffer,
-                                        out Object? result)
-    {
-        if (s_PolymorphicDeserializers.TryGetValue(key: type,
-                                                   value: out DynamicMethod? method))
-        {
-            Object?[] parameters = new Object?[] { buffer, null };
-            UInt32 read = (UInt32)method.Invoke(obj: null,
-                                                parameters: parameters)!;
-            result = parameters[1];
-            return read;
-        }
-        else
-        {
-            method = new DynamicMethod(name: "<Polymorphic_Deserialize_Overload>",
-                                       returnType: typeof(UInt32),
-                                       parameterTypes: new Type[] { typeof(IntPtr), type.MakeByRefType() },
-                                       owner: typeof(ByteSerializer));
-            ILGenerator generator = method.GetILGenerator();
-            generator.DeclareLocal(typeof(UInt32));
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Call, s_PolymorphicDeserializerMethod.Value.MakeGenericMethod(type));
-            generator.Emit(OpCodes.Ret);
-
-            s_PolymorphicDeserializers.Add(key: type,
-                                           value: method);
-
-            Object?[] parameters = new Object?[] { buffer, null };
-            UInt32 read = (UInt32)method.Invoke(obj: null,
-                                                parameters: parameters)!;
-            result = parameters[1];
-            return read;
-        }
-    }
-
-    static private MethodInfo GetPolymorphicDeserializerMethod()
-    {
-        return typeof(ByteSerializer).GetMethods()
-                                     .Where(method => method.Name is nameof(Deserialize))
-                                     .Where(method => method.IsStatic)
-                                     .Where(method => method.IsPublic)
-                                     .First(method => method.GetParameters()[0].ParameterType == typeof(Byte).MakePointerType());
-    }
-
-    static private readonly Dictionary<Type, DynamicMethod> s_PolymorphicDeserializers = new();
-    static private readonly Lazy<MethodInfo> s_PolymorphicDeserializerMethod = new(valueFactory: GetPolymorphicDeserializerMethod,
-                                                                                   mode: LazyThreadSafetyMode.ExecutionAndPublication);
 }

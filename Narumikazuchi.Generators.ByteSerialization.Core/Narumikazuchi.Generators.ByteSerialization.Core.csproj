@@ -11,7 +11,7 @@
 		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 		<IsRoslynComponent>true</IsRoslynComponent>
 		<RootNamespace>Narumikazuchi.Generators.ByteSerialization</RootNamespace>
-		<DefineConstants>OUTPUT</DefineConstants>
+		<!--<DefineConstants>OUTPUT</DefineConstants>-->
 	</PropertyGroup>
 
 	<ItemGroup>

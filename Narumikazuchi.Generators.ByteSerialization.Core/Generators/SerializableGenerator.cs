@@ -61,8 +61,11 @@ public sealed partial class SerializableGenerator
             builder.AppendLine("#nullable disable");
             builder.AppendLine();
             builder.AppendLine("using System;");
+            builder.AppendLine("using System.Reflection;");
+            builder.AppendLine("using System.Reflection.Emit;");
             builder.AppendLine("using System.Runtime.CompilerServices;");
             builder.AppendLine("using System.Runtime.InteropServices;");
+            builder.AppendLine("using System.Threading;");
             builder.AppendLine();
             builder.AppendLine("namespace Narumikazuchi.Generated.Internals.ByteSerialization;");
             builder.AppendLine();

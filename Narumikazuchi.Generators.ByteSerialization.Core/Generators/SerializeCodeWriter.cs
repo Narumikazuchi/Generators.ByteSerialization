@@ -16,13 +16,13 @@ static public class SerializeCodeWriter
         builder.AppendLine("            if (value is null)");
         builder.AppendLine("            {");
         builder.AppendLine("                *(UInt32*)buffer = 0;");
-        builder.AppendLine($"                *(TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
+        builder.AppendLine($"                *({GlobalNames.NAMESPACE}.TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
         builder.AppendLine("                *(buffer + 36) = 0x0;");
         builder.AppendLine("                return 37;");
         builder.AppendLine("            }");
         builder.AppendLine("            else");
         builder.AppendLine("            {");
-        builder.AppendLine($"                *(TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
+        builder.AppendLine($"                *({GlobalNames.NAMESPACE}.TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
         builder.AppendLine("                *(buffer + 36) = 0x1;");
         builder.AppendLine("                var pointer = buffer + 37;");
 

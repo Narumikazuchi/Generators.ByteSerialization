@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Narumikazuchi.CodeAnalysis;
-using System.IO;
 
 namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
@@ -162,19 +161,28 @@ static public class DeserializeCodeWriter
     static private void WriteMethodBody(INamedTypeSymbol type,
                                         StringBuilder builder,
                                         String indent,
-                                        String target = "result")
+                                        String target = "result",
+                                        Boolean includeVar = true)
     {
         if (type.SpecialType is SpecialType.System_String)
         {
             String targetNormalized = target.Replace('.', '_');
             builder.AppendLine($"{indent}var {targetNormalized}_size = *(UInt32*)pointer;");
+            builder.AppendLine($"{indent}pointer += sizeof(UInt32);");
             if (target is "result")
             {
                 builder.AppendLine($"{indent}result = ({type.ToFrameworkString()})null;");
             }
             else
             {
-                builder.AppendLine($"{indent}var {targetNormalized} = ({type.ToFrameworkString()})null;");
+                if (includeVar)
+                {
+                    builder.AppendLine($"{indent}var {targetNormalized} = ({type.ToFrameworkString()})null;");
+                }
+                else
+                {
+                    builder.AppendLine($"{indent}{targetNormalized} = ({type.ToFrameworkString()})null;");
+                }
             }
 
             builder.AppendLine($"{indent}if (({targetNormalized}_size & 0x80000000) == 0x80000000)");
@@ -189,7 +197,7 @@ static public class DeserializeCodeWriter
                 builder.AppendLine($"{indent}    {targetNormalized} = new String(MemoryMarshal.Cast<Byte, Char>({targetNormalized}_source));");
             }
 
-            builder.AppendLine($"{indent}    pointer += {targetNormalized}_source.Length + sizeof(Int32);");
+            builder.AppendLine($"{indent}    pointer += {targetNormalized}_source.Length;");
             builder.AppendLine($"{indent}}}");
             return;
         }
@@ -219,7 +227,14 @@ static public class DeserializeCodeWriter
             }
             else
             {
-                builder.AppendLine($"{indent}var {targetNormalized} = new {type.ToFrameworkString()}({targetNormalized}_Key, {targetNormalized}_Value);");
+                if (includeVar)
+                {
+                    builder.AppendLine($"{indent}var {targetNormalized} = new {type.ToFrameworkString()}({targetNormalized}_Key, {targetNormalized}_Value);");
+                }
+                else
+                {
+                    builder.AppendLine($"{indent}{targetNormalized} = new {type.ToFrameworkString()}({targetNormalized}_Key, {targetNormalized}_Value);");
+                }
             }
 
             return;
@@ -242,7 +257,14 @@ static public class DeserializeCodeWriter
             }
             else
             {
-                builder.AppendLine($"{indent}var {targetNormalized} = ({type.ToFrameworkString()})null;");
+                if (includeVar)
+                {
+                    builder.AppendLine($"{indent}var {targetNormalized} = ({type.ToFrameworkString()})null;");
+                }
+                else
+                {
+                    builder.AppendLine($"{indent}{targetNormalized} = ({type.ToFrameworkString()})null;");
+                }
             }
 
             builder.AppendLine($"{indent}if (*pointer == 0x1)");
@@ -279,23 +301,45 @@ static public class DeserializeCodeWriter
                     builder.AppendLine($"{indent}    {targetNormalized}.Add(*({elementType.ToFrameworkString()}*)pointer);");
                     builder.AppendLine($"{indent}    pointer += sizeof({elementType.ToFrameworkString()});");
                 }
-                else
+                else if (elementType is IArrayTypeSymbol elementArray)
                 {
-                    builder.AppendLine($"{indent}    pointer += {GlobalNames.BYTESERIALIZER}.Deserialize<{elementType.ToFrameworkString()}>(pointer, out var element);");
-                    builder.AppendLine($"{indent}    result.Add(element);");
+                    WriteMethodBody(array: elementArray,
+                                    builder: builder,
+                                    indent: indent + "    ",
+                                    target: $"{targetNormalized}_element");
+                    builder.AppendLine($"{indent}    {targetNormalized}.Add({targetNormalized}_element);");
+                }
+                else if (elementType is INamedTypeSymbol elementNamedType)
+                {
+                    WriteMethodBody(type: elementNamedType,
+                                    builder: builder,
+                                    indent: indent + "    ",
+                                    target: $"{targetNormalized}_element");
+                    builder.AppendLine($"{indent}    {targetNormalized}.Add({targetNormalized}_element);");
                 }
             }
             else
             {
                 if (elementType.IsUnmanagedSerializable())
                 {
-                    builder.AppendLine($"{indent}    ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>)result).Add(*({elementType.ToFrameworkString()}*)pointer);");
+                    builder.AppendLine($"{indent}    ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){targetNormalized}).Add(*({elementType.ToFrameworkString()}*)pointer);");
                     builder.AppendLine($"{indent}    pointer += sizeof({elementType.ToFrameworkString()});");
                 }
-                else
+                else if (elementType is IArrayTypeSymbol elementArray)
                 {
-                    builder.AppendLine($"{indent}    pointer += {GlobalNames.BYTESERIALIZER}.Deserialize<{elementType.ToFrameworkString()}>(pointer, out var element);");
-                    builder.AppendLine($"{indent}    ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>)result).Add(element);");
+                    WriteMethodBody(array: elementArray,
+                                    builder: builder,
+                                    indent: indent + "    ",
+                                    target: $"{targetNormalized}_element");
+                    builder.AppendLine($"{indent}    ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){targetNormalized}).Add({targetNormalized}_element);");
+                }
+                else if (elementType is INamedTypeSymbol elementNamedType)
+                {
+                    WriteMethodBody(type: elementNamedType,
+                                    builder: builder,
+                                    indent: indent + "    ",
+                                    target: $"{targetNormalized}_element");
+                    builder.AppendLine($"{indent}    ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){targetNormalized}).Add({targetNormalized}_element);");
                 }
             }
 
@@ -342,17 +386,18 @@ static public class DeserializeCodeWriter
                     String targetNormalized = target.Replace('.', '_');
                     builder.AppendLine($"{indent}var {targetNormalized}_typeIdentifier = *({GlobalNames.NAMESPACE}.TypeIdentifier*)pointer;");
                     builder.AppendLine($"{indent}pointer += sizeof({GlobalNames.NAMESPACE}.TypeIdentifier);");
+                    builder.AppendLine($"{indent}var {targetNormalized}_{member.Name} = ({memberType.ToFrameworkString()})null;");
                     Boolean first = true;
                     foreach (INamedTypeSymbol derivedType in derivedTypes)
                     {
                         if (first)
                         {
                             first = false;
-                            builder.AppendLine($"{indent}if ({targetNormalized}_typeIdentifier == {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom({derivedType.ToFrameworkString()}))");
+                            builder.AppendLine($"{indent}if ({targetNormalized}_typeIdentifier == {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({derivedType.ToFrameworkString()})))");
                         }
                         else
                         {
-                            builder.AppendLine($"{indent}else if ({targetNormalized}_typeIdentifier == {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom({derivedType.ToFrameworkString()}))");
+                            builder.AppendLine($"{indent}else if ({targetNormalized}_typeIdentifier == {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({derivedType.ToFrameworkString()})))");
                         }
 
                         builder.AppendLine($"{indent}{{");
@@ -360,20 +405,22 @@ static public class DeserializeCodeWriter
                         WriteMethodBody(type: derivedType,
                                         builder: builder,
                                         indent: indent + "    ",
-                                        target: $"{targetNormalized}_{member.Name}");
+                                        target: $"{targetNormalized}_{member.Name}",
+                                        includeVar: false);
 
                         builder.AppendLine($"{indent}}}");
                     }
 
                     if (!memberType.IsAbstract)
                     {
-                        builder.AppendLine($"{indent}else if ({targetNormalized}_typeIdentifier == {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom({memberType.ToFrameworkString()}))");
+                        builder.AppendLine($"{indent}else if ({targetNormalized}_typeIdentifier == {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({memberType.ToFrameworkString()})))");
                         builder.AppendLine($"{indent}{{");
 
                         WriteMethodBody(type: (INamedTypeSymbol)memberType,
                                         builder: builder,
                                         indent: indent + "    ",
-                                        target: $"{targetNormalized}_{member.Name}");
+                                        target: $"{targetNormalized}_{member.Name}",
+                                        includeVar: false);
 
                         builder.AppendLine($"{indent}}}");
                     }
