@@ -18,4 +18,5 @@ static public class GlobalNames
     public const String NAMESPACE = "Narumikazuchi.Generators.ByteSerialization";
     public const String BYTESERIALIZER = NAMESPACE + ".ByteSerializer";
     public const String IBYTESERIALIZER = NAMESPACE + ".IByteSerializer";
+    public const String IGNOREFORSERIALIZATIONATTRIBUTE = NAMESPACE + ".IgnoreForSerializationAttribute";
 }

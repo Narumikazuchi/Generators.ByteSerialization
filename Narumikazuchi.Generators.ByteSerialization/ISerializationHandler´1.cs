@@ -11,8 +11,8 @@ public unsafe interface ISerializationHandler<TSerializable>
     /// <param name="buffer">The buffer to read from.</param>
     /// <param name="result">The <typeparamref name="TSerializable"/> represented by the buffer.</param>
     /// <returns>The amount of bytes read from the buffer.</returns>
-    public Int32 Deserialize(Byte* buffer,
-                             out TSerializable result);
+    public UInt32 Deserialize(Byte* buffer,
+                              out TSerializable result);
 
     /// <summary>
     /// Calculates the expected amount of bytes the specified <paramref name="graph"/> will occupy once serialized. 
@@ -27,8 +27,8 @@ public unsafe interface ISerializationHandler<TSerializable>
     /// <param name="buffer">The buffer into which to store the serialized value.</param>
     /// <param name="graph">The value to serialize.</param>
     /// <returns>The amount of bytes written to the buffer.</returns>
-    public Int32 Serialize(Byte* buffer,
-                           TSerializable graph);
+    public UInt32 Serialize(Byte* buffer,
+                            TSerializable graph);
 
     /// <summary>
     /// Gets the unique type identifier for type <typeparamref name="TSerializable"/>.

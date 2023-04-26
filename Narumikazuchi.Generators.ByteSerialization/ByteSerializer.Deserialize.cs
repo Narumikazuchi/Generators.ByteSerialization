@@ -15,14 +15,14 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public unsafe Int32 Deserialize<TSerializable>(ReadOnlySpan<Byte> buffer,
+    static public unsafe UInt32 Deserialize<TSerializable>(ReadOnlySpan<Byte> buffer,
                                                           out TSerializable? result)
     {
         Type type = typeof(TSerializable);
         if (type.IsUnmanagedStruct())
         {
             result = Unsafe.As<Byte, TSerializable>(ref MemoryMarshal.GetReference(buffer));
-            return Unsafe.SizeOf<TSerializable>();
+            return (UInt32)Unsafe.SizeOf<TSerializable>();
         }
         else if (type.IsValueType ||
                  type.IsSealed)
@@ -67,9 +67,9 @@ public partial class ByteSerializer
             }
             else
             {
-                Int32 read = DeserializeAs(type: Handlers.Types.GetRightPartner(serialized),
-                                           buffer: PointerFromSpan(buffer),
-                                           result: out Object? boxed);
+                UInt32 read = DeserializeAs(type: Handlers.Types.GetRightPartner(serialized),
+                                            buffer: PointerFromSpan(buffer),
+                                            result: out Object? boxed);
                 result = (TSerializable?)boxed;
                 return read;
             }
@@ -86,14 +86,14 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public unsafe Int32 Deserialize<TSerializable>(Byte* buffer,
-                                                          out TSerializable? result)
+    static public unsafe UInt32 Deserialize<TSerializable>(Byte* buffer,
+                                                           out TSerializable? result)
     {
         Type type = typeof(TSerializable);
         if (type.IsUnmanagedStruct())
         {
             result = Unsafe.As<Byte, TSerializable>(ref Unsafe.AsRef<Byte>(buffer));
-            return Unsafe.SizeOf<TSerializable>();
+            return (UInt32)Unsafe.SizeOf<TSerializable>();
         }
         else if (type.IsValueType ||
                  type.IsSealed)
@@ -137,9 +137,9 @@ public partial class ByteSerializer
             }
             else
             {
-                Int32 read = DeserializeAs(type: Handlers.Types.GetRightPartner(serialized),
-                                           buffer: (IntPtr)buffer,
-                                           result: out Object? boxed);
+                UInt32 read = DeserializeAs(type: Handlers.Types.GetRightPartner(serialized),
+                                            buffer: (IntPtr)buffer,
+                                            result: out Object? boxed);
                 result = (TSerializable?)boxed;
                 return read;
             }
@@ -156,8 +156,8 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Int32 Deserialize<TSerializable>(Stream stream,
-                                                   out TSerializable? result)
+    static public UInt32 Deserialize<TSerializable>(Stream stream,
+                                                    out TSerializable? result)
     {
         return Deserialize<ReadableStreamWrapper, TSerializable?>(stream: stream,
                                                                   result: out result);
@@ -173,8 +173,8 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Int32 Deserialize<TStream, TSerializable>(TStream stream,
-                                                            out TSerializable? result)
+    static public UInt32 Deserialize<TStream, TSerializable>(TStream stream,
+                                                             out TSerializable? result)
         where TStream : IReadableStream
     {
         Byte[] buffer = new Byte[4];
@@ -183,8 +183,8 @@ public partial class ByteSerializer
         buffer = new Byte[size + 4];
         Unsafe.As<Byte, Int32>(ref buffer[0]) = size;
         stream.Read(buffer.AsSpan()[4..]);
-        Int32 read = Deserialize(buffer: buffer,
-                                 result: out result);
+        UInt32 read = Deserialize(buffer: buffer,
+                                  result: out result);
         read += sizeof(Int32);
         return read;
     }
@@ -229,8 +229,8 @@ public partial class ByteSerializer
         Unsafe.As<Byte, Int32>(ref buffer[0]) = size;
         await stream.ReadAsynchronously(buffer: buffer.AsMemory()[4..],
                                         cancellationToken: cancellationToken);
-        Int32 read = Deserialize(buffer: buffer,
-                                 result: out TSerializable? result);
+        UInt32 read = Deserialize(buffer: buffer,
+                                  result: out TSerializable? result);
         read += sizeof(Int32);
         return new AsynchronousDeserializationResult<TSerializable?>
         {
@@ -245,27 +245,27 @@ public partial class ByteSerializer
         return (IntPtr)Unsafe.AsPointer(ref first);
     }
 
-    static private Int32 DeserializeAs(Type type,
-                                       IntPtr buffer,
-                                       out Object? result)
+    static private UInt32 DeserializeAs(Type type,
+                                        IntPtr buffer,
+                                        out Object? result)
     {
         if (s_PolymorphicDeserializers.TryGetValue(key: type,
                                                    value: out DynamicMethod? method))
         {
             Object?[] parameters = new Object?[] { buffer, null };
-            Int32 read = (Int32)method.Invoke(obj: null,
-                                              parameters: parameters)!;
+            UInt32 read = (UInt32)method.Invoke(obj: null,
+                                                parameters: parameters)!;
             result = parameters[1];
             return read;
         }
         else
         {
             method = new DynamicMethod(name: "<Polymorphic_Deserialize_Overload>",
-                                       returnType: typeof(Int32),
+                                       returnType: typeof(UInt32),
                                        parameterTypes: new Type[] { typeof(IntPtr), type.MakeByRefType() },
                                        owner: typeof(ByteSerializer));
             ILGenerator generator = method.GetILGenerator();
-            generator.DeclareLocal(typeof(Int32));
+            generator.DeclareLocal(typeof(UInt32));
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Call, s_PolymorphicDeserializerMethod.Value.MakeGenericMethod(type));
@@ -275,8 +275,8 @@ public partial class ByteSerializer
                                            value: method);
 
             Object?[] parameters = new Object?[] { buffer, null };
-            Int32 read = (Int32)method.Invoke(obj: null,
-                                              parameters: parameters)!;
+            UInt32 read = (UInt32)method.Invoke(obj: null,
+                                                parameters: parameters)!;
             result = parameters[1];
             return read;
         }

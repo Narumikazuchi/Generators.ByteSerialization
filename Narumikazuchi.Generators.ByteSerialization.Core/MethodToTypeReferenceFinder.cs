@@ -93,28 +93,6 @@ static public class MethodToTypeReferenceFinder
             }
 
             builder.Add(type);
-            foreach (ITypeSymbol dependent in GetDependendTypes(type))
-            {
-                if (type is INamedTypeSymbol named2 &&
-                    named2.IsOpenGenericType())
-                {
-                    continue;
-                }
-
-                if (!RequiresGeneration(dependent))
-                {
-                    continue;
-                }
-
-                if (builder.Contains(value: dependent,
-                                     comparer: SymbolEqualityComparer.Default))
-                {
-                    continue;
-                }
-
-                builder.Add(dependent);
-            }
-
             return builder.ToImmutable();
         }
     }

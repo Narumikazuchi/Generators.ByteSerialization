@@ -28,6 +28,13 @@
             which means public non-readonly fields and public properties with a getter and setter or initilizer.
             </remarks>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GlobalSetupWithHandler``1(Narumikazuchi.Generators.ByteSerialization.ISerializationHandler{``0})">
+            <summary>
+            Adds the specified handler to the custom handlers for all serializers to use for serialization.
+            </summary>
+            <param name="handler">The handler to add.</param>
+            <exception cref="T:System.ArgumentNullException"/>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.GetExpectedSerializedSize``1(``0)">
             <summary>
             Calculates the expected size of the <see cref="T:System.Byte"/>[] array after serialization of the sepcified runtime object.
@@ -39,6 +46,19 @@
             If you encounter an exception it would help if you could contact me for a timely fix.
             </remarks>
             <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.SetupWithHandler``1(Narumikazuchi.Generators.ByteSerialization.ISerializationHandler{``0})">
+            <summary>
+            Adds the specified handler to the custom handlers to use for serialization.
+            </summary>
+            <param name="handler">The handler to add.</param>
+            <returns>The <see cref="T:Narumikazuchi.Generators.ByteSerialization.ByteSerializer"/> instance for chaining.</returns>
+            <exception cref="T:System.ArgumentNullException"/>
+        </member>
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Default">
+            <summary>
+            Gets the default seriliazer that uses globally setup custom handlers but no locally setup custom handlers.
+            </summary>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlySpan{System.Byte},``0@)">
             <summary>
@@ -313,19 +333,12 @@
             This doesn't mean they can't happen, it's just extremely unlikely.
             </remarks>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.#ctor(System.ReadOnlySpan{System.Byte})">
-            <summary>
-            Initializes a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier"/> struct.
-            </summary>
-            <param name="bytes">The hashed bytes to use for this identifier.</param>
-            <exception cref="T:System.ArgumentException"/>
-        </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.#ctor(System.Type)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(System.Type)">
             <summary>
             Initializes a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier"/> struct.
             </summary>
             <param name="type">The type to create an identifier for.</param>
-            <exception cref="T:System.NullReferenceException"/>
+            <exception cref="T:System.ArgumentNullException"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.ToString">
             <summary>

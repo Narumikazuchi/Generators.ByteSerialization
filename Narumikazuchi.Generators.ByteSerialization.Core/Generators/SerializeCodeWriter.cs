@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Narumikazuchi.CodeAnalysis;
+using System.IO;
 
 namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
@@ -9,72 +10,104 @@ static public class SerializeCodeWriter
                                    StringBuilder builder)
     {
         builder.AppendLine("        [CompilerGenerated]");
-        builder.AppendLine($"        static public Int32 Serialize(Byte* buffer, {array.ToFrameworkString()} value)");
+        builder.AppendLine("        [MethodImpl(MethodImplOptions.AggressiveInlining)]");
+        builder.AppendLine($"        static public UInt32 Serialize(Byte* buffer, {array.ToFrameworkString()} value)");
         builder.AppendLine("        {");
-        builder.AppendLine("            var pointer = buffer;");
+        builder.AppendLine("            if (value is null)");
+        builder.AppendLine("            {");
+        builder.AppendLine("                *(UInt32*)buffer = 0;");
+        builder.AppendLine($"                *(TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
+        builder.AppendLine("                *(buffer + 36) = 0x0;");
+        builder.AppendLine("                return 37;");
+        builder.AppendLine("            }");
+        builder.AppendLine("            else");
+        builder.AppendLine("            {");
+        builder.AppendLine($"                *(TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
+        builder.AppendLine("                *(buffer + 36) = 0x1;");
+        builder.AppendLine("                var pointer = buffer + 37;");
 
         WriteMethodBody(array: array,
                         builder: builder,
-                        indent: "            ");
+                        indent: "                ");
 
-        builder.AppendLine("            return (Int32)(pointer - buffer);");
+        builder.AppendLine("                var totalSerialized = (UInt32)(pointer - buffer);");
+        builder.AppendLine("                *(UInt32*)buffer = totalSerialized - 37U;");
+        builder.AppendLine("                return totalSerialized;");
+        builder.AppendLine("            }");
         builder.AppendLine("        }");
     }
     static public void WriteMethod(INamedTypeSymbol type,
-                                   ImmutableArray<ISymbol> members,
                                    StringBuilder builder)
     {
         builder.AppendLine("        [CompilerGenerated]");
-        builder.AppendLine($"        static public Int32 Serialize(Byte* buffer, {type.ToFrameworkString()} value)");
+        builder.AppendLine("        [MethodImpl(MethodImplOptions.AggressiveInlining)]");
+        builder.AppendLine($"        static public UInt32 Serialize(Byte* buffer, {type.ToFrameworkString()} value)");
         builder.AppendLine("        {");
-        builder.AppendLine("            var pointer = buffer;");
 
         if (!type.IsValueType)
         {
             builder.AppendLine("            if (value is null)");
             builder.AppendLine("            {");
-            builder.AppendLine("                return 0;");
+            builder.AppendLine("                *(UInt32*)buffer = 0;");
+            builder.AppendLine($"                *({GlobalNames.NAMESPACE}.TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
+            builder.AppendLine("                *(buffer + 36) = 0x0;");
+            builder.AppendLine("                return 37;");
             builder.AppendLine("            }");
             builder.AppendLine("            else");
             builder.AppendLine("            {");
+            builder.AppendLine($"                *({GlobalNames.NAMESPACE}.TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
+            builder.AppendLine("                *(buffer + 36) = 0x1;");
+            builder.AppendLine("                var pointer = buffer + 37;");
+
             WriteMethodBody(type: type,
-                            members: members,
                             builder: builder,
                             indent: "                ");
+
+            builder.AppendLine("                var totalSerialized = (UInt32)(pointer - buffer);");
+            builder.AppendLine("                *(UInt32*)buffer = totalSerialized - 37U;");
+            builder.AppendLine("                return totalSerialized;");
             builder.AppendLine("            }");
         }
         else
         {
+            builder.AppendLine($"            *({GlobalNames.NAMESPACE}.TypeIdentifier*)(buffer + 4) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
+            builder.AppendLine("            *(buffer + 36) = 0x1;");
+            builder.AppendLine("            var pointer = buffer + 37;");
+
             WriteMethodBody(type: type,
-                            members: members,
                             builder: builder,
                             indent: "            ");
+
+            builder.AppendLine("            var totalSerialized = (UInt32)(pointer - buffer);");
+            builder.AppendLine("            *(UInt32*)buffer = totalSerialized - 37U;");
+            builder.AppendLine("            return totalSerialized;");
         }
 
-        builder.AppendLine("            return (Int32)(pointer - buffer);");
         builder.AppendLine("        }");
     }
 
     static private void WriteMethodBody(IArrayTypeSymbol array,
                                         StringBuilder builder,
-                                        String indent)
+                                        String indent,
+                                        String target = "value")
     {
         if (array.Rank is 1 &&
             array.ElementType.IsUnmanagedSerializable())
         {
-            builder.AppendLine($"{indent}if (value is not null)");
+            String targetNormalized = target.Replace('.', '_');
+            builder.AppendLine($"{indent}if ({target} is not null)");
             builder.AppendLine($"{indent}{{");
-            builder.AppendLine($"{indent}    var memory = MemoryMarshal.AsBytes<{array.ElementType.ToFrameworkString()}>(value);");
-            builder.AppendLine($"{indent}    *(Int32*)pointer = memory.Length;");
+            builder.AppendLine($"{indent}    var {targetNormalized}_memory = MemoryMarshal.AsBytes<{array.ElementType.ToFrameworkString()}>({target});");
+            builder.AppendLine($"{indent}    *(Int32*)pointer = {targetNormalized}_memory.Length;");
             builder.AppendLine($"{indent}    pointer += sizeof(Int32);");
-            builder.AppendLine($"{indent}    var destination = new Span<Byte>(pointer, memory.Length);");
-            builder.AppendLine($"{indent}    memory.CopyTo(destination);");
-            builder.AppendLine($"{indent}    pointer += memory.Length;");
+            builder.AppendLine($"{indent}    var {targetNormalized}_destination = new Span<Byte>(pointer, {targetNormalized}_memory.Length);");
+            builder.AppendLine($"{indent}    {targetNormalized}_memory.CopyTo({targetNormalized}_destination);");
+            builder.AppendLine($"{indent}    pointer += {targetNormalized}_memory.Length;");
             builder.AppendLine($"{indent}}}");
         }
         else
         {
-            builder.AppendLine($"{indent}if (value is null)");
+            builder.AppendLine($"{indent}if ({target} is null)");
             builder.AppendLine($"{indent}{{");
             for (Int32 index = 0;
                  index < array.Rank;
@@ -92,20 +125,31 @@ static public class SerializeCodeWriter
                  index < array.Rank;
                  index++)
             {
-                builder.AppendLine($"{indent}    *(Int32*)pointer = value.GetLength({index});");
+                builder.AppendLine($"{indent}    *(Int32*)pointer = {target}.GetLength({index});");
                 builder.AppendLine($"{indent}    pointer += sizeof(Int32);");
             }
 
-            builder.AppendLine($"{indent}    foreach (var element in value)");
+            String targetNormalized = target.Replace('.', '_');
+            builder.AppendLine($"{indent}    foreach (var {targetNormalized}_element in {target})");
             builder.AppendLine($"{indent}    {{");
             if (array.ElementType.IsUnmanagedSerializable())
             {
-                builder.AppendLine($"{indent}        *({array.ElementType.ToFrameworkString()}*)pointer = element;");
+                builder.AppendLine($"{indent}        *({array.ElementType.ToFrameworkString()}*)pointer = {targetNormalized}_element;");
                 builder.AppendLine($"{indent}        pointer += sizeof({array.ElementType.ToFrameworkString()});");
             }
-            else
+            else if (array.ElementType is IArrayTypeSymbol elementArray)
             {
-                builder.AppendLine($"{indent}        pointer += {GlobalNames.BYTESERIALIZER}.Serialize(pointer, element);");
+                WriteMethodBody(array: elementArray,
+                                builder: builder,
+                                indent: indent + "        ",
+                                target: $"{targetNormalized}_element");
+            }
+            else if (array.ElementType is INamedTypeSymbol elementType)
+            {
+                WriteMethodBody(type: elementType,
+                                builder: builder,
+                                indent: indent + "        ",
+                                target: $"{targetNormalized}_element");
             }
 
             builder.AppendLine($"{indent}    }}");
@@ -113,12 +157,30 @@ static public class SerializeCodeWriter
         }
     }
     static private void WriteMethodBody(INamedTypeSymbol type,
-                                        ImmutableArray<ISymbol> members,
                                         StringBuilder builder,
-                                        String indent)
+                                        String indent,
+                                        String target = "value")
     {
-        if (type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<") &&
-            !type.IsUnmanagedSerializable())
+        if (type.SpecialType is SpecialType.System_String)
+        {
+            String targetNormalized = target.Replace('.', '_');
+            builder.AppendLine($"{indent}if ({target} is null)");
+            builder.AppendLine($"{indent}{{");
+            builder.AppendLine($"{indent}    *(Int32*)pointer = 0;");
+            builder.AppendLine($"{indent}    pointer += sizeof(Int32);");
+            builder.AppendLine($"{indent}}}");
+            builder.AppendLine($"{indent}else");
+            builder.AppendLine($"{indent}{{");
+            builder.AppendLine($"{indent}   var {targetNormalized}_bytes = MemoryMarshal.AsBytes({target}.AsSpan());");
+            builder.AppendLine($"{indent}   var {targetNormalized}_destination = new Span<Byte>(pointer + sizeof(Int32), {targetNormalized}_bytes.Length);");
+            builder.AppendLine($"{indent}   {targetNormalized}_bytes.CopyTo({targetNormalized}_destination);");
+            builder.AppendLine($"{indent}   *(UInt32*)pointer = (UInt32){targetNormalized}_bytes.Length | 0x80000000;");
+            builder.AppendLine($"{indent}   pointer += {targetNormalized}_destination.Length + sizeof(Int32);");
+            builder.AppendLine($"{indent}}}");
+            return;
+        }
+        else if (type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<") &&
+                 !type.IsUnmanagedSerializable())
         {
             IPropertySymbol property = type.GetMembers("Key")
                                            .OfType<IPropertySymbol>()
@@ -126,33 +188,76 @@ static public class SerializeCodeWriter
             WriteForMember(member: property,
                            memberType: property.Type,
                            builder: builder,
-                           indent: indent);
+                           indent: indent,
+                           target: target);
             property = type.GetMembers("Value")
                            .OfType<IPropertySymbol>()
                            .First();
             WriteForMember(member: property,
                            memberType: property.Type,
                            builder: builder,
-                           indent: indent);
+                           indent: indent,
+                           target: target);
             return;
         }
 
-        foreach (ISymbol member in members)
+        if (type.IsValueType)
         {
-            if (member is IFieldSymbol field)
+            ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
+            foreach (ISymbol member in members)
             {
-                WriteForMember(member: field,
-                               memberType: field.Type,
-                               builder: builder,
-                               indent: indent);
+                if (member is IFieldSymbol field)
+                {
+                    WriteForMember(member: field,
+                                   memberType: field.Type,
+                                   builder: builder,
+                                   indent: indent,
+                                   target: target);
+                }
+                else if (member is IPropertySymbol property)
+                {
+                    WriteForMember(member: property,
+                                   memberType: property.Type,
+                                   builder: builder,
+                                   indent: indent,
+                                   target: target);
+                }
             }
-            else if (member is IPropertySymbol property)
+        }
+        else
+        {
+            builder.AppendLine($"{indent}if ({target} is null)");
+            builder.AppendLine($"{indent}{{");
+            builder.AppendLine($"{indent}    *pointer = 0x0;");
+            builder.AppendLine($"{indent}    pointer++;");
+            builder.AppendLine($"{indent}}}");
+            builder.AppendLine($"{indent}else");
+            builder.AppendLine($"{indent}{{");
+            builder.AppendLine($"{indent}    *pointer = 0x1;");
+            builder.AppendLine($"{indent}    pointer++;");
+
+            ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
+            foreach (ISymbol member in members)
             {
-                WriteForMember(member: property,
-                               memberType: property.Type,
-                               builder: builder,
-                               indent: indent);
+                if (member is IFieldSymbol field)
+                {
+                    WriteForMember(member: field,
+                                   memberType: field.Type,
+                                   builder: builder,
+                                   indent: indent + "    ",
+                                   target: target);
+                }
+                else if (member is IPropertySymbol property)
+                {
+                    WriteForMember(member: property,
+                                   memberType: property.Type,
+                                   builder: builder,
+                                   indent: indent + "    ",
+                                   target: target);
+                }
             }
+
+            builder.AppendLine($"{indent}}}");
         }
 
         if (type.IsCollection(out ITypeSymbol elementType))
@@ -161,25 +266,36 @@ static public class SerializeCodeWriter
                     .OfType<IPropertySymbol>()
                     .Any(property => property.DeclaredAccessibility is Accessibility.Public))
             {
-                builder.AppendLine($"{indent}*(Int32*)pointer = value.Count;");
+                builder.AppendLine($"{indent}*(Int32*)pointer = {target}.Count;");
                 builder.AppendLine($"{indent}pointer += sizeof(Int32);");
             }
             else
             {
-                builder.AppendLine($"{indent}*(Int32*)pointer = ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>)value).Count;");
+                builder.AppendLine($"{indent}*(Int32*)pointer = ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){target}).Count;");
                 builder.AppendLine($"{indent}pointer += sizeof(Int32);");
             }
 
-            builder.AppendLine($"{indent}foreach (var element in value)");
+            String targetNormalized = target.Replace('.', '_');
+            builder.AppendLine($"{indent}foreach (var {targetNormalized}_element in {target})");
             builder.AppendLine($"{indent}{{");
             if (elementType.IsUnmanagedSerializable())
             {
-                builder.AppendLine($"{indent}    *({elementType.ToFrameworkString()}*)pointer = element;");
+                builder.AppendLine($"{indent}    *({elementType.ToFrameworkString()}*)pointer = {targetNormalized}_element;");
                 builder.AppendLine($"{indent}    pointer += sizeof({elementType.ToFrameworkString()});");
             }
-            else
+            else if (elementType is IArrayTypeSymbol elementArray)
             {
-                builder.AppendLine($"{indent}    pointer += {GlobalNames.BYTESERIALIZER}.Serialize(pointer, element);");
+                WriteMethodBody(array: elementArray,
+                                builder: builder,
+                                indent: indent + "    ",
+                                target: $"{targetNormalized}_element");
+            }
+            else if (elementType is INamedTypeSymbol elementNamedType)
+            {
+                WriteMethodBody(type: elementNamedType,
+                                builder: builder,
+                                indent: indent + "    ",
+                                target: $"{targetNormalized}_element");
             }
 
             builder.AppendLine($"{indent}}}");
@@ -189,11 +305,12 @@ static public class SerializeCodeWriter
     static private void WriteForMember(ISymbol member,
                                        ITypeSymbol memberType,
                                        StringBuilder builder,
-                                       String indent)
+                                       String indent,
+                                       String target = "value")
     {
         if (memberType.IsUnmanagedSerializable())
         {
-            builder.AppendLine($"{indent}*({memberType.ToFrameworkString()}*)pointer = value.{member.Name};");
+            builder.AppendLine($"{indent}*({memberType.ToFrameworkString()}*)pointer = {target}.{member.Name};");
             builder.AppendLine($"{indent}pointer += sizeof({memberType.ToFrameworkString()});");
         }
         else
@@ -201,47 +318,71 @@ static public class SerializeCodeWriter
             if (memberType.IsValueType ||
                 memberType.IsSealed)
             {
-                builder.AppendLine($"{indent}pointer += {GlobalNames.BYTESERIALIZER}.Serialize(pointer, value.{member.Name});");
+                if (memberType is IArrayTypeSymbol elementArray)
+                {
+                    WriteMethodBody(array: elementArray,
+                                    builder: builder,
+                                    indent: indent,
+                                    target: $"{target}.{member.Name}");
+                }
+                else if (memberType is INamedTypeSymbol elementType)
+                {
+                    WriteMethodBody(type: elementType,
+                                    builder: builder,
+                                    indent: indent,
+                                    target: $"{target}.{member.Name}");
+                }
             }
             else
             {
                 ImmutableArray<INamedTypeSymbol> derivedTypes = ((INamedTypeSymbol)memberType).GetDerivedTypes();
                 if (derivedTypes.Length is 0)
                 {
-                    builder.AppendLine($"{indent}pointer += {GlobalNames.BYTESERIALIZER}.Serialize(pointer, value.{member.Name});");
+                    WriteMethodBody(type: (INamedTypeSymbol)memberType,
+                                    builder: builder,
+                                    indent: indent,
+                                    target: $"{target}.{member.Name}");
                 }
                 else
                 {
+                    String targetNormalized = target.Replace('.', '_');
                     Boolean first = true;
-                    foreach (ITypeSymbol derivedType in derivedTypes)
+                    foreach (INamedTypeSymbol derivedType in derivedTypes)
                     {
                         if (first)
                         {
                             first = false;
-                            builder.AppendLine($"{indent}if (value.{member.Name} is {derivedType.ToFrameworkString()})");
+                            builder.AppendLine($"{indent}if ({target}.{member.Name} is {derivedType.ToFrameworkString()} {targetNormalized}_{member.Name}_{derivedType.Name})");
                         }
                         else
                         {
-                            builder.AppendLine($"{indent}else if (value.{member.Name} is {derivedType.ToFrameworkString()})");
+                            builder.AppendLine($"{indent}else if ({target}.{member.Name} is {derivedType.ToFrameworkString()} {targetNormalized}_{member.Name}_{derivedType.Name})");
                         }
 
                         builder.AppendLine($"{indent}{{");
-                        builder.AppendLine($"{indent}    pointer += {GlobalNames.BYTESERIALIZER}.Serialize(pointer, ({derivedType.ToFrameworkString()})value.{member.Name});");
+                        builder.AppendLine($"{indent}    *({GlobalNames.NAMESPACE}.TypeIdentifier*)pointer = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({derivedType.ToFrameworkString()}));");
+                        builder.AppendLine($"{indent}    pointer += sizeof({GlobalNames.NAMESPACE}.TypeIdentifier);");
+
+                        WriteMethodBody(type: derivedType,
+                                        builder: builder,
+                                        indent: indent + "    ",
+                                        target: $"{targetNormalized}_{member.Name}_{derivedType.Name}");
+
                         builder.AppendLine($"{indent}}}");
                     }
 
-                    if (memberType.IsAbstract)
+                    if (!memberType.IsAbstract)
                     {
                         builder.AppendLine($"{indent}else");
                         builder.AppendLine($"{indent}{{");
-                        builder.AppendLine($"{indent}    throw new Exception();");
-                        builder.AppendLine($"{indent}}}");
-                    }
-                    else
-                    {
-                        builder.AppendLine($"{indent}else");
-                        builder.AppendLine($"{indent}{{");
-                        builder.AppendLine($"{indent}    pointer += {GlobalNames.BYTESERIALIZER}.Serialize(pointer, value.{member.Name});");
+                        builder.AppendLine($"{indent}    *({GlobalNames.NAMESPACE}.TypeIdentifier*)pointer = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({memberType.ToFrameworkString()}));");
+                        builder.AppendLine($"{indent}    pointer += sizeof({GlobalNames.NAMESPACE}.TypeIdentifier);");
+
+                        WriteMethodBody(type: (INamedTypeSymbol)memberType,
+                                        builder: builder,
+                                        indent: indent + "    ",
+                                        target: $"{target}.{member.Name}");
+
                         builder.AppendLine($"{indent}}}");
                     }
                 }

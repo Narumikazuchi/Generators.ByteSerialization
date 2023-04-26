@@ -58,21 +58,18 @@ public sealed partial class SerializableGenerator
             builder.AppendLine("// </auto-generated>");
             builder.AppendLine("//------------------------------------------------------------------------------");
             builder.AppendLine("#pragma warning disable");
-            builder.AppendLine("#nullable enable");
+            builder.AppendLine("#nullable disable");
             builder.AppendLine();
             builder.AppendLine("using System;");
-            builder.AppendLine("using System.Reflection;");
-            builder.AppendLine("using System.Reflection.Emit;");
             builder.AppendLine("using System.Runtime.CompilerServices;");
             builder.AppendLine("using System.Runtime.InteropServices;");
-            builder.AppendLine("using System.Threading;");
             builder.AppendLine();
             builder.AppendLine("namespace Narumikazuchi.Generated.Internals.ByteSerialization;");
             builder.AppendLine();
             builder.AppendLine($"public unsafe partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} : {GlobalNames.ISerializationHandler(type)}");
             builder.AppendLine("{");
             builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    Int32 {GlobalNames.ISerializationHandler(type)}.Deserialize(Byte* buffer, out {type.ToFrameworkString()} result)");
+            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Deserialize(Byte* buffer, out {type.ToFrameworkString()} result)");
             builder.AppendLine("    {");
             builder.AppendLine($"        return __{index}.Deserialize(buffer, out result);");
             builder.AppendLine("    }");
@@ -84,7 +81,7 @@ public sealed partial class SerializableGenerator
             builder.AppendLine("    }");
             builder.AppendLine();
             builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    Int32 {GlobalNames.ISerializationHandler(type)}.Serialize(Byte* buffer, {type.ToFrameworkString()} value)");
+            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Serialize(Byte* buffer, {type.ToFrameworkString()} value)");
             builder.AppendLine("    {");
             builder.AppendLine($"        return __{index}.Serialize(buffer, value);");
             builder.AppendLine("    }");
@@ -104,19 +101,15 @@ public sealed partial class SerializableGenerator
 
             if (type is INamedTypeSymbol named)
             {
-                ImmutableArray<ISymbol> members = named.GetMembersToSerialize();
                 DeserializeCodeWriter.WriteMethod(type: named,
-                                                  members: members,
                                                   builder: builder);
                 builder.AppendLine();
 
                 SizeCodeWriter.WriteMethod(type: named,
-                                           members: members,
                                            builder: builder);
                 builder.AppendLine();
 
                 SerializeCodeWriter.WriteMethod(type: named,
-                                                members: members,
                                                 builder: builder);
                 builder.AppendLine();
                 index++;
@@ -138,7 +131,7 @@ public sealed partial class SerializableGenerator
             }
 
             builder.AppendLine("        [CompilerGenerated]");
-            builder.AppendLine($"        static public {GlobalNames.NAMESPACE}.TypeIdentifier Identifier {{ get; }} = new {GlobalNames.NAMESPACE}.TypeIdentifier(typeof({type.ToFrameworkString()}));");
+            builder.AppendLine($"        static public {GlobalNames.NAMESPACE}.TypeIdentifier Identifier {{ get; }} = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
 
             if (type is INamedTypeSymbol named2 &&
                 !named2.HasDefaultConstructor() &&

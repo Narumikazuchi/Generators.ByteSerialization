@@ -12,29 +12,33 @@ public readonly record struct TypeIdentifier
     /// <summary>
     /// Initializes a new instance of the <see cref="TypeIdentifier"/> struct.
     /// </summary>
-    /// <param name="bytes">The hashed bytes to use for this identifier.</param>
-    /// <exception cref="ArgumentException"/>
-    public TypeIdentifier(ReadOnlySpan<Byte> bytes)
+    /// <param name="type">The type to create an identifier for.</param>
+    /// <exception cref="ArgumentNullException"/>
+    static public TypeIdentifier CreateFrom(Type type)
     {
-        if (bytes.Length is not 32)
-        {
-            throw new ArgumentException(message: "Thee supplied byte span does not have the required length of 32.",
-                                        paramName: nameof(bytes));
-        }
+        ArgumentNullException.ThrowIfNull(type);
 
+        if (s_Cached.TryGetValue(key: type,
+                                 value: out TypeIdentifier result))
+        {
+            return result;
+        }
+        else
+        {
+            result = new(SHA512.HashData(MemoryMarshal.AsBytes(type.AssemblyQualifiedName.AsSpan())));
+            s_Cached.Add(key: type,
+                         value: result);
+            return result;
+        }
+    }
+
+    private TypeIdentifier(ReadOnlySpan<Byte> bytes)
+    {
         m_First = Unsafe.As<Byte, Int64>(ref MemoryMarshal.GetReference(bytes));
         m_Second = Unsafe.As<Byte, Int64>(ref MemoryMarshal.GetReference(bytes[8..]));
         m_Third = Unsafe.As<Byte, Int64>(ref MemoryMarshal.GetReference(bytes[16..]));
         m_Fourth = Unsafe.As<Byte, Int64>(ref MemoryMarshal.GetReference(bytes[24..]));
     }
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TypeIdentifier"/> struct.
-    /// </summary>
-    /// <param name="type">The type to create an identifier for.</param>
-    /// <exception cref="NullReferenceException"/>
-    public TypeIdentifier(Type type)
-        : this(SHA512.HashData(MemoryMarshal.AsBytes(type.AssemblyQualifiedName.AsSpan())))
-    { }
 
     /// <summary>
     /// Returns the string-representation of this identifier.
@@ -57,6 +61,8 @@ public readonly record struct TypeIdentifier
         builder.Append(new String(bytes.SelectMany(b => b.ToString("X2").ToLowerInvariant()).ToArray()));
         return builder.ToString();
     }
+
+    static private readonly Dictionary<Type, TypeIdentifier> s_Cached = new();
 
     private readonly Int64 m_First;
     private readonly Int64 m_Second;

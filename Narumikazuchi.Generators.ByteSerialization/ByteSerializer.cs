@@ -7,8 +7,20 @@
 /// The <see cref="ByteSerializer"/> currently only supports the serialization of public mutable members,
 /// which means public non-readonly fields and public properties with a getter and setter or initilizer.
 /// </remarks>
-static public partial class ByteSerializer
+public sealed partial class ByteSerializer
 {
+    /// <summary>
+    /// Adds the specified handler to the custom handlers for all serializers to use for serialization.
+    /// </summary>
+    /// <param name="handler">The handler to add.</param>
+    /// <exception cref="ArgumentNullException"/>
+    static public void GlobalSetupWithHandler<TSerializable>(ISerializationHandler<TSerializable> handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        s_PriorityHandlers.Add(key: typeof(TSerializable),
+                               value: handler);
+    }
+
     /// <summary>
     /// Calculates the expected size of the <see cref="Byte"/>[] array after serialization of the sepcified runtime object.
     /// </summary>
@@ -42,6 +54,25 @@ static public partial class ByteSerializer
             }
         }
     }
+
+    /// <summary>
+    /// Adds the specified handler to the custom handlers to use for serialization.
+    /// </summary>
+    /// <param name="handler">The handler to add.</param>
+    /// <returns>The <see cref="ByteSerializer"/> instance for chaining.</returns>
+    /// <exception cref="ArgumentNullException"/>
+    public ByteSerializer SetupWithHandler<TSerializable>(ISerializationHandler<TSerializable> handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        m_PriorityHandlers.Add(key: typeof(TSerializable),
+                               value: handler);
+        return this;
+    }
+
+    /// <summary>
+    /// Gets the default seriliazer that uses globally setup custom handlers but no locally setup custom handlers.
+    /// </summary>
+    static public ByteSerializer Default { get; } = new();
 
     static private IByteSerializer FindHandler()
     {
@@ -77,10 +108,13 @@ static public partial class ByteSerializer
     {
         get
         {
-            return s_ByteSerializer.Value;
+            return s_Handlers.Value;
         }
     }
 
-    static private readonly Lazy<IByteSerializer> s_ByteSerializer = new(valueFactory: FindHandler,
-                                                                         mode: LazyThreadSafetyMode.ExecutionAndPublication);
+    static private readonly Lazy<IByteSerializer> s_Handlers = new(valueFactory: FindHandler,
+                                                                   mode: LazyThreadSafetyMode.ExecutionAndPublication);
+    static private readonly Dictionary<Type, dynamic> s_PriorityHandlers = new();
+
+    private readonly Dictionary<Type, dynamic> m_PriorityHandlers = new();
 }
