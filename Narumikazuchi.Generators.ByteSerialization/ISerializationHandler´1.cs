@@ -29,9 +29,4 @@ public unsafe interface ISerializationHandler<TSerializable>
     /// <returns>The amount of bytes written to the buffer.</returns>
     public UInt32 Serialize(Byte* buffer,
                             TSerializable? graph);
-
-    /// <summary>
-    /// Gets the unique type identifier for type <typeparamref name="TSerializable"/>.
-    /// </summary>
-    public TypeIdentifier TypeIdentifier { get; }
 }

@@ -48,14 +48,4 @@ public unsafe partial interface IByteSerializer : ISerializationHandler<String>
             return (UInt32)destination.Length + sizeof(Int32);
         }
     }
-
-    TypeIdentifier ISerializationHandler<String>.TypeIdentifier
-    {
-        get
-        {
-            return s_Identifier;
-        }
-    }
-
-    static private readonly TypeIdentifier s_Identifier = TypeIdentifier.CreateFrom(typeof(String));
 }

@@ -93,15 +93,6 @@ public sealed partial class SerializableGenerator
             builder.AppendLine("    }");
             builder.AppendLine();
             builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    {GlobalNames.NAMESPACE}.TypeIdentifier {GlobalNames.ISerializationHandler(type)}.TypeIdentifier");
-            builder.AppendLine("    {");
-            builder.AppendLine("        get");
-            builder.AppendLine("        {");
-            builder.AppendLine($"            return __{index}.Identifier;");
-            builder.AppendLine("        }");
-            builder.AppendLine("    }");
-            builder.AppendLine();
-            builder.AppendLine("    [CompilerGenerated]");
             builder.AppendLine($"    static private class __{index}");
             builder.AppendLine("    {");
 
@@ -135,9 +126,6 @@ public sealed partial class SerializableGenerator
                 builder.AppendLine();
                 index++;
             }
-
-            builder.AppendLine("        [CompilerGenerated]");
-            builder.AppendLine($"        static public {GlobalNames.NAMESPACE}.TypeIdentifier Identifier {{ get; }} = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
 
             if (type is INamedTypeSymbol named2 &&
                 !named2.HasDefaultConstructor() &&

@@ -268,11 +268,6 @@
             <param name="graph">The value to serialize.</param>
             <returns>The amount of bytes written to the buffer.</returns>
         </member>
-        <member name="P:Narumikazuchi.Generators.ByteSerialization.ISerializationHandler`1.TypeIdentifier">
-            <summary>
-            Gets the unique type identifier for type <typeparamref name="TSerializable"/>.
-            </summary>
-        </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.MirroredMap`2">
             <summary>
             Represents a map, where you can access both sides of the map with the other object as key.
