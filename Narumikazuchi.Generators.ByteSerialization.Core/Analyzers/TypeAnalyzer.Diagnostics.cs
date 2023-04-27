@@ -25,10 +25,10 @@ public partial class TypeAnalyzer
                                  typename);
     }
 
-    static public Diagnostic CreateNoInterfaceMembersDiagnostic(InvocationExpressionSyntax method,
-                                                                String typename)
+    static public Diagnostic CreateNoAbstractMembersDiagnostic(InvocationExpressionSyntax method,
+                                                               String typename)
     {
-        return Diagnostic.Create(descriptor: s_NoInterfaceMembersDescriptor,
+        return Diagnostic.Create(descriptor: s_NoAbstractMembersDescriptor,
                                  location: method.GetLocation(),
                                  typename);
     }
@@ -53,22 +53,22 @@ public partial class TypeAnalyzer
                                                                                            title: "Open generics are not supported",
                                                                                            messageFormat: "Open generics are currently not supported.",
                                                                                            description: "Open generics are currently not supported.",
-                                                                                           defaultSeverity: DiagnosticSeverity.Warning,
+                                                                                           defaultSeverity: DiagnosticSeverity.Error,
                                                                                            isEnabledByDefault: true);
     static private readonly DiagnosticDescriptor s_NoPublicMembersDescriptor = new(id: "NCG011",
                                                                                    category: "Code Generation",
                                                                                    title: "No public members",
-                                                                                   messageFormat: "The type '{0}' has no accessible public members to serialize. The object will always be empty.",
-                                                                                   description: "The type '{0}' has no accessible public members to serialize. The object will always be empty.",
+                                                                                   messageFormat: "The type '{0}' has no accessible public members to serialize. The object will take up space but will otherwise always be empty.",
+                                                                                   description: "The type '{0}' has no accessible public members to serialize. The object will take up space but will otherwise always be empty.",
                                                                                    defaultSeverity: DiagnosticSeverity.Warning,
                                                                                    isEnabledByDefault: true);
-    static private readonly DiagnosticDescriptor s_NoInterfaceMembersDescriptor = new(id: "NCG012",
-                                                                                      category: "Code Generation",
-                                                                                      title: "No public interface members",
-                                                                                      messageFormat: "The type '{0}' has no accessible public members to serialize. Be sure to have some members accessible on implementing types, otherwise the serialized object will always be empty.",
-                                                                                      description: "The type '{0}' has no accessible public members to serialize. Be sure to have some members accessible on implementing types, otherwise the serialized object will always be empty.",
-                                                                                      defaultSeverity: DiagnosticSeverity.Info,
-                                                                                      isEnabledByDefault: true);
+    static private readonly DiagnosticDescriptor s_NoAbstractMembersDescriptor = new(id: "NCG012",
+                                                                                     category: "Code Generation",
+                                                                                     title: "No public abstract members",
+                                                                                     messageFormat: "The type '{0}' has no accessible public members to serialize. Be sure to have some members accessible on derived or implementing types, otherwise the serialized object will always be empty while still taking up space.",
+                                                                                     description: "The type '{0}' has no accessible public members to serialize. Be sure to have some members accessible on derived or implementing types, otherwise the serialized object will always be empty while still taking up space.",
+                                                                                     defaultSeverity: DiagnosticSeverity.Info,
+                                                                                     isEnabledByDefault: true);
     static private readonly DiagnosticDescriptor s_ConsiderUnmanagedDescriptor = new(id: "NCG013",
                                                                                      category: "Code Generation",
                                                                                      title: "Consider making type unmanaged",

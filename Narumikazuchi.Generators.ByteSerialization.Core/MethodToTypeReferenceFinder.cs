@@ -81,12 +81,6 @@ static public class MethodToTypeReferenceFinder
         else
         {
             ImmutableArray<ITypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<ITypeSymbol>();
-            if (type is INamedTypeSymbol named &&
-                named.IsOpenGenericType())
-            {
-                return ImmutableArray<ITypeSymbol>.Empty;
-            }
-
             if (!RequiresGeneration(type))
             {
                 return ImmutableArray<ITypeSymbol>.Empty;

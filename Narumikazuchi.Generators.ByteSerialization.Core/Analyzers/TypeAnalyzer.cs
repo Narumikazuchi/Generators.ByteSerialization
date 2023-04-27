@@ -22,7 +22,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
         s_PointerNotSerializableDescriptor,
         s_OpenGenericsUnsupportedDescriptor,
         s_NoPublicMembersDescriptor,
-        s_NoInterfaceMembersDescriptor,
+        s_NoAbstractMembersDescriptor,
         s_ConsiderUnmanagedDescriptor
     }.ToImmutableArray();
 
@@ -58,8 +58,8 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
             {
                 if (type.IsAbstract)
                 {
-                    context.ReportDiagnostic(CreateNoInterfaceMembersDiagnostic(method: invocation,
-                                                                                typename: type.Name));
+                    context.ReportDiagnostic(CreateNoAbstractMembersDiagnostic(method: invocation,
+                                                                               typename: type.Name));
                 }
                 else
                 {
@@ -68,17 +68,20 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
                 }
             }
 
-            members = type.GetMembers()
-                          .Where(member => member is IFieldSymbol
-                                                  or IPropertySymbol)
-                          .ToImmutableArray();
-            if (!type.ToFrameworkString().StartsWith("System.") &&
-                !type.IsValueType &&
-                members.Length > 0 &&
-                members.All(MemberIsUnmanaged))
+            if (type.ContainingAssembly is not null &&
+                SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, context.SemanticModel.Compilation.Assembly) &&
+                !type.IsValueType)
             {
-                context.ReportDiagnostic(CreateConsiderUnmanagedDiagnostic(method: invocation,
-                                                                           typename: type.Name));
+                members = type.GetMembers()
+                              .Where(member => member is IFieldSymbol
+                                                      or IPropertySymbol)
+                              .ToImmutableArray();
+                if (members.Length > 0 &&
+                    members.All(MemberIsUnmanaged))
+                {
+                    context.ReportDiagnostic(CreateConsiderUnmanagedDiagnostic(method: invocation,
+                                                                               typename: type.Name));
+                }
             }
         }
     }

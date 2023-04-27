@@ -31,6 +31,9 @@ public sealed partial class SerializableGenerator
         }
 
         types = types.Where(type => !type.IsInterface())
+                     .Where(type => type is IArrayTypeSymbol ||
+                                    (type is INamedTypeSymbol named &&
+                                    !named.IsOpenGenericType()))
                      .Where(type => type.SpecialType is not SpecialType.System_IntPtr
                                                      and not SpecialType.System_UIntPtr
                                                      and not SpecialType.System_Delegate
