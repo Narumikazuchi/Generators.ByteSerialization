@@ -100,8 +100,8 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Int32 Serialize<TSerializable>(Stream stream,
-                                                 TSerializable? graph)
+    static public UInt32 Serialize<TSerializable>(Stream stream,
+                                                  TSerializable? graph)
     {
         return Serialize(stream: stream.AsWriteableStream(),
                          graph: graph);
@@ -117,13 +117,13 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Int32 Serialize<TStream, TSerializable>(TStream stream,
-                                                          TSerializable? graph)
+    static public UInt32 Serialize<TStream, TSerializable>(TStream stream,
+                                                           TSerializable? graph)
         where TStream : IWriteableStream
     {
         Byte[] buffer = Serialize(graph);
         stream.Write(buffer);
-        return buffer.Length;
+        return (UInt32)buffer.Length;
     }
 
     /// <summary>
@@ -138,9 +138,9 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Task<Int32> SerializeAsynchronously<TSerializable>(Stream stream,
-                                                                     TSerializable? graph,
-                                                                     CancellationToken cancellationToken = default)
+    static public Task<UInt32> SerializeAsynchronously<TSerializable>(Stream stream,
+                                                                      TSerializable? graph,
+                                                                      CancellationToken cancellationToken = default)
     {
         return SerializeAsynchronously(stream: stream.AsWriteableStream(),
                                        graph: graph,
@@ -158,14 +158,14 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public async Task<Int32> SerializeAsynchronously<TStream, TSerializable>(TStream stream,
-                                                                                    TSerializable? graph,
-                                                                                    CancellationToken cancellationToken = default)
+    static public async Task<UInt32> SerializeAsynchronously<TStream, TSerializable>(TStream stream,
+                                                                                     TSerializable? graph,
+                                                                                     CancellationToken cancellationToken = default)
         where TStream : IWriteableStream
     {
         Byte[] buffer = Serialize(graph);
         await stream.WriteAsynchronously(buffer: buffer,
                                          cancellationToken: cancellationToken);
-        return buffer.Length;
+        return (UInt32)buffer.Length;
     }
 }
