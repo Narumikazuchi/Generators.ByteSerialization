@@ -4,197 +4,316 @@
 public partial class NoDiagnostics
 {
     [TestMethod]
-    public async Task ClassOfUnmanagedTypeProperties()
+    public async Task StructOfUnmanagedTypeProperties()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public partial class Test
+public struct Test
 {
-    public DateOnly DateOnly { get; set; }
-    public TimeOnly TimeOnly { get; set; }
-    public TimeSpan TimeSpan { get; set; }
+    public Byte Byte { get; set; }
+    public Char Char { get; set; }
+    public Single Single { get; set; }
+    public Int64 Int64 { get; set; }
+    public Decimal Decimal { get; set; }
     public Guid Guid { get; set; }
-    public Half Half { get; set; }
     public Vector2D Vector2D { get; set; }
+}
+
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
 }";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
-    public async Task ClassOfUnmanagedTypeFields()
+    public async Task StructOfUnmanagedTypePropertiesInit()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public partial class Test
+public struct Test
 {
-    public DateOnly DateOnly;
-    public TimeOnly TimeOnly;
-    public TimeSpan TimeSpan;
+    public Byte Byte { get; init; }
+    public Char Char { get; init; }
+    public Single Single { get; init; }
+    public Int64 Int64 { get; init; }
+    public Decimal Decimal { get; init; }
+    public Guid Guid { get; init; }
+    public Vector2D Vector2D { get; init; }
+}
+
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
+}";
+
+        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+    }
+
+    [TestMethod]
+    public async Task ReadonlyStructOfUnmanagedTypePropertiesInit()
+    {
+        String source = @"using Narumikazuchi.Generators.ByteSerialization;
+using System;
+using System.IO;
+
+public struct Vector2D
+{
+    public Int32 X { get; set; }
+    public Int32 Y { get; set; }
+}
+
+public readonly struct Test
+{
+    public Byte Byte { get; init; }
+    public Char Char { get; init; }
+    public Single Single { get; init; }
+    public Int64 Int64 { get; init; }
+    public Decimal Decimal { get; init; }
+    public Guid Guid { get; init; }
+    public Vector2D Vector2D { get; init; }
+}
+
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
+}";
+
+        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+    }
+
+    [TestMethod]
+    public async Task StructOfUnmanagedTypeFields()
+    {
+        String source = @"using Narumikazuchi.Generators.ByteSerialization;
+using System;
+using System.IO;
+
+public struct Vector2D
+{
+    public Int32 X { get; set; }
+    public Int32 Y { get; set; }
+}
+
+public struct Test
+{
+    public Byte Byte;
+    public Char Char;
+    public Single Single;
+    public Int64 Int64;
+    public Decimal Decimal;
     public Guid Guid;
-    public Half Half;
     public Vector2D Vector2D;
+}
+
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
 }";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
-    public async Task SealedClassOfUnmanagedTypeProperties()
+    public async Task RecordStructOfUnmanagedTypeParameters()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public sealed partial class Test
+public record struct Test(Byte Byte,
+                          Char Char,
+                          Single Single,
+                          Int64 Int64,
+                          Decimal Decimal,
+                          Guid Guid,
+                          Vector2D Vector2D);
+
+public class Application
 {
-    public DateOnly DateOnly { get; set; }
-    public TimeOnly TimeOnly { get; set; }
-    public TimeSpan TimeSpan { get; set; }
-    public Guid Guid { get; set; }
-    public Half Half { get; set; }
-    public Vector2D Vector2D { get; set; }
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
 }";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
-    public async Task SealedClassOfUnmanagedTypeFields()
+    public async Task ReadonlyRecordStructOfUnmanagedTypeParameters()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public sealed partial class Test
+public readonly record struct Test(Byte Byte,
+                                   Char Char,
+                                   Single Single,
+                                   Int64 Int64,
+                                   Decimal Decimal,
+                                   Guid Guid,
+                                   Vector2D Vector2D);
+
+public class Application
 {
-    public DateOnly DateOnly;
-    public TimeOnly TimeOnly;
-    public TimeSpan TimeSpan;
-    public Guid Guid;
-    public Half Half;
-    public Vector2D Vector2D;
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
 }";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
-    public async Task RecordClassOfUnmanagedTypeProperties()
+    public async Task RecordStructOfUnmanagedTypeParametersAndProperties()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public partial record class Test(DateOnly DateOnly,
-                                 TimeOnly TimeOnly,
-                                 TimeSpan TimeSpan,
-                                 Guid Guid,
-                                 Half Half,
-                                 Vector2D Vector2D);";
+public record struct Test(Byte Byte,
+                          Char Char,
+                          Single Single,
+                          Int64 Int64,
+                          Decimal Decimal)
+{
+    public Guid Guid { get; set; } = default;
+    public Vector2D Vector2D { get; set; } = default;
+};
+
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
+}";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
-    public async Task SealedRecordClassOfUnmanagedTypeFields()
+    public async Task RecordStructOfUnmanagedTypeParametersAndPropertiesInit()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public sealed partial record class Test(DateOnly DateOnly,
-                                        TimeOnly TimeOnly,
-                                        TimeSpan TimeSpan,
-                                        Guid Guid,
-                                        Half Half,
-                                        Vector2D Vector2D);";
+public record struct Test(Byte Byte,
+                          Char Char,
+                          Single Single,
+                          Int64 Int64,
+                          Decimal Decimal)
+{
+    public Guid Guid { get; init; } = default;
+    public Vector2D Vector2D { get; init; } = default;
+};
+
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
+    }
+}";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
-    public async Task RecordStructOfUnmanagedTypeProperties()
+    public async Task ReadonlyRecordStructOfUnmanagedTypeParametersAndProperties()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
+using System.IO;
 
 public struct Vector2D
 {
     public Int32 X { get; set; }
-    public Int32 Y;
+    public Int32 Y { get; set; }
 }
 
-[ByteSerializable]
-public partial record struct Test(DateOnly DateOnly,
-                                  TimeOnly TimeOnly,
-                                  TimeSpan TimeSpan,
-                                  Guid Guid,
-                                  Half Half,
-                                  Vector2D Vector2D);";
+public readonly record struct Test(Byte Byte,
+                                   Char Char,
+                                   Single Single,
+                                   Int64 Int64,
+                                   Decimal Decimal)
+{
+    public Guid Guid { get; init; } = default;
+    public Vector2D Vector2D { get; init; } = default;
+};
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+public class Application
+{
+    static public void Run()
+    {
+        using MemoryStream stream = new MemoryStream();
+        ByteSerializer.Serialize(stream, new Test());
     }
-
-    [TestMethod]
-    public async Task ReadonlyRecordStructOfUnmanagedTypeFields()
-    {
-        String source = @"using Narumikazuchi.Generators.ByteSerialization;
-using System;
-
-public struct Vector2D
-{
-    public Int32 X { get; set; }
-    public Int32 Y;
-}
-
-[ByteSerializable]
-public readonly partial record struct Test(DateOnly DateOnly,
-                                           TimeOnly TimeOnly,
-                                           TimeSpan TimeSpan,
-                                           Guid Guid,
-                                           Half Half,
-                                           Vector2D Vector2D);";
+}";
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
