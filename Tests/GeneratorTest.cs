@@ -1,5 +1,6 @@
 ﻿using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.Generators.ByteSerialization.Generators;
+using Narumikazuchi.InputOutput;
 
 namespace Tests;
 
@@ -13,7 +14,11 @@ public sealed class GeneratorTest : SourceGeneratorTest<MSTestVerifier>
             TestState =
             {
                 ReferenceAssemblies = Net7.Assemblies,
-                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location }
+                AdditionalReferences =
+                {
+                    typeof(ByteSerializer).Assembly.Location,
+                    typeof(IStream).Assembly.Location
+                }
             }
         };
         foreach (String source in sources)
@@ -37,7 +42,11 @@ public sealed class GeneratorTest : SourceGeneratorTest<MSTestVerifier>
             {
                 Sources = { source },
                 ReferenceAssemblies = Net7.Assemblies,
-                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location }
+                AdditionalReferences =
+                {
+                    typeof(ByteSerializer).Assembly.Location,
+                    typeof(IStream).Assembly.Location
+                }
             }
         };
         foreach ((String filename, SourceText content) item in expected)

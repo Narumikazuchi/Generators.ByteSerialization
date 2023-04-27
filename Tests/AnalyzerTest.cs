@@ -1,5 +1,6 @@
 ﻿using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.Generators.ByteSerialization.Analyzers;
+using Narumikazuchi.InputOutput;
 
 namespace Tests;
 
@@ -13,7 +14,11 @@ public sealed class AnalyzerTest : CSharpAnalyzerTest<TypeAnalyzer, MSTestVerifi
             TestState =
             {
                 ReferenceAssemblies = Net7.Assemblies,
-                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location }
+                AdditionalReferences =
+                {
+                    typeof(ByteSerializer).Assembly.Location,
+                    typeof(IStream).Assembly.Location
+                }
             }
         };
 
@@ -35,7 +40,11 @@ public sealed class AnalyzerTest : CSharpAnalyzerTest<TypeAnalyzer, MSTestVerifi
             {
                 Sources = { source },
                 ReferenceAssemblies = Net7.Assemblies,
-                AdditionalReferences = { typeof(ByteSerializableAttribute).Assembly.Location }
+                AdditionalReferences =
+                {
+                    typeof(ByteSerializer).Assembly.Location,
+                    typeof(IStream).Assembly.Location
+                }
             }
         };
 
