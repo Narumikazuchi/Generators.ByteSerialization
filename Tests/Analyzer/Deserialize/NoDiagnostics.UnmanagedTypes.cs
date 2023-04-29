@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests.Analyzer;
+namespace Tests.Analyzer.Deserialize;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 public partial class NoDiagnostics
@@ -34,7 +34,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -70,7 +70,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -106,7 +106,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -142,7 +142,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -175,7 +175,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -208,7 +208,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -243,7 +243,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -278,7 +278,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 
@@ -313,7 +313,7 @@ public class Application
     static public void Run()
     {
         using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
+        ByteSerializer.Deserialize<Test>(stream, out _);
     }
 }";
 

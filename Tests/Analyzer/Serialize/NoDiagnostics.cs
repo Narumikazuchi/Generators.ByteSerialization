@@ -1,12 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests.Analyzer;
+namespace Tests.Analyzer.Serialize;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
+[TestClass]
 public partial class NoDiagnostics
 {
     [TestMethod]
-    public async Task StructOfEnumTypeProperties()
+    public async Task StructOfStringProperties()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -14,9 +15,7 @@ using System.IO;
 
 public struct Test
 {
-    public DayOfWeek DayOfWeek { get; set; }
-    public ConsoleColor ConsoleColor { get; set; }
-    public PlatformID PlatformID { get; set; }
+    public String String { get; set; }
 }
 
 public class Application
@@ -32,7 +31,7 @@ public class Application
     }
 
     [TestMethod]
-    public async Task StructOfEnumTypePropertiesInit()
+    public async Task StructOfStringPropertiesInit()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -40,9 +39,7 @@ using System.IO;
 
 public struct Test
 {
-    public DayOfWeek DayOfWeek { get; init; }
-    public ConsoleColor ConsoleColor { get; init; }
-    public PlatformID PlatformID { get; init; }
+    public String String { get; init; }
 }
 
 public class Application
@@ -58,7 +55,7 @@ public class Application
     }
 
     [TestMethod]
-    public async Task ReadonlyStructOfEnumTypePropertiesInit()
+    public async Task ReadonlyStructOfStringPropertiesInit()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -66,9 +63,7 @@ using System.IO;
 
 public readonly struct Test
 {
-    public DayOfWeek DayOfWeek { get; init; }
-    public ConsoleColor ConsoleColor { get; init; }
-    public PlatformID PlatformID { get; init; }
+    public String String { get; init; }
 }
 
 public class Application
@@ -84,7 +79,7 @@ public class Application
     }
 
     [TestMethod]
-    public async Task StructOfEnumTypeFields()
+    public async Task StructOfStringFields()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -92,9 +87,7 @@ using System.IO;
 
 public struct Test
 {
-    public DayOfWeek DayOfWeek;
-    public ConsoleColor ConsoleColor;
-    public PlatformID PlatformID;
+    public String String;
 }
 
 public class Application
@@ -110,15 +103,13 @@ public class Application
     }
 
     [TestMethod]
-    public async Task RecordStructOfEnumTypeParameters()
+    public async Task RecordStructOfStringParameters()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 using System.IO;
 
-public record struct Test(DayOfWeek DayOfWeek,
-                          ConsoleColor ConsoleColor,
-                          PlatformID PlatformID);
+public record struct Test(String String);
 
 public class Application
 {
@@ -133,39 +124,15 @@ public class Application
     }
 
     [TestMethod]
-    public async Task ReadonlyRecordStructOfEnumTypeParameters()
+    public async Task RecordStructOfStringProperties()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 using System.IO;
 
-public readonly record struct Test(DayOfWeek DayOfWeek,
-                                   ConsoleColor ConsoleColor,
-                                   PlatformID PlatformID);
-
-public class Application
+public record struct Test()
 {
-    static public void Run()
-    {
-        using MemoryStream stream = new MemoryStream();
-        ByteSerializer.Serialize(stream, new Test());
-    }
-}";
-
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
-    }
-
-    [TestMethod]
-    public async Task RecordStructOfEnumTypeParametersAndProperties()
-    {
-        String source = @"using Narumikazuchi.Generators.ByteSerialization;
-using System;
-using System.IO;
-
-public record struct Test(DayOfWeek DayOfWeek,
-                          ConsoleColor ConsoleColor)
-{
-    public PlatformID PlatformID { get; set; } = default;
+    public String String { get; set; } = default;
 };
 
 public class Application
@@ -181,16 +148,15 @@ public class Application
     }
 
     [TestMethod]
-    public async Task RecordStructOfEnumTypeParametersAndPropertiesInit()
+    public async Task RecordStructOfStringPropertiesInit()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 using System.IO;
 
-public record struct Test(DayOfWeek DayOfWeek,
-                          ConsoleColor ConsoleColor)
+public record struct Test()
 {
-    public PlatformID PlatformID { get; init; } = default;
+    public String String { get; init; } = default;
 };
 
 public class Application
@@ -206,16 +172,15 @@ public class Application
     }
 
     [TestMethod]
-    public async Task ReadonlyRecordStructOfEnumTypeParametersAndProperties()
+    public async Task ReadonlyRecordStructOfStringProperties()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 using System.IO;
 
-public readonly record struct Test(DayOfWeek DayOfWeek,
-                                   ConsoleColor ConsoleColor)
+public readonly record struct Test()
 {
-    public PlatformID PlatformID { get; init; } = default;
+    public String String { get; init; } = default;
 };
 
 public class Application
