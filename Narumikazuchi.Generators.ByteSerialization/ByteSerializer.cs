@@ -21,25 +21,17 @@ static public partial class ByteSerializer
     /// <exception cref="TypeNotSerializable"/>
     static public Int32 GetExpectedSerializedSize<TSerializable>(TSerializable? graph)
     {
-        Type? type = graph?.GetType();
-        if (type is null)
+        if (typeof(TSerializable).IsUnmanagedStruct())
         {
-            return 21;
+            return Unsafe.SizeOf<TSerializable>();
+        }
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
+        {
+            return handler.GetExpectedArraySize(graph);
         }
         else
         {
-            if (type.IsUnmanagedStruct())
-            {
-                return Unsafe.SizeOf<TSerializable>();
-            }
-            else if (Handlers is ISerializationHandler<TSerializable> handler)
-            {
-                return handler.GetExpectedArraySize(graph!) + 37;
-            }
-            else
-            {
-                throw new TypeNotSerializable(type);
-            }
+            throw new TypeNotSerializable(graph?.GetType() ?? typeof(TSerializable));
         }
     }
 

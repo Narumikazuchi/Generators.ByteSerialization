@@ -2,6 +2,8 @@
 
 namespace Narumikazuchi.Generators.ByteSerialization;
 
+#pragma warning disable CS8500
+
 public partial class ByteSerializer
 {
     /// <summary>
@@ -14,7 +16,7 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public unsafe Byte[] Serialize<TSerializable>(TSerializable? graph)
+    static public Byte[] Serialize<TSerializable>(TSerializable? graph)
     {
         if (typeof(TSerializable).IsUnmanagedStruct())
         {
@@ -24,18 +26,15 @@ public partial class ByteSerializer
         }
         else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph!));
-            fixed (Byte* pointer = buffer)
-            {
-                UInt32 written = Serialize(buffer: pointer,
-                                           graph: graph);
-                Byte[] result = new Byte[written];
-                Array.Copy(sourceArray: buffer,
-                           destinationArray: result,
-                           length: written);
-                ArrayPool<Byte>.Shared.Return(buffer);
-                return result;
-            }
+            Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph));
+            UInt32 written = handler.Serialize(buffer: buffer,
+                                               graph: graph);
+            Byte[] result = new Byte[written];
+            Array.Copy(sourceArray: buffer,
+                       destinationArray: result,
+                       length: written);
+            ArrayPool<Byte>.Shared.Return(buffer);
+            return result;
         }
         else
         {
@@ -53,11 +52,24 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public unsafe UInt32 Serialize<TSerializable>(Span<Byte> buffer,
-                                                         TSerializable? graph)
+    static public UInt32 Serialize<TSerializable>(Span<Byte> buffer,
+                                                  TSerializable? graph)
     {
-        return Serialize(buffer: (Byte*)Unsafe.AsPointer(ref buffer[0]),
-                         graph: graph);
+        if (typeof(TSerializable).IsUnmanagedStruct())
+        {
+            Unsafe.As<Byte, TSerializable>(ref buffer[0]) = graph!;
+            return (UInt32)Unsafe.SizeOf<TSerializable>();
+        }
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
+        {
+            UInt32 written = handler.Serialize(buffer: buffer,
+                                               graph: graph!);
+            return written;
+        }
+        else
+        {
+            throw new TypeNotSerializable(graph?.GetType() ?? typeof(TSerializable));
+        }
     }
     /// <summary>
     /// Serializes the specified runtime object into it's raw <see cref="Byte"/>-representation.
@@ -75,13 +87,14 @@ public partial class ByteSerializer
     {
         if (typeof(TSerializable).IsUnmanagedStruct())
         {
-            Unsafe.As<Byte, TSerializable>(ref Unsafe.AsRef<Byte>(buffer)) = graph!;
+            Unsafe.As<Byte, TSerializable>(ref buffer[0]) = graph!;
             return (UInt32)Unsafe.SizeOf<TSerializable>();
         }
         else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            UInt32 written = handler.Serialize(buffer: buffer,
-                                               graph: graph!);
+            Int32 size = handler.GetExpectedArraySize(graph);
+            UInt32 written = handler.Serialize(buffer: new Span<Byte>(buffer, size),
+                                               graph: graph);
             return written;
         }
         else

@@ -15,8 +15,8 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public unsafe UInt32 Deserialize<TSerializable>(ReadOnlySpan<Byte> buffer,
-                                                           out TSerializable? result)
+    static public UInt32 Deserialize<TSerializable>(ReadOnlySpan<Byte> buffer,
+                                                    out TSerializable? result)
     {
         if (typeof(TSerializable).IsUnmanagedStruct())
         {
@@ -25,7 +25,7 @@ public partial class ByteSerializer
         }
         else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            return handler.Deserialize(buffer: (Byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(buffer)),
+            return handler.Deserialize(buffer: buffer,
                                        result: out result);
         }
         else
@@ -54,7 +54,8 @@ public partial class ByteSerializer
         }
         else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            return handler.Deserialize(buffer: buffer,
+            Int32 size = *(Int32*)buffer;
+            return handler.Deserialize(buffer: new ReadOnlySpan<Byte>(buffer, size),
                                        result: out result);
         }
         else

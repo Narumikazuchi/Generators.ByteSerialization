@@ -182,8 +182,7 @@ static public partial class Extensions
         {
             return result;
         }
-        else if (type.SpecialType is SpecialType.System_String ||
-                 type.IsUnmanagedSerializable())
+        else if (type.IsUnmanagedSerializable())
         {
             s_CanBeSerializedCache.GetOrAdd(key: type,
                                             value: true);

@@ -3,7 +3,7 @@
 /// <summary>
 /// -- Used for internal code generation. --
 /// </summary>
-public partial interface IByteSerializer
+public interface IByteSerializer
 {
     /// <summary>
     /// -- Used for internal code generation. --

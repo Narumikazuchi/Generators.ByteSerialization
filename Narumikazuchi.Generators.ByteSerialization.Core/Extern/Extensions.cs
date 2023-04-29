@@ -113,7 +113,8 @@ static public class Extensions
                 }
                 else
                 {
-                    return 0;
+                    return right.BaseTypeCount()
+                                .CompareTo(left.BaseTypeCount());
                 }
             }
 
@@ -124,6 +125,18 @@ static public class Extensions
                                         value: result);
             return result;
         }
+    }
+
+    static public Int32 BaseTypeCount(this ITypeSymbol type)
+    {
+        Int32 result = 0;
+        INamedTypeSymbol baseType = type.BaseType;
+        while (baseType is not null)
+        {
+            result++;
+        }
+
+        return result;
     }
 
     static public Boolean ImplementsInterface(this INamedTypeSymbol type,

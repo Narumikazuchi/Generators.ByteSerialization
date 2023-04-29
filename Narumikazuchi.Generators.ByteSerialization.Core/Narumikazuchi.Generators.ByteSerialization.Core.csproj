@@ -52,6 +52,7 @@
 		<Using Include="System.Collections.Immutable" />
 		<Using Include="System.Diagnostics" />
 		<Using Include="System.Globalization" />
+		<Using Include="System.IO" />
 		<Using Include="System.Linq" />
 		<Using Include="System.Runtime.InteropServices" />
 		<Using Include="System.Security.Cryptography" />

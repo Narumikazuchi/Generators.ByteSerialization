@@ -80,9 +80,10 @@ public sealed class AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpType
     {{ }}
 }}";
 
-#if OUTPUT
-        System.IO.File.WriteAllText($@"D:\Sources\Narumikazuchi.Generated.Internals.ByteSerialization.AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()}.g.cs", source);
-#else
+#if DEBUG && OUTPUT
+        Directory.CreateDirectory(Path.Combine(Environment.CurrentDirectory, @"..\Generated"));
+        File.WriteAllText(Path.Combine(Environment.CurrentDirectory, @$"..\Generated\Narumikazuchi.Generated.Internals.ByteSerialization.AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()}.g.cs"), source);
+#endif
         try
         {
             SourceText text = SourceText.From(text: source,
@@ -91,7 +92,6 @@ public sealed class AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpType
                               sourceText: text);
         }
         catch { }
-#endif
     }
 
     static private void ExploreNamespace(INamespaceOrTypeSymbol namespaceOrType,

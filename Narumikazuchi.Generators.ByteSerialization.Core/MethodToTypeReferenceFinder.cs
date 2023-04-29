@@ -34,7 +34,6 @@ static public class MethodToTypeReferenceFinder
             namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_Nullable_T));
             namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_SByte));
             namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_Single));
-            namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_String));
             namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_UInt16));
             namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_UInt32));
             namedBuilder.Add(compilation.GetSpecialType(SpecialType.System_UInt64));
@@ -107,107 +106,6 @@ static public class MethodToTypeReferenceFinder
         }
 
         return true;
-    }
-
-    static private ITypeSymbol[] GetDependendTypes(ITypeSymbol type)
-    {
-        HashSet<ITypeSymbol> builder = new(SymbolEqualityComparer.Default);
-        if (type is IArrayTypeSymbol array)
-        {
-            builder.Add(array.ElementType);
-
-            foreach (ITypeSymbol dependent in GetDependendTypes(array.ElementType))
-            {
-                builder.Add(dependent);
-            }
-        }
-        else if (type is INamedTypeSymbol namedType)
-        {
-            if (namedType.IsGenericType)
-            {
-                foreach (ITypeSymbol typeArgument in namedType.TypeArguments.Where(argument => argument.TypeKind is not TypeKind.TypeParameter))
-                {
-                    builder.Add(typeArgument);
-                    foreach (ITypeSymbol dependent in GetDependendTypes(typeArgument))
-                    {
-                        builder.Add(dependent);
-                    }
-                }
-            }
-
-            ImmutableArray<ISymbol> members = namedType.GetMembersToSerialize();
-            foreach (IFieldSymbol field in members.OfType<IFieldSymbol>())
-            {
-                if (field.Type is INamedTypeSymbol fieldType &&
-                    fieldType.SpecialType is SpecialType.None
-                                          or SpecialType.System_DateTime
-                                          or SpecialType.System_Enum
-                                          or SpecialType.System_Nullable_T
-                                          or SpecialType.System_String)
-                {
-                    builder.Add(fieldType);
-                    foreach (ITypeSymbol dependent in GetDependendTypes(fieldType))
-                    {
-                        builder.Add(dependent);
-                    }
-                }
-                else if (field.Type is IArrayTypeSymbol arrayField &&
-                         arrayField.ElementType is INamedTypeSymbol element)
-                {
-                    builder.Add(arrayField);
-                    builder.Add(element);
-                }
-            }
-
-            foreach (IPropertySymbol property in members.OfType<IPropertySymbol>())
-            {
-                if (property.Type is INamedTypeSymbol propertyType &&
-                    propertyType.SpecialType is SpecialType.None
-                                          or SpecialType.System_DateTime
-                                          or SpecialType.System_Enum
-                                          or SpecialType.System_Nullable_T
-                                          or SpecialType.System_String)
-                {
-                    builder.Add(propertyType);
-                    foreach (ITypeSymbol dependent in GetDependendTypes(propertyType))
-                    {
-                        builder.Add(dependent);
-                    }
-                }
-                else if (property.Type is IArrayTypeSymbol arrayField &&
-                         arrayField.ElementType is INamedTypeSymbol element)
-                {
-                    builder.Add(arrayField);
-                    builder.Add(element);
-                }
-            }
-
-            if (!namedType.IsValueType &&
-                !namedType.IsSealed)
-            {
-                foreach (INamedTypeSymbol derived in namedType.GetDerivedTypes())
-                {
-                    builder.Add(derived);
-                    foreach (ITypeSymbol dependent in GetDependendTypes(derived))
-                    {
-                        builder.Add(dependent);
-                    }
-                }
-            }
-
-            INamedTypeSymbol collection = type.AllInterfaces.FirstOrDefault(@interface => @interface.ToFrameworkString()
-                                                                                                    .StartsWith("System.Collections.Generic.ICollection<"));
-            if (collection is not null)
-            {
-                builder.Add(collection.TypeArguments[0]);
-                foreach (ITypeSymbol dependent in GetDependendTypes(collection.TypeArguments[0]))
-                {
-                    builder.Add(dependent);
-                }
-            }
-        }
-
-        return builder.ToArray();
     }
 
     static private INamedTypeSymbol s_ByteSerializer = default;

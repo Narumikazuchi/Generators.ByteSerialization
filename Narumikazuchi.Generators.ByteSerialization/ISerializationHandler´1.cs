@@ -11,7 +11,7 @@ public unsafe interface ISerializationHandler<TSerializable>
     /// <param name="buffer">The buffer to read from.</param>
     /// <param name="result">The <typeparamref name="TSerializable"/> represented by the buffer.</param>
     /// <returns>The amount of bytes read from the buffer.</returns>
-    public UInt32 Deserialize(Byte* buffer,
+    public UInt32 Deserialize(ReadOnlySpan<Byte> buffer,
                               out TSerializable? result);
 
     /// <summary>
@@ -27,6 +27,6 @@ public unsafe interface ISerializationHandler<TSerializable>
     /// <param name="buffer">The buffer into which to store the serialized value.</param>
     /// <param name="graph">The value to serialize.</param>
     /// <returns>The amount of bytes written to the buffer.</returns>
-    public UInt32 Serialize(Byte* buffer,
+    public UInt32 Serialize(Span<Byte> buffer,
                             TSerializable? graph);
 }

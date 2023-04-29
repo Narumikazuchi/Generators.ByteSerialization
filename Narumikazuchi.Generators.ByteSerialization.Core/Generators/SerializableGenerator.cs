@@ -30,14 +30,7 @@ public sealed partial class SerializableGenerator
             return;
         }
 
-        types = types.Where(type => !type.IsInterface())
-                     .Where(type => type is IArrayTypeSymbol ||
-                                    (type is INamedTypeSymbol named &&
-                                    !named.IsOpenGenericType()))
-                     .Where(type => type.SpecialType is not SpecialType.System_IntPtr
-                                                     and not SpecialType.System_UIntPtr
-                                                     and not SpecialType.System_Delegate
-                                                     and not SpecialType.System_MulticastDelegate)
+        types = types.Where(ShouldGenerateCode)
                      .Distinct((IEqualityComparer<ITypeSymbol>)SymbolEqualityComparer.Default)
                      .ToImmutableArray();
 
@@ -75,7 +68,7 @@ public sealed partial class SerializableGenerator
             builder.AppendLine($"public unsafe partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} : {GlobalNames.ISerializationHandler(type)}");
             builder.AppendLine("{");
             builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Deserialize(Byte* buffer, out {type.ToFrameworkString()} result)");
+            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Deserialize(ReadOnlySpan<Byte> buffer, out {type.ToFrameworkString()} result)");
             builder.AppendLine("    {");
             builder.AppendLine($"        return __{index}.Deserialize(buffer, out result);");
             builder.AppendLine("    }");
@@ -87,7 +80,7 @@ public sealed partial class SerializableGenerator
             builder.AppendLine("    }");
             builder.AppendLine();
             builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Serialize(Byte* buffer, {type.ToFrameworkString()} value)");
+            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Serialize(Span<Byte> buffer, {type.ToFrameworkString()} value)");
             builder.AppendLine("    {");
             builder.AppendLine($"        return __{index}.Serialize(buffer, value);");
             builder.AppendLine("    }");
@@ -96,90 +89,70 @@ public sealed partial class SerializableGenerator
             builder.AppendLine($"    static private class __{index}");
             builder.AppendLine("    {");
 
-            if (type is INamedTypeSymbol named)
-            {
-                DeserializeCodeWriter.WriteMethod(type: named,
-                                                  builder: builder);
-                builder.AppendLine();
+            DeserializeCodeWriter.WriteMethod(type: type,
+                                              builder: builder);
+            builder.AppendLine();
 
-                SizeCodeWriter.WriteMethod(type: named,
-                                           builder: builder);
-                builder.AppendLine();
+            SizeCodeWriter.WriteMethod(type: type,
+                                       builder: builder);
+            builder.AppendLine();
 
-                SerializeCodeWriter.WriteMethod(type: named,
-                                                builder: builder);
-                builder.AppendLine();
-                index++;
-            }
-            else if (type is IArrayTypeSymbol array)
-            {
-                DeserializeCodeWriter.WriteMethod(array: array,
-                                                  builder: builder);
-                builder.AppendLine();
+            SerializeCodeWriter.WriteMethod(type: type,
+                                            builder: builder);
 
-                SizeCodeWriter.WriteMethod(array: array,
-                                           builder: builder);
-                builder.AppendLine();
-
-                SerializeCodeWriter.WriteMethod(array: array,
-                                                builder: builder);
-                builder.AppendLine();
-                index++;
-            }
-
-            if (type is INamedTypeSymbol named2 &&
-                !named2.HasDefaultConstructor() &&
-                !named2.IsRecord)
-            {
-                static String MemberToParameter(ISymbol member)
-                {
-                    if (member is IFieldSymbol field)
-                    {
-                        return $"{field.Type.ToFrameworkString()} {field.Name}";
-                    }
-                    else if (member is IPropertySymbol property)
-                    {
-                        return $"{property.Type.ToFrameworkString()} {property.Name}";
-                    }
-                    else
-                    {
-                        return String.Empty;
-                    }
-                }
-
-                builder.AppendLine();
-
-                ImmutableArray<ISymbol> members = named2.GetMembersToSerialize();
-                ConstructorCodeWriter.WriteMethod(type: named2,
-                                                  members: members,
-                                                  builder: builder);
-
-                builder.AppendLine();
-                builder.AppendLine($"        static private readonly Lazy<Constructor> s_Constructor = new Lazy<Constructor>(GenerateConstructor, LazyThreadSafetyMode.ExecutionAndPublication);");
-
-                String parameters = String.Join(", ", members.Select(MemberToParameter));
-
-                builder.AppendLine();
-                builder.AppendLine($"        private delegate {named2.ToFrameworkString()} Constructor({parameters});");
-            }
+            ConstructorCodeWriter.WriteConstructor(type: type,
+                                                   builder: builder);
+            index++;
 
             builder.AppendLine("    }");
 
             builder.Append('}');
 
             String source = builder.ToString();
-#if OUTPUT
-            System.IO.File.WriteAllText($@"D:\Sources\Narumikazuchi.Generated.Internals.ByteSerialization.Handler.{type.ToFileString()}.g.cs", source);
-#else
-        try
-        {
+#if DEBUG && OUTPUT
+            Directory.CreateDirectory(Path.Combine(Environment.CurrentDirectory, @"..\Generated"));
+            File.WriteAllText(Path.Combine(Environment.CurrentDirectory, $@"..\Generated\Narumikazuchi.Generated.Internals.ByteSerialization.Handler.{type.ToFileString()}.g.cs"), source);
+#endif
+            try
+            {
             SourceText text = SourceText.From(text: source,
                                               encoding: Encoding.UTF8);
             context.AddSource(hintName: $"Narumikazuchi.Generated.Internals.ByteSerialization.Handler.{type.ToFileString()}.g.cs",
                               sourceText: text);
         }
         catch { }
-#endif
         }
+    }
+
+    static private Boolean ShouldGenerateCode(ITypeSymbol type)
+    {
+        if (type.IsInterface())
+        {
+            return false;
+        }
+
+        if (type is INamedTypeSymbol named)
+        {
+            if (named.IsOpenGenericType())
+            {
+                return false;
+            }
+
+            if (named.IsAbstract &&
+                named.GetDerivedTypes().Length is 0)
+            {
+                return false;
+            }
+        }
+
+        if (type.SpecialType is SpecialType.System_IntPtr
+                             or SpecialType.System_UIntPtr
+                             or SpecialType.System_Delegate
+                             or SpecialType.System_MulticastDelegate)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

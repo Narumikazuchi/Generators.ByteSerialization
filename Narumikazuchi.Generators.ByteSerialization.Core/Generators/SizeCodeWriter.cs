@@ -5,298 +5,431 @@ namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 static public class SizeCodeWriter
 {
-    static public void WriteMethod(IArrayTypeSymbol array,
-                                   StringBuilder builder)
-    {
-        builder.AppendLine("        [CompilerGenerated]");
-        builder.AppendLine("        [MethodImpl(MethodImplOptions.AggressiveInlining)]");
-        builder.AppendLine($"        static public Int32 GetExpectedArraySize({array.ToFrameworkString()} value)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            var size = 37;");
-
-        WriteMethodBody(array: array,
-                        builder: builder,
-                        indent: "            ");
-
-        builder.AppendLine("            return size + 128;");
-        builder.AppendLine("        }");
-    }
-    static public void WriteMethod(INamedTypeSymbol type,
+    static public void WriteMethod(ITypeSymbol type,
                                    StringBuilder builder)
     {
         builder.AppendLine("        [CompilerGenerated]");
         builder.AppendLine("        [MethodImpl(MethodImplOptions.AggressiveInlining)]");
         builder.AppendLine($"        static public Int32 GetExpectedArraySize({type.ToFrameworkString()} value)");
         builder.AppendLine("        {");
-        builder.AppendLine("            var size = 37;");
+        builder.AppendLine($"            var size = sizeof(Int64) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
 
-        WriteMethodBody(type: type,
-                        builder: builder,
-                        indent: "            ");
+        Int32 varCounter = -1;
+        WriteForType(type: type,
+                     builder: builder,
+                     indent: "            ",
+                     target: "value",
+                     varCounter: ref varCounter);
 
-        builder.AppendLine("            return size + 128;");
+        builder.AppendLine("            return size;");
         builder.AppendLine("        }");
     }
 
-    static private void WriteMethodBody(IArrayTypeSymbol array,
-                                        StringBuilder builder,
-                                        String indent,
-                                        String target = "value")
+    static private void WriteForType(ITypeSymbol type,
+                                     StringBuilder builder,
+                                     String indent,
+                                     String target,
+                                     ref Int32 varCounter)
+    {
+        if (type is IArrayTypeSymbol array)
+        {
+            WriteForArrayType(array: array,
+                              builder: builder,
+                              indent: indent,
+                              varCounter: ref varCounter,
+                              target: target);
+        }
+        else if (type.IsValueType)
+        {
+            WriteForValueType(type: (INamedTypeSymbol)type,
+                              builder: builder,
+                              indent: indent,
+                              varCounter: ref varCounter,
+                              target: target);
+        }
+        else if (type.IsSealed)
+        {
+            WriteForSealedType(type: (INamedTypeSymbol)type,
+                               builder: builder,
+                               indent: indent,
+                               varCounter: ref varCounter,
+                               target: target);
+        }
+        else if (type.IsAbstract)
+        {
+            WriteForAbstractType(type: (INamedTypeSymbol)type,
+                                 builder: builder,
+                                 indent: indent,
+                                 varCounter: ref varCounter,
+                                 target: target);
+        }
+        else
+        {
+            WriteForPolymorphicType(type: (INamedTypeSymbol)type,
+                                    builder: builder,
+                                    indent: indent,
+                                    varCounter: ref varCounter,
+                                    target: target);
+        }
+    }
+
+    static private void WriteForArrayType(IArrayTypeSymbol array,
+                                          StringBuilder builder,
+                                          String indent,
+                                          String target,
+                                          ref Int32 varCounter)
     {
         if (array.Rank is 1 &&
             array.ElementType.IsUnmanagedSerializable())
         {
             builder.AppendLine($"{indent}if ({target} is not null)");
             builder.AppendLine($"{indent}{{");
-            builder.AppendLine($"{indent}    size += sizeof(Int32) + {target}.Length * sizeof({array.ElementType.ToFrameworkString()});");
+            builder.AppendLine($"{indent}    size += sizeof(Int32) + {target}.Length * Unsafe.SizeOf<{array.ElementType.ToFrameworkString()}>();");
             builder.AppendLine($"{indent}}}");
         }
         else
         {
-            builder.AppendLine($"{indent}size += {array.Rank * sizeof(Int32)};");
-
             builder.AppendLine($"{indent}if ({target} is not null)");
             builder.AppendLine($"{indent}{{");
+            builder.AppendLine($"{indent}    size += sizeof(Int32) * {array.Rank};");
+            varCounter++;
+            builder.AppendLine($"{indent}    foreach (var _var{varCounter} in {target})");
+            builder.AppendLine($"{indent}    {{");
 
-            if (array.ElementType.IsUnmanagedSerializable())
-            {
-                builder.AppendLine($"{indent}    size += {target}.Length * sizeof({array.ElementType.ToFrameworkString()});");
-            }
-            else if (array.ElementType is IArrayTypeSymbol elementArray)
-            {
-                String targetNormalized = target.Replace('.', '_');
-                builder.AppendLine($"{indent}    foreach (var {targetNormalized}_element in {target})");
-                builder.AppendLine($"{indent}    {{");
+            WriteForType(type: array.ElementType,
+                         builder: builder,
+                         indent: indent + "        ",
+                         target: $"_var{varCounter}",
+                         varCounter: ref varCounter);
 
-                WriteMethodBody(array: elementArray,
-                                builder: builder,
-                                indent: indent + "        ",
-                                target: $"{targetNormalized}_element");
-
-                builder.AppendLine($"{indent}    }}");
-            }
-            else if (array.ElementType is INamedTypeSymbol elementType)
-            {
-                String targetNormalized = target.Replace('.', '_');
-                builder.AppendLine($"{indent}    foreach (var {targetNormalized}_element in {target})");
-                builder.AppendLine($"{indent}    {{");
-
-                WriteMethodBody(type: elementType,
-                                builder: builder,
-                                indent: indent + "        ",
-                                target: $"{targetNormalized}_element");
-
-                builder.AppendLine($"{indent}    }}");
-            }
-
+            builder.AppendLine($"{indent}    }}");
             builder.AppendLine($"{indent}}}");
         }
     }
-    static private void WriteMethodBody(INamedTypeSymbol type,
-                                        StringBuilder builder,
-                                        String indent,
-                                        String target = "value")
+
+    static private void WriteForValueType(INamedTypeSymbol type,
+                                          StringBuilder builder,
+                                          String indent,
+                                          String target,
+                                          ref Int32 varCounter)
     {
-        if (type.SpecialType is SpecialType.System_String)
+        if (type.IsUnmanagedSerializable())
         {
-            builder.AppendLine($"{indent}size += sizeof(Int32);");
-            builder.AppendLine($"{indent}if ({target} is not null)");
-            builder.AppendLine($"{indent}{{");
-            builder.AppendLine($"{indent}   size += 4 * {target}.Length;");
-            builder.AppendLine($"{indent}}}");
-            return;
+            builder.AppendLine($"{indent}size += Unsafe.SizeOf<{type.ToFrameworkString()}>();");
         }
-        else if (type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<") &&
-                 !type.IsUnmanagedSerializable())
+        else if (type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<"))
         {
             IPropertySymbol property = type.GetMembers("Key")
                                            .OfType<IPropertySymbol>()
                                            .First();
-            WriteForMember(member: property,
-                           memberType: property.Type,
-                           builder: builder,
-                           indent: indent,
-                           target: target);
+            WriteForType(type: property.Type,
+                         builder: builder,
+                         indent: indent,
+                         varCounter: ref varCounter,
+                         target: $"{target}.Key");
+
             property = type.GetMembers("Value")
                            .OfType<IPropertySymbol>()
                            .First();
-            WriteForMember(member: property,
-                           memberType: property.Type,
-                           builder: builder,
-                           indent: indent,
-                           target: target);
-            return;
+            WriteForType(type: property.Type,
+                         builder: builder,
+                         indent: indent,
+                         varCounter: ref varCounter,
+                         target: $"{target}.Value");
         }
-
-        if (!type.IsValueType)
+        else
         {
-            builder.AppendLine($"{indent}size++;");
-            builder.AppendLine($"{indent}if ({target} is not null)");
-            builder.AppendLine($"{indent}{{");
-            indent += "    ";
-        }
+            builder.AppendLine($"{indent}size += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
 
-        ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
-        foreach (ISymbol member in members)
-        {
-            if (member is IFieldSymbol field)
+            ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
+            foreach (ISymbol member in members)
             {
-                WriteForMember(member: field,
-                               memberType: field.Type,
-                               builder: builder,
-                               indent: indent,
-                               target: target);
-            }
-            else if (member is IPropertySymbol property)
-            {
-                WriteForMember(member: property,
-                               memberType: property.Type,
-                               builder: builder,
-                               indent: indent,
-                               target: target);
+                if (member is IFieldSymbol field)
+                {
+                    WriteForType(type: field.Type,
+                                 builder: builder,
+                                 indent: indent,
+                                 varCounter: ref varCounter,
+                                 target: $"{target}.{field.Name}");
+                }
+                else if (member is IPropertySymbol property)
+                {
+                    WriteForType(type: property.Type,
+                                 builder: builder,
+                                 indent: indent,
+                                 varCounter: ref varCounter,
+                                 target: $"{target}.{property.Name}");
+                }
             }
         }
 
         if (type.IsCollection(out ITypeSymbol elementType))
         {
-            if (elementType.IsUnmanagedSerializable())
-            {
-                if (type.GetMembers("Count")
-                        .OfType<IPropertySymbol>()
-                        .Any(property => property.DeclaredAccessibility is Accessibility.Public))
-                {
-                    builder.AppendLine($"{indent}size += sizeof(Int32) + {target}.Count * sizeof({elementType.ToFrameworkString()});");
-                }
-                else
-                {
-                    builder.AppendLine($"{indent}size += sizeof(Int32) + ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){target}).Count * sizeof({elementType.ToFrameworkString()});");
-                }
-            }
-            else if (elementType is IArrayTypeSymbol elementArray)
-            {
-                String targetNormalized = target.Replace('.', '_');
-                builder.AppendLine($"{indent}size += sizeof(Int32);");
-                builder.AppendLine($"{indent}foreach (var {targetNormalized}_element in {target})");
-                builder.AppendLine($"{indent}{{");
-
-                WriteMethodBody(array: elementArray,
-                                builder: builder,
-                                indent: indent + "    ",
-                                target: $"{targetNormalized}_element");
-
-                builder.AppendLine($"{indent}}}");
-            }
-            else if (elementType is INamedTypeSymbol elementNamedType)
-            {
-                String targetNormalized = target.Replace('.', '_');
-                builder.AppendLine($"{indent}size += sizeof(Int32);");
-                builder.AppendLine($"{indent}foreach (var {targetNormalized}_element in {target})");
-                builder.AppendLine($"{indent}{{");
-
-                WriteMethodBody(type: elementNamedType,
-                                builder: builder,
-                                indent: indent + "    ",
-                                target: $"{targetNormalized}_element");
-
-                builder.AppendLine($"{indent}}}");
-            }
+            WriteForCollection(type: type,
+                               elementType: elementType,
+                               builder: builder,
+                               indent: indent,
+                               varCounter: ref varCounter,
+                               target: target);
         }
+    }
 
-        if (!type.IsValueType)
+    static private void WriteForSealedType(INamedTypeSymbol type,
+                                           StringBuilder builder,
+                                           String indent,
+                                           String target,
+                                           ref Int32 varCounter)
+    {
+        builder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+        if (type.SpecialType is SpecialType.System_String)
         {
-            indent = indent.Substring(4);
+            builder.AppendLine($"{indent}size += 4 * {target}.Length;");
+        }
+        else
+        {
+            builder.AppendLine($"{indent}if ({target} is not null)");
+            builder.AppendLine($"{indent}{{");
+
+            ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
+            String furtherIndent = indent + "    ";
+            foreach (ISymbol member in members)
+            {
+                if (member is IFieldSymbol field)
+                {
+                    WriteForType(type: field.Type,
+                                 builder: builder,
+                                 indent: furtherIndent,
+                                 varCounter: ref varCounter,
+                                 target: $"{target}.{field.Name}");
+                }
+                else if (member is IPropertySymbol property)
+                {
+                    WriteForType(type: property.Type,
+                                 builder: builder,
+                                 indent: furtherIndent,
+                                 varCounter: ref varCounter,
+                                 target: $"{target}.{property.Name}");
+                }
+            }
+
+            if (type.IsCollection(out ITypeSymbol elementType))
+            {
+                WriteForCollection(type: type,
+                                   elementType: elementType,
+                                   builder: builder,
+                                   indent: furtherIndent,
+                                   varCounter: ref varCounter,
+                                   target: target);
+            }
+
             builder.AppendLine($"{indent}}}");
         }
     }
 
-    static private void WriteForMember(ISymbol member,
-                                       ITypeSymbol memberType,
-                                       StringBuilder builder,
-                                       String indent,
-                                       String target = "value")
+    static private void WriteForAbstractType(INamedTypeSymbol type,
+                                             StringBuilder builder,
+                                             String indent,
+                                             String target,
+                                             ref Int32 varCounter)
     {
-        if (memberType.IsUnmanagedSerializable())
+        builder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+
+        ImmutableArray<INamedTypeSymbol> derivedTypes = type.GetDerivedTypes();
+        Boolean first = true;
+        foreach (INamedTypeSymbol derivedType in derivedTypes)
         {
-            builder.AppendLine($"{indent}size += sizeof({memberType.ToFrameworkString()});");
-        }
-        else
-        {
-            if (memberType.IsValueType ||
-                memberType.IsSealed)
+            varCounter++;
+            if (first)
             {
-                if (memberType is IArrayTypeSymbol elementArray)
-                {
-                    WriteMethodBody(array: elementArray,
-                                    builder: builder,
-                                    indent: indent,
-                                    target: $"{target}.{member.Name}");
-                }
-                else if (memberType is INamedTypeSymbol elementType)
-                {
-                    WriteMethodBody(type: elementType,
-                                    builder: builder,
-                                    indent: indent,
-                                    target: $"{target}.{member.Name}");
-                }
+                builder.AppendLine($"{indent}if ({target} is {derivedType.ToFrameworkString()} _var{varCounter})");
+                first = false;
             }
             else
             {
-                ImmutableArray<INamedTypeSymbol> derivedTypes = ((INamedTypeSymbol)memberType).GetDerivedTypes();
-                if (derivedTypes.Length is 0)
+                builder.AppendLine($"{indent}else if ({target} is {derivedType.ToFrameworkString()} _var{varCounter})");
+            }
+
+            builder.AppendLine($"{indent}{{");
+
+            ImmutableArray<ISymbol> members = derivedType.GetMembersToSerialize();
+            String furtherIndent = indent + "        ";
+            foreach (ISymbol member in members)
+            {
+                if (member is IFieldSymbol field)
                 {
-                    WriteMethodBody(type: (INamedTypeSymbol)memberType,
-                                    builder: builder,
-                                    indent: indent,
-                                    target: $"{target}.{member.Name}");
+                    WriteForType(type: field.Type,
+                                 builder: builder,
+                                 indent: furtherIndent,
+                                 varCounter: ref varCounter,
+                                 target: $"_var{varCounter}.{field.Name}");
+                }
+                else if (member is IPropertySymbol property)
+                {
+                    WriteForType(type: property.Type,
+                                 builder: builder,
+                                 indent: furtherIndent,
+                                 varCounter: ref varCounter,
+                                 target: $"_var{varCounter}.{property.Name}");
+                }
+            }
+
+            if (derivedType.IsCollection(out ITypeSymbol elementType))
+            {
+                WriteForCollection(type: type,
+                                   elementType: elementType,
+                                   builder: builder,
+                                   indent: furtherIndent,
+                                   varCounter: ref varCounter,
+                                   target: target);
+            }
+
+            builder.AppendLine($"{indent}}}");
+        }
+    }
+
+    static private void WriteForPolymorphicType(INamedTypeSymbol type,
+                                                StringBuilder builder,
+                                                String indent,
+                                                String target,
+                                                ref Int32 varCounter)
+    {
+        ImmutableArray<ISymbol> members;
+        String furtherIndent = indent + "    ";
+
+        ImmutableArray<INamedTypeSymbol> derivedTypes = type.GetDerivedTypes();
+        if (derivedTypes.Length is 0)
+        {
+            WriteForSealedType(type: type,
+                               builder: builder,
+                               indent: indent,
+                               varCounter: ref varCounter,
+                               target: target);
+        }
+        else
+        {
+            builder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+
+            Boolean first = true;
+            foreach (INamedTypeSymbol derivedType in derivedTypes)
+            {
+                varCounter++;
+                if (first)
+                {
+                    builder.AppendLine($"{indent}if ({target} is {derivedType.ToFrameworkString()} _var{varCounter})");
+                    first = false;
                 }
                 else
                 {
-                    builder.AppendLine($"{indent}size += 32;");
-                    String targetNormalized = target.Replace('.', '_');
-                    Boolean first = true;
-                    foreach (INamedTypeSymbol derivedType in derivedTypes)
+                    builder.AppendLine($"{indent}else if ({target} is {derivedType.ToFrameworkString()} _var{varCounter})");
+                }
+
+                builder.AppendLine($"{indent}{{");
+
+                members = derivedType.GetMembersToSerialize();
+                foreach (ISymbol member in members)
+                {
+                    if (member is IFieldSymbol field)
                     {
-                        if (first)
-                        {
-                            first = false;
-                            builder.AppendLine($"{indent}if ({target}.{member.Name} is {derivedType.ToFrameworkString()} {targetNormalized}_{member.Name}_{derivedType.Name})");
-                        }
-                        else
-                        {
-                            builder.AppendLine($"{indent}else if ({target}.{member.Name} is {derivedType.ToFrameworkString()} {targetNormalized}_{member.Name}_{derivedType.Name})");
-                        }
-
-                        builder.AppendLine($"{indent}{{");
-
-                        WriteMethodBody(type: derivedType,
-                                        builder: builder,
-                                        indent: indent + "    ",
-                                        target: $"{targetNormalized}_{member.Name}_{derivedType.Name}");
-
-                        builder.AppendLine($"{indent}}}");
+                        WriteForType(type: field.Type,
+                                     builder: builder,
+                                     indent: furtherIndent,
+                                     varCounter: ref varCounter,
+                                     target: $"_var{varCounter}.{field.Name}");
                     }
-
-                    if (memberType.IsAbstract)
+                    else if (member is IPropertySymbol property)
                     {
-                        builder.AppendLine($"{indent}else");
-                        builder.AppendLine($"{indent}{{");
-                        builder.AppendLine($"{indent}    throw new {GlobalNames.BYTESERIALIZER}.TypeNotSerializable(typeof({memberType.ToFrameworkString()}));");
-                        builder.AppendLine($"{indent}}}");
-                    }
-                    else
-                    {
-                        builder.AppendLine($"{indent}else");
-                        builder.AppendLine($"{indent}{{");
-
-                        WriteMethodBody(type: (INamedTypeSymbol)memberType,
-                                        builder: builder,
-                                        indent: indent + "    ",
-                                        target: $"{target}.{member.Name}");
-
-                        builder.AppendLine($"{indent}}}");
+                        WriteForType(type: property.Type,
+                                     builder: builder,
+                                     indent: furtherIndent,
+                                     varCounter: ref varCounter,
+                                     target: $"_var{varCounter}.{property.Name}");
                     }
                 }
+
+                if (derivedType.IsCollection(out ITypeSymbol derivedElementType))
+                {
+                    WriteForCollection(type: type,
+                                       elementType: derivedElementType,
+                                       builder: builder,
+                                       indent: furtherIndent,
+                                       varCounter: ref varCounter,
+                                       target: target);
+                }
+
+                builder.AppendLine($"{indent}}}");
             }
+
+            varCounter++;
+            builder.AppendLine($"{indent}else if ({target} is {type.ToFrameworkString()} _var{varCounter})");
+            builder.AppendLine($"{indent}{{");
+
+            foreach (ISymbol member in members)
+            {
+                if (member is IFieldSymbol field)
+                {
+                    WriteForType(type: field.Type,
+                                 builder: builder,
+                                 indent: furtherIndent,
+                                 varCounter: ref varCounter,
+                                 target: $"{target}.{field.Name}");
+                }
+                else if (member is IPropertySymbol property)
+                {
+                    WriteForType(type: property.Type,
+                                 builder: builder,
+                                 indent: furtherIndent,
+                                 varCounter: ref varCounter,
+                                 target: $"{target}.{property.Name}");
+                }
+            }
+
+            if (type.IsCollection(out ITypeSymbol elementType))
+            {
+                WriteForCollection(type: type,
+                                   elementType: elementType,
+                                   builder: builder,
+                                   indent: furtherIndent,
+                                   varCounter: ref varCounter,
+                                   target: target);
+            }
+
+            builder.AppendLine($"{indent}}}");
+        }
+    }
+
+    static private void WriteForCollection(INamedTypeSymbol type,
+                                           ITypeSymbol elementType,
+                                           StringBuilder builder,
+                                           String indent,
+                                           String target,
+                                           ref Int32 varCounter)
+    {
+        if (elementType.IsUnmanagedSerializable())
+        {
+            if (type.GetMembers("Count")
+                    .OfType<IPropertySymbol>()
+                    .Any(property => property.DeclaredAccessibility is Accessibility.Public))
+            {
+                builder.AppendLine($"{indent}size += {target}.Count * Unsafe.SizeOf<{elementType.ToFrameworkString()}>();");
+            }
+            else
+            {
+                builder.AppendLine($"{indent}size += ((System.Collections.Generic.ICollection<{elementType.ToFrameworkString()}>){target}).Count * Unsafe.SizeOf<{elementType.ToFrameworkString()}>();");
+            }
+        }
+        else
+        {
+            varCounter++;
+            builder.AppendLine($"{indent}foreach (var _var{varCounter} in {target})");
+            builder.AppendLine($"{indent}{{");
+
+            WriteForType(type: elementType,
+                         builder: builder,
+                         indent: indent + "    ",
+                         varCounter: ref varCounter,
+                         target: $"_var{varCounter}");
+
+            builder.AppendLine($"{indent}}}");
         }
     }
 }

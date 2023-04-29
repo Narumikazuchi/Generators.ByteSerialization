@@ -5,9 +5,50 @@ namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 static public class ConstructorCodeWriter
 {
-    static public void WriteMethod(INamedTypeSymbol type,
-                                   ImmutableArray<ISymbol> members,
-                                   StringBuilder builder)
+    static public void WriteConstructor(ITypeSymbol type,
+                                        StringBuilder builder)
+    {
+        if (type is INamedTypeSymbol named &&
+            !named.HasDefaultConstructor() &&
+            !named.IsRecord)
+        {
+            builder.AppendLine();
+            builder.AppendLine();
+
+            ImmutableArray<ISymbol> members = named.GetMembersToSerialize();
+            WriteMethod(type: named,
+                        members: members,
+                        builder: builder);
+
+            builder.AppendLine();
+            builder.AppendLine($"        static private readonly Lazy<Constructor> s_Constructor = new Lazy<Constructor>(GenerateConstructor, LazyThreadSafetyMode.ExecutionAndPublication);");
+
+            String parameters = String.Join(", ", members.Select(MemberToParameter));
+
+            builder.AppendLine();
+            builder.AppendLine($"        private delegate {named.ToFrameworkString()} Constructor({parameters});");
+        }
+    }
+
+    static private String MemberToParameter(ISymbol member)
+    {
+        if (member is IFieldSymbol field)
+        {
+            return $"{field.Type.ToFrameworkString()} {field.Name}";
+        }
+        else if (member is IPropertySymbol property)
+        {
+            return $"{property.Type.ToFrameworkString()} {property.Name}";
+        }
+        else
+        {
+            return String.Empty;
+        }
+    }
+
+    static private void WriteMethod(INamedTypeSymbol type,
+                                    ImmutableArray<ISymbol> members,
+                                    StringBuilder builder)
     {
         builder.AppendLine("        static private Constructor GenerateConstructor()");
         builder.AppendLine("        {");

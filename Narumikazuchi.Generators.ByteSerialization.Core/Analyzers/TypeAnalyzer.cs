@@ -21,6 +21,7 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
     {
         s_PointerNotSerializableDescriptor,
         s_OpenGenericsUnsupportedDescriptor,
+        s_NoImplementationDescriptor,
         s_NoPublicMembersDescriptor,
         s_NoAbstractMembersDescriptor,
         s_ConsiderUnmanagedDescriptor
@@ -49,6 +50,13 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
                                  or SpecialType.System_MulticastDelegate)
             {
                 context.ReportDiagnostic(CreatePointerNotSerializableDiagnostic(invocation));
+            }
+
+            if (type.IsAbstract &&
+                type.GetDerivedTypes().Length is 0)
+            {
+                context.ReportDiagnostic(CreateNoImplementationDiagnostic(method: invocation,
+                                                                          typename: type.Name));
             }
 
             ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
