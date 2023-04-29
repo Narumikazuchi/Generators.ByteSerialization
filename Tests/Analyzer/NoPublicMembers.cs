@@ -1,4 +1,8 @@
-﻿namespace Tests.Analyzer;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Tests.Analyzer;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 [TestClass]
@@ -29,7 +33,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(18, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -65,7 +69,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(21, 22),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 22),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -97,7 +101,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(19, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(19, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -131,7 +135,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(21, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -165,7 +169,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(21, 19),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 19),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -201,7 +205,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(23, 19),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(23, 19),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -232,7 +236,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(18, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -263,7 +267,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(18, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -295,7 +299,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(19, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(19, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -331,7 +335,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(21, 13),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 13),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -364,7 +368,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(20, 9),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(20, 9),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -398,7 +402,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(21, 9),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 9),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -433,7 +437,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(22, 15),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(22, 15),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -469,7 +473,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(23, 15),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(23, 15),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);

@@ -1,4 +1,6 @@
-﻿namespace Tests.Analyzer;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Tests.Analyzer;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 [TestClass]

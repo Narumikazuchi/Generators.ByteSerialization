@@ -6,53 +6,43 @@ namespace Tests.Analyzer;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 [TestClass]
-public class ConsiderUnmanaged
+public class NoImplementation
 {
     [TestMethod]
-    public async Task DeserializeConsiderUnmanaged()
+    public async Task DeserializeNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
     static public UInt32 Run(Byte[] buffer)
     {
-        return ByteSerializer.Deserialize<Test>(buffer, out _);
+        return ByteSerializer.Deserialize<ITest>(buffer, out _);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(18, 16),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(13, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeUnsafeConsiderUnmanaged()
+    public async Task DeserializeUnsafeNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
@@ -62,67 +52,57 @@ public class Application
         UInt32 result;
         fixed (Byte* pointer = buffer)
         {
-            result = ByteSerializer.Deserialize<Test>(pointer, out _);
+            result = ByteSerializer.Deserialize<ITest>(pointer, out _);
         }
         return result;
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(21, 22),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(16, 22),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeIOStreamConsiderUnmanaged()
+    public async Task DeserializeIOStreamNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 using System.IO;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
     static public UInt32 Run(Stream stream)
     {
-        return ByteSerializer.Deserialize<Test>(stream, out _);
+        return ByteSerializer.Deserialize<ITest>(stream, out _);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(19, 16),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(14, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeStreamConsiderUnmanaged()
+    public async Task DeserializeStreamNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
 using System;
 using System.IO;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
@@ -130,19 +110,19 @@ public class Application
     static public UInt32 Run<TStream>(TStream stream)
         where TStream : IReadableStream
     {
-        return ByteSerializer.Deserialize<TStream, Test>(stream, out _);
+        return ByteSerializer.Deserialize<TStream, ITest>(stream, out _);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(21, 16),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(16, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeIOStreamAsyncConsiderUnmanaged()
+    public async Task DeserializeIOStreamAsyncNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -150,33 +130,28 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
     static public async Task Run(Stream stream, CancellationToken cancellationToken)
     {
-        _ = await ByteSerializer.DeserializeAsynchronously<Test>(stream, cancellationToken);
+        _ = await ByteSerializer.DeserializeAsynchronously<ITest>(stream, cancellationToken);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(21, 19),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(16, 19),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeStreamAsyncConsiderUnmanaged()
+    public async Task DeserializeStreamAsyncNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -185,14 +160,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
@@ -200,98 +170,83 @@ public class Application
     static public async Task Run<TStream>(TStream stream, CancellationToken cancellationToken)
         where TStream : IReadableStream
     {
-        _ = await ByteSerializer.DeserializeAsynchronously<TStream, Test>(stream, cancellationToken);
+        _ = await ByteSerializer.DeserializeAsynchronously<TStream, ITest>(stream, cancellationToken);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(23, 19),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(18, 19),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task GetSizeConsiderUnmanaged()
+    public async Task GetSizeNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public Int32 Run(Test graph)
+    static public Int32 Run(ITest graph)
     {
         return ByteSerializer.GetExpectedSerializedSize(graph);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(18, 16),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(13, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SimpleSerializeConsiderUnmanaged()
+    public async Task SimpleSerializeNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public Byte[] Run(Test graph)
+    static public Byte[] Run(ITest graph)
     {
         return ByteSerializer.Serialize(graph);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(18, 16),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(13, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeConsiderUnmanaged()
+    public async Task SerializeNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public UInt32 Run(Test graph)
+    static public UInt32 Run(ITest graph)
     {
         Byte[] buffer = new Byte[16];
         return ByteSerializer.Serialize(buffer, graph);
@@ -299,31 +254,26 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(19, 16),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(14, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeUnsafeConsiderUnmanaged()
+    public async Task SerializeUnsafeNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public unsafe Byte[] Run(Test graph)
+    static public unsafe Byte[] Run(ITest graph)
     {
         Byte[] buffer = new Byte[16];
         fixed (Byte* pointer = buffer)
@@ -335,32 +285,27 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(21, 13),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(16, 13),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeIOStreamConsiderUnmanaged()
+    public async Task SerializeIOStreamNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 using System.IO;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public void Run(Test graph)
+    static public void Run(ITest graph)
     {
         using MemoryStream stream = new MemoryStream();
         ByteSerializer.Serialize(stream, graph);
@@ -368,33 +313,28 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(20, 9),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(15, 9),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeStreamConsiderUnmanaged()
+    public async Task SerializeStreamNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
 using System;
 using System.IO;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public void Run(Test graph)
+    static public void Run(ITest graph)
     {
         using MemoryStream stream = new MemoryStream();
         ByteSerializer.Serialize(stream.AsWriteableStream(), graph);
@@ -402,14 +342,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(21, 9),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(16, 9),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeIOStreamAsyncConsiderUnmanaged()
+    public async Task SerializeIOStreamAsyncNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -417,19 +357,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public async Task Run(Test graph, CancellationToken cancellationToken)
+    static public async Task Run(ITest graph, CancellationToken cancellationToken)
     {
         using MemoryStream stream = new MemoryStream();
         await ByteSerializer.SerializeAsynchronously(stream, graph, cancellationToken);
@@ -437,14 +372,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(22, 15),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(17, 15),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeStreamAsyncConsiderUnmanaged()
+    public async Task SerializeStreamAsyncNoImplementation()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -453,19 +388,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class Test
+public interface ITest
 {
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
+    public String Value { get; set; }
 }
 
 public class Application
 {
-    static public async Task Run(Test graph, CancellationToken cancellationToken)
+    static public async Task Run(ITest graph, CancellationToken cancellationToken)
     {
         using MemoryStream stream = new MemoryStream();
         await ByteSerializer.SerializeAsynchronously(stream.AsWriteableStream(), graph, cancellationToken);
@@ -473,7 +403,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(23, 15),
+            new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(18, 15),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);

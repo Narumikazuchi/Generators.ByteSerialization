@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using Microsoft.CodeAnalysis.Testing;
 
 namespace Tests;
 

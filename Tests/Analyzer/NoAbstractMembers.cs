@@ -1,4 +1,8 @@
-﻿namespace Tests.Analyzer;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Tests.Analyzer;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 [TestClass]
@@ -15,6 +19,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public UInt32 Run(Byte[] buffer)
@@ -24,7 +33,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(13, 16),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(18, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -41,6 +50,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public unsafe UInt32 Run(Byte[] buffer)
@@ -55,7 +69,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(16, 22),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(21, 22),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -73,6 +87,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public UInt32 Run(Stream stream)
@@ -82,7 +101,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(14, 16),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(19, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -101,6 +120,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public UInt32 Run<TStream>(TStream stream)
@@ -111,7 +135,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(16, 16),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(21, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -131,6 +155,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public async Task Run(Stream stream, CancellationToken cancellationToken)
@@ -140,7 +169,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(16, 19),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(21, 19),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -161,6 +190,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public async Task Run<TStream>(TStream stream, CancellationToken cancellationToken)
@@ -171,7 +205,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(18, 19),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(23, 19),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -188,6 +222,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public Int32 Run(ITest graph)
@@ -197,7 +236,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(13, 16),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(18, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -214,6 +253,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public Byte[] Run(ITest graph)
@@ -223,7 +267,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(13, 16),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(18, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -240,6 +284,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public UInt32 Run(ITest graph)
@@ -250,7 +299,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(14, 16),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(19, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -267,6 +316,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public unsafe Byte[] Run(ITest graph)
@@ -281,7 +335,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(16, 13),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(21, 13),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -299,6 +353,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public void Run(ITest graph)
@@ -309,7 +368,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(15, 9),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(20, 9),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -328,6 +387,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public void Run(ITest graph)
@@ -338,7 +402,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(16, 9),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(21, 9),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -358,6 +422,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public async Task Run(ITest graph, CancellationToken cancellationToken)
@@ -368,7 +437,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(17, 15),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(22, 15),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -389,6 +458,11 @@ public interface ITest
     protected String Value { get; }
 }
 
+public class Test : ITest
+{
+    String ITest.Value { get; } = String.Empty;
+}
+
 public class Application
 {
     static public async Task Run(ITest graph, CancellationToken cancellationToken)
@@ -399,7 +473,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Info).WithLocation(18, 15),
+            new DiagnosticResult("NCG013", DiagnosticSeverity.Info).WithLocation(23, 15),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);

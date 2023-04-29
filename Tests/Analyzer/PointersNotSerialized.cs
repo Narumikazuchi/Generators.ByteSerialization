@@ -1,4 +1,8 @@
-﻿namespace Tests.Analyzer;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Tests.Analyzer;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 [TestClass]
@@ -20,7 +24,7 @@ public class Application
         DiagnosticResult[] results = new DiagnosticResult[]
         {
             new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(8, 16),
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(8, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(8, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -42,7 +46,7 @@ public class Application
         DiagnosticResult[] results = new DiagnosticResult[]
         {
             new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(8, 16),
-            new DiagnosticResult("NCG011", DiagnosticSeverity.Warning).WithLocation(8, 16),
+            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(8, 16),
         };
 
         await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
