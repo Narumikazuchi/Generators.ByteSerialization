@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Narumikazuchi.CodeAnalysis;
-using System;
 
 namespace Narumikazuchi.Generators.ByteSerialization;
 
@@ -86,7 +85,7 @@ static public partial class Extensions
                 }
                 else
                 {
-                    result = namedType.ToDisplayString();
+                    result = namedType.ToFrameworkString();
                 }
             }
 
@@ -296,7 +295,6 @@ static public partial class Extensions
         s_MemberCache.Clear();
     }
 
-    static private readonly SHA512 s_Hasher = SHA512.Create();
     static private readonly ConcurrentDictionary<ITypeSymbol, String> s_FileStringCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_CanBeSerializedCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_IsUnmanagedCache = new(SymbolEqualityComparer.Default);

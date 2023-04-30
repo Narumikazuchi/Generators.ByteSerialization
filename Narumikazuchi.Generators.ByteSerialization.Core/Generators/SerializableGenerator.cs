@@ -115,12 +115,12 @@ public sealed partial class SerializableGenerator
 #endif
             try
             {
-            SourceText text = SourceText.From(text: source,
-                                              encoding: Encoding.UTF8);
-            context.AddSource(hintName: $"Narumikazuchi.Generated.Internals.ByteSerialization.Handler.{type.ToFileString()}.g.cs",
-                              sourceText: text);
-        }
-        catch { }
+                SourceText text = SourceText.From(text: source,
+                                                  encoding: Encoding.UTF8);
+                context.AddSource(hintName: $"Narumikazuchi.Generated.Internals.ByteSerialization.Handler.{type.ToFileString()}.g.cs",
+                                  sourceText: text);
+            }
+            catch { }
         }
     }
 

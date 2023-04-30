@@ -21,8 +21,10 @@ static public class Extensions
                 result = result.Replace(kv.Key, kv.Value);
             }
 
-            if (type.ContainingNamespace is not null &&
-                type.ContainingNamespace.Name is "System")
+            if ((type.ContainingNamespace is not null &&
+                 type.ContainingNamespace.Name is "System") ||
+                (result.Count(c => c == '.') is 1 &&
+                result.StartsWith("System.")))
             {
                 result = result.Replace("System.", "");
             }
