@@ -1,8 +1,12 @@
-﻿namespace Narumikazuchi.Generators.ByteSerialization;
+﻿using System.ComponentModel;
+
+namespace Narumikazuchi.Generators.ByteSerialization;
 
 /// <summary>
 /// Represents a map, where you can access both sides of the map with the other object as key.
 /// </summary>
+[Browsable(false)]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public sealed class MirroredMap<TLeft, TRight>
     where TLeft : notnull
     where TRight : notnull

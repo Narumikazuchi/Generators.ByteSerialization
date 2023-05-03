@@ -157,6 +157,24 @@ static public partial class Extensions
         return builder.ToString();
     }
 
+    static public Boolean IsCompilerGenerated(this INamedTypeSymbol type)
+    {
+        if (s_IsCompilerGeneratedCache.TryGetValue(key: type,
+                                                   value: out Boolean result))
+        {
+            return result;
+        }
+        else
+        {
+            result = type.GetAttributes()
+                         .Any(data => data.AttributeClass is not null &&
+                                      data.AttributeClass.ToFrameworkString() is "System.Runtime.CompilerServices.CompilerGeneratedAttribute");
+            s_IsCompilerGeneratedCache.GetOrAdd(key: type,
+                                                value: result);
+            return result;
+        }
+    }
+
     static public Boolean HasDefaultConstructor(this INamedTypeSymbol type)
     {
         if (s_HasDefaultConstructorCache.TryGetValue(key: type,
@@ -174,12 +192,53 @@ static public partial class Extensions
         }
     }
 
-    static public Boolean CanBeSerialized(this ITypeSymbol type)
+    static public IMethodSymbol ParameterizedConstructor(this INamedTypeSymbol type)
+    {
+        if (s_ParameterizedConstructor.TryGetValue(key: type,
+                                                   value: out IMethodSymbol result))
+        {
+            return result;
+        }
+        else
+        {
+            foreach (IMethodSymbol constructor in type.InstanceConstructors.OrderByDescending(method => method.Parameters.Length))
+            {
+                if (constructor.DeclaredAccessibility is not Accessibility.Public ||
+                    constructor.Parameters.Length is 0)
+                {
+                    continue;
+                }
+
+                if (constructor.Parameters.All(ParameterHasSerializeAttribute))
+                {
+                    s_ParameterizedConstructor.GetOrAdd(key: type,
+                                                        value: constructor);
+                    return constructor;
+                }
+            }
+
+            s_ParameterizedConstructor.GetOrAdd(key: type,
+                                                value: default);
+            return default;
+        }
+    }
+
+    static public Boolean CanBeSerialized(this ITypeSymbol type,
+                                          ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers)
     {
         if (s_CanBeSerializedCache.TryGetValue(key: type,
                                                value: out Boolean result))
         {
             return result;
+        }
+        else if (type.SpecialType is SpecialType.System_IntPtr
+                                  or SpecialType.System_UIntPtr
+                                  or SpecialType.System_Delegate
+                                  or SpecialType.System_MulticastDelegate)
+        {
+            s_CanBeSerializedCache.GetOrAdd(key: type,
+                                            value: false);
+            return false;
         }
         else if (type.IsUnmanagedSerializable())
         {
@@ -187,10 +246,97 @@ static public partial class Extensions
                                             value: true);
             return true;
         }
+        else if (customSerializers.TryGetValue(key: type,
+                                               value: out ImmutableHashSet<INamedTypeSymbol> serializers))
+        {
+            s_CanBeSerializedCache.GetOrAdd(key: type,
+                                            value: serializers.Count is 1);
+            return serializers.Count is 1;
+        }
+        else if (type is INamedTypeSymbol named)
+        {
+            if (named.IsOpenGenericType())
+            {
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: false);
+                return false;
+            }
+            else if (named.IsAbstract &&
+                     named.GetDerivedTypes().Length is 0)
+            {
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: false);
+                return false;
+            }
+            else if (named.SpecialType is SpecialType.System_String)
+            {
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: true);
+                return true;
+            }
+            else if (named.HasDefaultConstructor())
+            {
+                result = named.GetMembersToSerialize()
+                              .All(member => member.CanBeSerialized(customSerializers));
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: result);
+                return result;
+            }
+            else if (named.IsRecord)
+            {
+                result = named.GetMembersToSerialize()
+                              .All(member => member.CanBeSerialized(customSerializers));
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: result);
+                return result;
+            }
+            else if (named.ParameterizedConstructor() is not null)
+            {
+                result = named.GetMembersToSerialize()
+                              .All(member => member.CanBeSerialized(customSerializers));
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: result);
+                return result;
+            }
+            else
+            {
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: false);
+                return false;
+            }
+        }
+        else if (type is IArrayTypeSymbol array)
+        {
+            result = array.ElementType.CanBeSerialized(customSerializers);
+            s_CanBeSerializedCache.GetOrAdd(key: type,
+                                            value: result);
+            return result;
+        }
         else
         {
             s_CanBeSerializedCache.GetOrAdd(key: type,
                                             value: false);
+            return false;
+        }
+    }
+
+    static public Boolean CanBeSerialized(this ISymbol member,
+                                          ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers)
+    {
+        if (member is IFieldSymbol field)
+        {
+            return field.Type.CanBeSerialized(customSerializers);
+        }
+        else if (member is IPropertySymbol property)
+        {
+            return property.Type.CanBeSerialized(customSerializers);
+        }
+        else if (member is ITypeSymbol type)
+        {
+            return type.CanBeSerialized(customSerializers);
+        }
+        else
+        {
             return false;
         }
     }
@@ -290,16 +436,44 @@ static public partial class Extensions
         s_FileStringCache.Clear();
         s_HasDefaultConstructorCache.Clear();
         s_IsCollectionCache.Clear();
+        s_IsCompilerGeneratedCache.Clear();
         s_IsSerializationHandlerCache.Clear();
         s_IsUnmanagedCache.Clear();
         s_MemberCache.Clear();
     }
 
+    static private Boolean ParameterHasSerializeAttribute(IParameterSymbol parameter)
+    {
+        ImmutableArray<AttributeData> attributes = parameter.GetAttributes();
+        Boolean result = false;
+
+        foreach (AttributeData attribute in attributes)
+        {
+            if (attribute.AttributeClass is null)
+            {
+                continue;
+            }
+
+            if (attribute.AttributeClass.ToFrameworkString()
+                                        .StartsWith(GlobalNames.SERIALIZEDEFAULTATTRIBUTE) ||
+                (attribute.AttributeClass.ToFrameworkString()
+                                         .StartsWith(GlobalNames.SERIALIZEFROMMEMBERATTRIBUTE) &&
+                !attribute.ConstructorArguments[0].IsNull))
+            {
+                result = !result;
+            }
+        }
+
+        return result;
+    }
+
     static private readonly ConcurrentDictionary<ITypeSymbol, String> s_FileStringCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_CanBeSerializedCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_IsUnmanagedCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_IsCompilerGeneratedCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_HasDefaultConstructorCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_IsSerializationHandlerCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<INamedTypeSymbol, ITypeSymbol> s_IsCollectionCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<INamedTypeSymbol, IMethodSymbol> s_ParameterizedConstructor = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<String, String> s_BuiltInTypes;
 }

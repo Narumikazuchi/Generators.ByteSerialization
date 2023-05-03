@@ -16,6 +16,11 @@ static public class Extensions
             result = type.ToDisplayString()
                          .Replace("*", "");
 
+            if (!type.IsValueType)
+            {
+                result = result.Replace("?", "");
+            }
+
             foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
             {
                 result = result.Replace(kv.Key, kv.Value);

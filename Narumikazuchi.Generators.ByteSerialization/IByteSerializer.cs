@@ -1,8 +1,12 @@
-﻿namespace Narumikazuchi.Generators.ByteSerialization;
+﻿using System.ComponentModel;
+
+namespace Narumikazuchi.Generators.ByteSerialization;
 
 /// <summary>
 /// -- Used for internal code generation. --
 /// </summary>
+[Browsable(false)]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public interface IByteSerializer
 {
     /// <summary>

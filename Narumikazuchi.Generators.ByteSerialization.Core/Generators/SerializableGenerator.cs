@@ -24,21 +24,24 @@ public sealed partial class SerializableGenerator
     static private void GenerateSerializationCode(SourceProductionContext context,
                                                   (Compilation, ImmutableArray<ITypeSymbol>) compilationAndTypes)
     {
+        CodeAnalysis.Extensions.ClearCaches();
+        Extensions.ClearCaches();
+        CustomHandlerFinder.ClearCache();
+
         (Compilation compilation, ImmutableArray<ITypeSymbol> types) = compilationAndTypes;
         if (types.IsDefaultOrEmpty)
         {
             return;
         }
 
-        types = types.Where(ShouldGenerateCode)
-                     .Distinct((IEqualityComparer<ITypeSymbol>)SymbolEqualityComparer.Default)
+        ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers = CustomHandlerFinder.FindTypesWithCustomHandlerIn(compilation);
+
+        types = types.Where(type => type.CanBeSerialized(customSerializers))
+                     .Where(type => !type.IsUnmanagedSerializable())
+                     .Distinct<ITypeSymbol>(SymbolEqualityComparer.Default)
                      .ToImmutableArray();
 
-        CodeAnalysis.Extensions.ClearCaches();
-        Extensions.ClearCaches();
-
-        AssemblyHandlerEmitter.Emit(types: types,
-                                    context: context,
+        AssemblyHandlerEmitter.Emit(context: context,
                                     compilation: compilation);
 
         Int32 index = 0;
@@ -65,46 +68,19 @@ public sealed partial class SerializableGenerator
             builder.AppendLine();
             builder.AppendLine("namespace Narumikazuchi.Generated.Internals.ByteSerialization;");
             builder.AppendLine();
-            builder.AppendLine($"public unsafe partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} : {GlobalNames.ISerializationHandler(type)}");
+            builder.AppendLine($"public partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} : {GlobalNames.ISerializationHandler(type)}");
             builder.AppendLine("{");
-            builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Deserialize(ReadOnlySpan<Byte> buffer, out {type.ToFrameworkString()} result)");
-            builder.AppendLine("    {");
-            builder.AppendLine($"        return __{index}.Deserialize(buffer, out result);");
-            builder.AppendLine("    }");
-            builder.AppendLine();
-            builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    Int32 {GlobalNames.ISerializationHandler(type)}.GetExpectedArraySize({type.ToFrameworkString()} value)");
-            builder.AppendLine("    {");
-            builder.AppendLine($"        return __{index}.GetExpectedArraySize(value);");
-            builder.AppendLine("    }");
-            builder.AppendLine();
-            builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    UInt32 {GlobalNames.ISerializationHandler(type)}.Serialize(Span<Byte> buffer, {type.ToFrameworkString()} value)");
-            builder.AppendLine("    {");
-            builder.AppendLine($"        return __{index}.Serialize(buffer, value);");
-            builder.AppendLine("    }");
-            builder.AppendLine();
-            builder.AppendLine("    [CompilerGenerated]");
-            builder.AppendLine($"    static private class __{index}");
-            builder.AppendLine("    {");
 
-            DeserializeCodeWriter.WriteMethod(type: type,
-                                              builder: builder);
-            builder.AppendLine();
+            DeserializeCodeWriter deserializeCodeWriter = new(customSerializers);
+            builder.AppendLine(deserializeCodeWriter.WriteMethod(type));
 
-            SizeCodeWriter.WriteMethod(type: type,
-                                       builder: builder);
-            builder.AppendLine();
+            SizeCodeWriter sizeCodeWriter = new(customSerializers);
+            builder.AppendLine(sizeCodeWriter.WriteMethod(type));
 
-            SerializeCodeWriter.WriteMethod(type: type,
-                                            builder: builder);
+            SerializeCodeWriter serializeCodeWriter = new(customSerializers);
+            builder.AppendLine(serializeCodeWriter.WriteMethod(type));
 
-            ConstructorCodeWriter.WriteConstructor(type: type,
-                                                   builder: builder);
             index++;
-
-            builder.AppendLine("    }");
 
             builder.Append('}');
 
@@ -122,37 +98,5 @@ public sealed partial class SerializableGenerator
             }
             catch { }
         }
-    }
-
-    static private Boolean ShouldGenerateCode(ITypeSymbol type)
-    {
-        if (type.IsInterface())
-        {
-            return false;
-        }
-
-        if (type is INamedTypeSymbol named)
-        {
-            if (named.IsOpenGenericType())
-            {
-                return false;
-            }
-
-            if (named.IsAbstract &&
-                named.GetDerivedTypes().Length is 0)
-            {
-                return false;
-            }
-        }
-
-        if (type.SpecialType is SpecialType.System_IntPtr
-                             or SpecialType.System_UIntPtr
-                             or SpecialType.System_Delegate
-                             or SpecialType.System_MulticastDelegate)
-        {
-            return false;
-        }
-
-        return true;
     }
 }

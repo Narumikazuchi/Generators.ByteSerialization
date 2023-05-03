@@ -1,8 +1,7 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Narumikazuchi.CodeAnalysis;
 
 namespace Narumikazuchi.Generators.ByteSerialization.Analyzers;
 
@@ -14,99 +13,56 @@ public sealed partial class TypeAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.RegisterSyntaxNodeAction(action: this.Analyze,
-                                         SyntaxKind.InvocationExpression);
+                                         SyntaxKind.ClassDeclaration,
+                                         SyntaxKind.RecordDeclaration,
+                                         SyntaxKind.StructDeclaration,
+                                         SyntaxKind.RecordStructDeclaration);
     }
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = new DiagnosticDescriptor[]
     {
-        s_PointerNotSerializableDescriptor,
-        s_OpenGenericsUnsupportedDescriptor,
-        s_NoImplementationDescriptor,
-        s_NoPublicMembersDescriptor,
-        s_NoAbstractMembersDescriptor,
-        s_ConsiderUnmanagedDescriptor
+        s_NoDefaultConstructorDescriptor,
+        s_MoreThanOneSerializerDefinedDescriptor
     }.ToImmutableArray();
 
     private void Analyze(SyntaxNodeAnalysisContext context)
     {
-        InvocationExpressionSyntax invocation = (InvocationExpressionSyntax)context.Node;
-        ImmutableArray<ITypeSymbol> types = MethodToTypeReferenceFinder.FindTypes(compilation: context.SemanticModel.Compilation,
-                                                                                  invocation: invocation);
-        if (types.IsEmpty)
+        TypeDeclarationSyntax syntax = (TypeDeclarationSyntax)context.Node;
+        INamedTypeSymbol type = context.SemanticModel.GetDeclaredSymbol(syntax);
+        if (type is null ||
+            type.IsCompilerGenerated())
         {
             return;
         }
 
-        foreach (INamedTypeSymbol type in types.OfType<INamedTypeSymbol>())
+        INamedTypeSymbol handler = context.Compilation.GetTypeByMetadataName($"{GlobalNames.NAMESPACE}.{GlobalNames.ISERIALIZATIONHANDLER}");
+        ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers = CustomHandlerFinder.FindTypesWithCustomHandlerIn(context.Compilation);
+
+        foreach (INamedTypeSymbol implements in type.AllInterfaces.Where(implements => implements.MetadataName is GlobalNames.ISERIALIZATIONHANDLER))
         {
-            if (type.IsOpenGenericType())
+            if (!SymbolEqualityComparer.Default.Equals(handler, implements.ConstructedFrom))
             {
-                context.ReportDiagnostic(CreateOpenGenericsUnsupportedDiagnostic(invocation));
+                continue;
             }
 
-            if (type.SpecialType is SpecialType.System_IntPtr
-                                 or SpecialType.System_UIntPtr
-                                 or SpecialType.System_Delegate
-                                 or SpecialType.System_MulticastDelegate)
+            ITypeSymbol handledType = implements.TypeArguments[0];
+            if (customSerializers.TryGetValue(key: handledType,
+                                              value: out ImmutableHashSet<INamedTypeSymbol> serializers))
             {
-                context.ReportDiagnostic(CreatePointerNotSerializableDiagnostic(invocation));
-            }
-
-            if (type.IsAbstract &&
-                type.GetDerivedTypes().Length is 0)
-            {
-                context.ReportDiagnostic(CreateNoImplementationDiagnostic(method: invocation,
-                                                                          typename: type.Name));
-            }
-
-            ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
-            if (members.IsEmpty &&
-                !type.IsCollection(out _) &&
-                !type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<"))
-            {
-                if (type.IsAbstract)
+                if (serializers.Count is 1)
                 {
-                    context.ReportDiagnostic(CreateNoAbstractMembersDiagnostic(method: invocation,
-                                                                               typename: type.Name));
+                    if (!serializers.First()
+                                    .HasDefaultConstructor())
+                    {
+                        context.ReportDiagnostic(CreateNoDefaultConstructorDiagnostic(syntax));
+                    }
                 }
                 else
                 {
-                    context.ReportDiagnostic(CreateNoPublicMemberDiagnostic(method: invocation,
-                                                                            typename: type.Name));
+                    context.ReportDiagnostic(CreateMoreThanOneSerializerDefinedDiagnostic(type: syntax,
+                                                                                          typename: handledType.Name));
                 }
             }
-
-            if (type.ContainingAssembly is not null &&
-                SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, context.SemanticModel.Compilation.Assembly) &&
-                !type.IsValueType)
-            {
-                members = type.GetMembers()
-                              .Where(member => member is IFieldSymbol
-                                                      or IPropertySymbol)
-                              .ToImmutableArray();
-                if (members.Length > 0 &&
-                    members.All(MemberIsUnmanaged))
-                {
-                    context.ReportDiagnostic(CreateConsiderUnmanagedDiagnostic(method: invocation,
-                                                                               typename: type.Name));
-                }
-            }
-        }
-    }
-
-    static private Boolean MemberIsUnmanaged(ISymbol member)
-    {
-        if (member is IFieldSymbol field)
-        {
-            return field.Type.IsUnmanagedSerializable();
-        }
-        else if (member is IPropertySymbol property)
-        {
-            return property.Type.IsUnmanagedSerializable();
-        }
-        else
-        {
-            return false;
         }
     }
 }

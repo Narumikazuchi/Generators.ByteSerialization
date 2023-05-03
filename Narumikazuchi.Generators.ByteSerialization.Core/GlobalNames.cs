@@ -19,4 +19,7 @@ static public class GlobalNames
     public const String BYTESERIALIZER = NAMESPACE + ".ByteSerializer";
     public const String IBYTESERIALIZER = NAMESPACE + ".IByteSerializer";
     public const String IGNOREFORSERIALIZATIONATTRIBUTE = NAMESPACE + ".IgnoreForSerializationAttribute";
+    public const String ISERIALIZATIONHANDLER = "ISerializationHandler`1";
+    public const String SERIALIZEFROMMEMBERATTRIBUTE = NAMESPACE + ".SerializeFromMemberAttribute";
+    public const String SERIALIZEDEFAULTATTRIBUTE = NAMESPACE + ".SerializeDefaultAttribute";
 }

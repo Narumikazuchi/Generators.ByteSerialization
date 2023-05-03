@@ -3,7 +3,7 @@
 /// <summary>
 /// Provides Methods to serialize a runtime object of type <typeparamref name="TSerializable"/>.
 /// </summary>
-public unsafe interface ISerializationHandler<TSerializable>
+public interface ISerializationHandler<TSerializable>
 {
     /// <summary>
     /// Deserializes the contents of the <paramref name="buffer"/> into a runtime object of type <typeparamref name="TSerializable"/>.

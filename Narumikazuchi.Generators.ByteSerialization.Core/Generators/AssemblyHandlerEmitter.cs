@@ -6,8 +6,7 @@ namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 static public class AssemblyHandlerEmitter
 {
-    static public void Emit(ImmutableArray<ITypeSymbol> types,
-                            SourceProductionContext context,
+    static public void Emit(SourceProductionContext context,
                             Compilation compilation)
     {
         ImmutableArray<IAssemblySymbol> assemblies = compilation.References.Select(compilation.GetAssemblyOrModuleSymbol)

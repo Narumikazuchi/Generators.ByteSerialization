@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
-using Narumikazuchi.CodeAnalysis;
 
 namespace Narumikazuchi.Generators.ByteSerialization;
 
@@ -54,8 +53,7 @@ static public class MethodToTypeReferenceFinder
 
         SymbolInfo symbolInfo = compilation.GetSemanticModel(invocation.SyntaxTree)
                                            .GetSymbolInfo(invocation);
-        IMethodSymbol method = (IMethodSymbol)symbolInfo.Symbol;
-        if (method is null ||
+        if (symbolInfo.Symbol is not IMethodSymbol method ||
             !method.IsGenericMethod ||
             !SymbolEqualityComparer.Default.Equals(s_ByteSerializer, method.ContainingType))
         {
@@ -92,7 +90,7 @@ static public class MethodToTypeReferenceFinder
 
     static private Boolean RequiresGeneration(ITypeSymbol type)
     {
-        if (type.CanBeSerialized())
+        if (type.IsUnmanagedSerializable())
         {
             return false;
         }
