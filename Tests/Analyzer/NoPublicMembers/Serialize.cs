@@ -14,26 +14,16 @@ public class Serialize
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public Byte[] Run(Test graph)
+    static public Byte[] Run(Version graph)
     {
         return ByteSerializer.Serialize(graph);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(8, 16),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -45,19 +35,9 @@ public class Application
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public UInt32 Run(Test graph)
+    static public UInt32 Run(Version graph)
     {
         Byte[] buffer = new Byte[16];
         return ByteSerializer.Serialize(buffer, graph);
@@ -65,7 +45,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(19, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(9, 16),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -77,19 +57,9 @@ public class Application
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public unsafe Byte[] Run(Test graph)
+    static public unsafe Byte[] Run(Version graph)
     {
         Byte[] buffer = new Byte[16];
         fixed (Byte* pointer = buffer)
@@ -101,7 +71,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 13),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(11, 13),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -114,19 +84,9 @@ public class Application
 using System;
 using System.IO;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public void Run(Test graph)
+    static public void Run(Version graph)
     {
         using MemoryStream stream = new MemoryStream();
         ByteSerializer.Serialize(stream, graph);
@@ -134,7 +94,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(20, 9),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(10, 9),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -148,19 +108,9 @@ using Narumikazuchi.InputOutput;
 using System;
 using System.IO;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public void Run(Test graph)
+    static public void Run(Version graph)
     {
         using MemoryStream stream = new MemoryStream();
         ByteSerializer.Serialize(stream.AsWriteableStream(), graph);
@@ -168,7 +118,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 9),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(11, 9),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -183,19 +133,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public async Task Run(Test graph, CancellationToken cancellationToken)
+    static public async Task Run(Version graph, CancellationToken cancellationToken)
     {
         using MemoryStream stream = new MemoryStream();
         await ByteSerializer.SerializeAsynchronously(stream, graph, cancellationToken);
@@ -203,7 +143,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(22, 15),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(12, 15),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -219,19 +159,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
-    static public async Task Run(Test graph, CancellationToken cancellationToken)
+    static public async Task Run(Version graph, CancellationToken cancellationToken)
     {
         using MemoryStream stream = new MemoryStream();
         await ByteSerializer.SerializeAsynchronously(stream.AsWriteableStream(), graph, cancellationToken);
@@ -239,7 +169,7 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(23, 15),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(13, 15),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);

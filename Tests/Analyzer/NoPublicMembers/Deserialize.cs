@@ -14,26 +14,16 @@ public class Deserialize
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
     static public UInt32 Run(Byte[] buffer)
     {
-        return ByteSerializer.Deserialize<Test>(buffer, out _);
+        return ByteSerializer.Deserialize<Version>(buffer, out _);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(8, 16),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -45,16 +35,6 @@ public class Application
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
     static public unsafe UInt32 Run(Byte[] buffer)
@@ -62,14 +42,14 @@ public class Application
         UInt32 result;
         fixed (Byte* pointer = buffer)
         {
-            result = ByteSerializer.Deserialize<Test>(pointer, out _);
+            result = ByteSerializer.Deserialize<Version>(pointer, out _);
         }
         return result;
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 22),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(11, 22),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -82,26 +62,16 @@ public class Application
 using System;
 using System.IO;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
     static public UInt32 Run(Stream stream)
     {
-        return ByteSerializer.Deserialize<Test>(stream, out _);
+        return ByteSerializer.Deserialize<Version>(stream, out _);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(19, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(9, 16),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -115,27 +85,17 @@ using Narumikazuchi.InputOutput;
 using System;
 using System.IO;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
     static public UInt32 Run<TStream>(TStream stream)
         where TStream : IReadableStream
     {
-        return ByteSerializer.Deserialize<TStream, Test>(stream, out _);
+        return ByteSerializer.Deserialize<TStream, Version>(stream, out _);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(11, 16),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -150,26 +110,16 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
     static public async Task Run(Stream stream, CancellationToken cancellationToken)
     {
-        _ = await ByteSerializer.DeserializeAsynchronously<Test>(stream, cancellationToken);
+        _ = await ByteSerializer.DeserializeAsynchronously<Version>(stream, cancellationToken);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 19),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(11, 19),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
@@ -185,27 +135,17 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class Test
-{
-    public Test(String value)
-    {
-        m_Value = value;
-    }
-
-    private readonly String m_Value;
-}
-
 public class Application
 {
     static public async Task Run<TStream>(TStream stream, CancellationToken cancellationToken)
         where TStream : IReadableStream
     {
-        _ = await ByteSerializer.DeserializeAsynchronously<TStream, Test>(stream, cancellationToken);
+        _ = await ByteSerializer.DeserializeAsynchronously<TStream, Version>(stream, cancellationToken);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(23, 19),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(13, 19),
         };
 
         await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);

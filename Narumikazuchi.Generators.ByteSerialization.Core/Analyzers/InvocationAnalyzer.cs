@@ -179,7 +179,8 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
                 }
             }
 
-            if (!named.HasDefaultConstructor() &&
+            if (!named.IsAbstract &&
+                !named.HasDefaultConstructor() &&
                 !named.IsRecord &&
                 named.ParameterizedConstructor() is null)
             {

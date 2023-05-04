@@ -14,28 +14,18 @@ public class GetExpectedSerializedSize
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public Int32 Run(Test graph)
+    static public Int32 Run(StoreMap graph)
     {
         return ByteSerializer.GetExpectedSerializedSize(graph);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(18, 16),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(8, 16),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 }

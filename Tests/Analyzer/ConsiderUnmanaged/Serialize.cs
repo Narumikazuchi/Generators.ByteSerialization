@@ -14,29 +14,19 @@ public class Serialize
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public Byte[] Run(Test graph)
+    static public Byte[] Run(StoreMap graph)
     {
         return ByteSerializer.Serialize(graph);
     }
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(18, 16),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(8, 16),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 
     [TestMethod]
@@ -45,19 +35,9 @@ public class Application
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public UInt32 Run(Test graph)
+    static public UInt32 Run(StoreMap graph)
     {
         Byte[] buffer = new Byte[16];
         return ByteSerializer.Serialize(buffer, graph);
@@ -65,10 +45,10 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(19, 16),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(9, 16),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 
     [TestMethod]
@@ -77,19 +57,9 @@ public class Application
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public unsafe Byte[] Run(Test graph)
+    static public unsafe Byte[] Run(StoreMap graph)
     {
         Byte[] buffer = new Byte[16];
         fixed (Byte* pointer = buffer)
@@ -101,10 +71,10 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(21, 13),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(11, 13),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 
     [TestMethod]
@@ -114,19 +84,9 @@ public class Application
 using System;
 using System.IO;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public void Run(Test graph)
+    static public void Run(StoreMap graph)
     {
         using MemoryStream stream = new MemoryStream();
         ByteSerializer.Serialize(stream, graph);
@@ -134,10 +94,10 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(20, 9),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(10, 9),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 
     [TestMethod]
@@ -148,19 +108,9 @@ using Narumikazuchi.InputOutput;
 using System;
 using System.IO;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public void Run(Test graph)
+    static public void Run(StoreMap graph)
     {
         using MemoryStream stream = new MemoryStream();
         ByteSerializer.Serialize(stream.AsWriteableStream(), graph);
@@ -168,10 +118,10 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(21, 9),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(11, 9),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 
     [TestMethod]
@@ -183,19 +133,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public async Task Run(Test graph, CancellationToken cancellationToken)
+    static public async Task Run(StoreMap graph, CancellationToken cancellationToken)
     {
         using MemoryStream stream = new MemoryStream();
         await ByteSerializer.SerializeAsynchronously(stream, graph, cancellationToken);
@@ -203,10 +143,10 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(22, 15),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(12, 15),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 
     [TestMethod]
@@ -219,19 +159,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class Test
-{
-    public Test(Int32 value)
-    {
-        m_Value = value;
-    }
-
-    public Int32 m_Value;
-}
-
 public class Application
 {
-    static public async Task Run(Test graph, CancellationToken cancellationToken)
+    static public async Task Run(StoreMap graph, CancellationToken cancellationToken)
     {
         using MemoryStream stream = new MemoryStream();
         await ByteSerializer.SerializeAsynchronously(stream.AsWriteableStream(), graph, cancellationToken);
@@ -239,9 +169,9 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(23, 15),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(13, 15),
         };
 
-        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(new String[] { source, ClassSources.STOREMAP_FILE_SOURCE }, results);
     }
 }
