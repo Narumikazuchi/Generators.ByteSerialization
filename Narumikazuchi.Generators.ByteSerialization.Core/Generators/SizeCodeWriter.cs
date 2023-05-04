@@ -194,7 +194,10 @@ public sealed class SizeCodeWriter
         m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
         if (type.SpecialType is SpecialType.System_String)
         {
-            m_CodeBuilder.AppendLine($"{indent}size += 4 * {target}.Length;");
+            m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
+            m_CodeBuilder.AppendLine($"{indent}{{");
+            m_CodeBuilder.AppendLine($"{indent}    size += 4 * {target}.Length;");
+            m_CodeBuilder.AppendLine($"{indent}}}");
         }
         else
         {
