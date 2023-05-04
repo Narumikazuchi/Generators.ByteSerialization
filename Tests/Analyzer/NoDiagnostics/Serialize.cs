@@ -4,7 +4,7 @@ namespace Tests.Analyzer.NoDiagnostics;
 
 #pragma warning disable IDE1006 // No need to add postfix 'Asynchronously' here
 [TestClass]
-public partial class Serialize
+public class Serialize
 {
     [TestMethod]
     [DataRow("Boolean")]
