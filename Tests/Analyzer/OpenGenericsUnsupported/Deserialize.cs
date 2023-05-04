@@ -9,7 +9,7 @@ namespace Tests.Analyzer.OpenGenericsUnsupported;
 public class Deserialize
 {
     [TestMethod]
-    public async Task DeserializeOpenGeneric()
+    public async Task DeserializeSafe()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -26,11 +26,11 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(8, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeUnsafeOpenGeneric()
+    public async Task DeserializeUnsafe()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -52,11 +52,11 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(11, 22),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeIOStreamOpenGeneric()
+    public async Task DeserializeIOStream()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -74,11 +74,11 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(9, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeStreamOpenGeneric()
+    public async Task DeserializeStream()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -98,11 +98,11 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(11, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeIOStreamAsyncOpenGeneric()
+    public async Task DeserializeIOStreamAsync()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -122,11 +122,11 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(11, 19),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task DeserializeStreamAsyncOpenGeneric()
+    public async Task DeserializeStreamAsync()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -148,6 +148,6 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(13, 19),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

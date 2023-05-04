@@ -9,7 +9,7 @@ namespace Tests.Analyzer.ConsiderUnmanaged;
 public class GetExpectedSerializedSize
 {
     [TestMethod]
-    public async Task GetExpectedSerializedSizeConsiderUnmanaged()
+    public async Task GetExpectedSize()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -33,9 +33,9 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG014", DiagnosticSeverity.Info).WithLocation(18, 16),
+            new DiagnosticResult("NCG016", DiagnosticSeverity.Info).WithLocation(18, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

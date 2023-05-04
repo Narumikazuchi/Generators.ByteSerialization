@@ -38,7 +38,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -74,7 +74,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -110,7 +110,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -146,7 +146,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -179,7 +179,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -212,7 +212,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -247,7 +247,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -282,7 +282,7 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 
     [TestMethod]
@@ -317,6 +317,6 @@ public class Application
     }
 }";
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source);
     }
 }

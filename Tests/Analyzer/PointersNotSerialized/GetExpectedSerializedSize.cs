@@ -11,7 +11,7 @@ public class GetExpectedSerializedSize
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task GetExpectedSerializedSizeIntPtr(String type)
+    public async Task GetExpectedSize(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -25,10 +25,9 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(8, 16),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(8, 16),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(8, 16)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

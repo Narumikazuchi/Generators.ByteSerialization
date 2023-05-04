@@ -9,7 +9,7 @@ namespace Tests.Analyzer.OpenGenericsUnsupported;
 public class GetExpectedSerializedSize
 {
     [TestMethod]
-    public async Task GetExpectedSerializedSizeOpenGeneric()
+    public async Task GetExpectedSize()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -26,6 +26,6 @@ public class Application<T>
             new DiagnosticResult("NCG010", DiagnosticSeverity.Error).WithLocation(8, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

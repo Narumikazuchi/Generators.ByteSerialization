@@ -9,7 +9,7 @@ namespace Tests.Analyzer.NoPublicMembers;
 public class Serialize
 {
     [TestMethod]
-    public async Task SimpleSerializeNoPublicMembers()
+    public async Task SimpleSerialize()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -33,14 +33,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(18, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeNoPublicMembers()
+    public async Task SerializeSafe()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -65,14 +65,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(19, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(19, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeUnsafeNoPublicMembers()
+    public async Task SerializeUnsafe()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -101,14 +101,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 13),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 13),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeIOStreamNoPublicMembers()
+    public async Task SerializeIOStream()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -134,14 +134,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(20, 9),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(20, 9),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeStreamNoPublicMembers()
+    public async Task SerializeStream()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -168,14 +168,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(21, 9),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(21, 9),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeIOStreamAsyncNoPublicMembers()
+    public async Task SerializeIOStreamAsync()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -203,14 +203,14 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(22, 15),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(22, 15),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
-    public async Task SerializeStreamAsyncNoPublicMembers()
+    public async Task SerializeStreamAsync()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -239,9 +239,9 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(23, 15),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(23, 15),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

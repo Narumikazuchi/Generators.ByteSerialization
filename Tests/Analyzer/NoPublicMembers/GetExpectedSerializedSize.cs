@@ -9,7 +9,7 @@ namespace Tests.Analyzer.NoPublicMembers;
 public class GetExpectedSerializedSize
 {
     [TestMethod]
-    public async Task GetExpectedSerializedSizeNoPublicMembers()
+    public async Task GetExpectedSize()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -33,9 +33,9 @@ public class Application
 }";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(18, 16),
+            new DiagnosticResult("NCG014", DiagnosticSeverity.Warning).WithLocation(18, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

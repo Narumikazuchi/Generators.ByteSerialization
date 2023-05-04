@@ -11,7 +11,7 @@ public class Deserialize
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task DeserializePointersNotSerialized(String type)
+    public async Task DeserializeSafe(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -25,17 +25,16 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(8, 16),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(8, 16),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(8, 16)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task DeserializeUnsafePointersNotSerialized(String type)
+    public async Task DeserializeUnsafe(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -54,17 +53,16 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(11, 22),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(11, 22),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(11, 22)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task DeserializeIOStreamPointersNotSerialized(String type)
+    public async Task DeserializeIOStream(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -79,17 +77,16 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(9, 16),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(9, 16),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(9, 16)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task DeserializeStreamPointersNotSerialized(String type)
+    public async Task DeserializeStream(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -106,17 +103,16 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(11, 16),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(11, 16),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(11, 16)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task DeserializeIOStreamAsyncPointersNotSerialized(String type)
+    public async Task DeserializeIOStreamAsync(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -133,17 +129,16 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(11, 19),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(11, 19),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(11, 19)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 
     [TestMethod]
     [DataRow("IntPtr")]
     [DataRow("UIntPtr")]
-    public async Task DeserializeStreamAsyncPointersNotSerialized(String type)
+    public async Task DeserializeStreamAsync(String type)
     {
         String source = $@"using Narumikazuchi.Generators.ByteSerialization;
 using Narumikazuchi.InputOutput;
@@ -162,10 +157,9 @@ public class Application
 }}";
         DiagnosticResult[] results = new DiagnosticResult[]
         {
-            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(13, 19),
-            new DiagnosticResult("NCG012", DiagnosticSeverity.Warning).WithLocation(13, 19),
+            new DiagnosticResult("NCG009", DiagnosticSeverity.Error).WithLocation(13, 19)
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }

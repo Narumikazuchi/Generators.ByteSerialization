@@ -9,7 +9,7 @@ namespace Tests.Analyzer.NoImplementation;
 public class GetExpectedSerializedSize
 {
     [TestMethod]
-    public async Task GetExpectedSerializedSizeNoImplementation()
+    public async Task GetExpectedSize()
     {
         String source = @"using Narumikazuchi.Generators.ByteSerialization;
 using System;
@@ -31,6 +31,6 @@ public class Application
             new DiagnosticResult("NCG011", DiagnosticSeverity.Error).WithLocation(13, 16),
         };
 
-        await AnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
+        await InvocationAnalyzerTest.VerifyAnalyzerAsynchronously(source, results);
     }
 }
