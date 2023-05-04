@@ -78,7 +78,7 @@ public sealed partial class SerializableGenerator
             builder.AppendLine(sizeCodeWriter.WriteMethod(type));
 
             SerializeCodeWriter serializeCodeWriter = new(customSerializers);
-            builder.AppendLine(serializeCodeWriter.WriteMethod(type));
+            builder.Append(serializeCodeWriter.WriteMethod(type));
 
             index++;
 
