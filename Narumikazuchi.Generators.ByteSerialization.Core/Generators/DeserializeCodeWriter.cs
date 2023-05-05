@@ -522,6 +522,7 @@ public sealed class DeserializeCodeWriter
             }
         }
 
+        IMethodSymbol constructor = type.ParameterizedConstructor();
         if (type.HasDefaultConstructor())
         {
             m_CodeBuilder.Append($"{indent}{target} = new {type.ToFrameworkString()}()");
@@ -541,40 +542,9 @@ public sealed class DeserializeCodeWriter
                 m_CodeBuilder.AppendLine(";");
             }
         }
-        else if (type.IsRecord)
-        {
-            List<String> parameters = new();
-            StringBuilder initializer = new();
-            IMethodSymbol constructor = type.InstanceConstructors.First();
-            foreach (KeyValuePair<String, String> property in propertyMap)
-            {
-                if (constructor.Parameters.Any(parameter => parameter.Name == property.Key))
-                {
-                    parameters.Add($"{property.Key}: {property.Value}");
-                }
-                else
-                {
-                    initializer.AppendLine($"{indent}   {property.Key} = {property.Value},");
-                }
-            }
-
-            m_CodeBuilder.Append($"{indent}{target} = new {type.ToFrameworkString()}({String.Join(", ", parameters)})");
-            if (initializer.Length > 0)
-            {
-                m_CodeBuilder.AppendLine();
-                m_CodeBuilder.AppendLine($"{indent}{{");
-                m_CodeBuilder.Append(initializer.ToString());
-                m_CodeBuilder.AppendLine($"{indent}}};");
-            }
-            else
-            {
-                m_CodeBuilder.AppendLine(";");
-            }
-        }
-        else
+        else if (constructor is not null)
         {
             List<String> usedMembers = new();
-            IMethodSymbol constructor = type.ParameterizedConstructor();
             StringBuilder parameters = new();
             Boolean first = true;
             foreach (IParameterSymbol parameter in constructor.Parameters)
@@ -634,6 +604,40 @@ public sealed class DeserializeCodeWriter
             {
                 m_CodeBuilder.AppendLine(";");
             }
+        }
+        else if (type.IsRecord)
+        {
+            List<String> parameters = new();
+            StringBuilder initializer = new();
+            constructor = type.InstanceConstructors.OrderBy(constructor => constructor.Parameters.Length)
+                                                   .First(constructor => constructor.DeclaredAccessibility is Accessibility.Public);
+            foreach (KeyValuePair<String, String> property in propertyMap)
+            {
+                if (constructor.Parameters.Any(parameter => parameter.Name == property.Key))
+                {
+                    parameters.Add($"{property.Key}: {property.Value}");
+                }
+                else
+                {
+                    initializer.AppendLine($"{indent}   {property.Key} = {property.Value},");
+                }
+            }
+
+            m_CodeBuilder.Append($"{indent}{target} = new {type.ToFrameworkString()}({String.Join(", ", parameters)})");
+            if (initializer.Length > 0)
+            {
+                m_CodeBuilder.AppendLine();
+                m_CodeBuilder.AppendLine($"{indent}{{");
+                m_CodeBuilder.Append(initializer.ToString());
+                m_CodeBuilder.AppendLine($"{indent}}};");
+            }
+            else
+            {
+                m_CodeBuilder.AppendLine(";");
+            }
+        }
+        else
+        {
         }
     }
 
