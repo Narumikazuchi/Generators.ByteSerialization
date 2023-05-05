@@ -103,14 +103,14 @@ public sealed class SizeCodeWriter
         {
             m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
-            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) + {target}.Length * Unsafe.SizeOf<{array.ElementType.ToFrameworkString()}>();");
+            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>() + {target}.Length * Unsafe.SizeOf<{array.ElementType.ToFrameworkString()}>();");
             m_CodeBuilder.AppendLine($"{indent}}}");
         }
         else
         {
             m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
-            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) * {array.Rank};");
+            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) * {array.Rank} + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    foreach (var _var{varCounter} in {target})");
             m_CodeBuilder.AppendLine($"{indent}    {{");
