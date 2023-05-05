@@ -9,7 +9,7 @@ public sealed class TypeNotSerializable : Exception
     /// Initializes a new instance of the <see cref="TypeNotSerializable"/> exception.
     /// </summary>
     /// <param name="type">The type that failed to serialize.</param>
-    public TypeNotSerializable(Type type) 
+    public TypeNotSerializable(Type type)
         : base($"No serialization code could be found for the type '${type.FullName}'.")
     { }
 }

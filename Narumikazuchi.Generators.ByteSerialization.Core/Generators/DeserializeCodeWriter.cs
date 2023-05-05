@@ -51,7 +51,7 @@ public sealed class DeserializeCodeWriter
                 serializer = $"_var{varCounter}";
                 m_CustomSerializerVars.Add(key: type,
                                            value: serializer);
-                m_SerializerBuilder.AppendLine($"{indent}{GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
+                m_SerializerBuilder.AppendLine($"        {GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
             }
 
             m_CodeBuilder.AppendLine($"{indent}{AssignTo(target)} = default({type.ToFrameworkString()});");
@@ -108,7 +108,11 @@ public sealed class DeserializeCodeWriter
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
-            // TODO: Type doesn't match
+            m_CodeBuilder.AppendLine($"{indent}    if (_var{varCounter} != {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()})))");
+            m_CodeBuilder.AppendLine($"{indent}    {{");
+            m_CodeBuilder.AppendLine($"{indent}        throw new {GlobalNames.NAMESPACE}.WrongTypeDeserialization(typeof({array.ToFrameworkString()}));");
+            m_CodeBuilder.AppendLine($"{indent}    }}");
+
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<Int32>();");
@@ -127,7 +131,11 @@ public sealed class DeserializeCodeWriter
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
-            // TODO: Type doesn't match
+            m_CodeBuilder.AppendLine($"{indent}    if (_var{varCounter} != {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()})))");
+            m_CodeBuilder.AppendLine($"{indent}    {{");
+            m_CodeBuilder.AppendLine($"{indent}        throw new {GlobalNames.NAMESPACE}.WrongTypeDeserialization(typeof({array.ToFrameworkString()}));");
+            m_CodeBuilder.AppendLine($"{indent}    }}");
+
             String[] arraySizes = new String[array.Rank];
             Int32 arrayCounter = ++varCounter;
             varCounter += 2 * array.Rank;
@@ -226,7 +234,10 @@ public sealed class DeserializeCodeWriter
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}var _var{varCounter} = Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
-            // TODO: Type doesn't match
+            m_CodeBuilder.AppendLine($"{indent}    if (_var{varCounter} != {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()})))");
+            m_CodeBuilder.AppendLine($"{indent}    {{");
+            m_CodeBuilder.AppendLine($"{indent}        throw new {GlobalNames.NAMESPACE}.WrongTypeDeserialization(typeof({type.ToFrameworkString()}));");
+            m_CodeBuilder.AppendLine($"{indent}    }}");
 
             this.CreateObject(type: type,
                               indent: indent,
@@ -257,7 +268,11 @@ public sealed class DeserializeCodeWriter
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
-            // TODO: Type doesn't match
+            m_CodeBuilder.AppendLine($"{indent}    if (_var{varCounter} != {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()})))");
+            m_CodeBuilder.AppendLine($"{indent}    {{");
+            m_CodeBuilder.AppendLine($"{indent}        throw new {GlobalNames.NAMESPACE}.WrongTypeDeserialization(typeof({type.ToFrameworkString()}));");
+            m_CodeBuilder.AppendLine($"{indent}    }}");
+
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<Int32>();");
@@ -277,7 +292,10 @@ public sealed class DeserializeCodeWriter
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));");
             m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
-            // TODO: Type doesn't match
+            m_CodeBuilder.AppendLine($"{indent}    if (_var{varCounter} != {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()})))");
+            m_CodeBuilder.AppendLine($"{indent}    {{");
+            m_CodeBuilder.AppendLine($"{indent}        throw new {GlobalNames.NAMESPACE}.WrongTypeDeserialization(typeof({type.ToFrameworkString()}));");
+            m_CodeBuilder.AppendLine($"{indent}    }}");
 
             String furtherIndent = indent + "    ";
             this.CreateObject(type: type,

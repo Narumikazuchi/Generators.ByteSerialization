@@ -51,10 +51,10 @@ public sealed class SizeCodeWriter
                 serializer = $"_var{varCounter}";
                 m_CustomSerializerVars.Add(key: type,
                                            value: serializer);
-                m_SerializerBuilder.AppendLine($"{indent}{GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
+                m_SerializerBuilder.AppendLine($"        {GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
             }
 
-            m_CodeBuilder.AppendLine($"{indent}size += (Int32){serializer}.GetExpectedArraySize({target});");
+            m_CodeBuilder.AppendLine($"{indent}size += {serializer}.GetExpectedArraySize({target});");
         }
         else if (type is IArrayTypeSymbol array)
         {

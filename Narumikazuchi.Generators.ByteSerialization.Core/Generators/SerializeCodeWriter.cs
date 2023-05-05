@@ -52,7 +52,7 @@ public sealed class SerializeCodeWriter
                 serializer = $"_var{varCounter}";
                 m_CustomSerializerVars.Add(key: type,
                                            value: serializer);
-                m_SerializerBuilder.AppendLine($"{indent}{GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
+                m_SerializerBuilder.AppendLine($"        {GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
             }
 
             m_CodeBuilder.AppendLine($"{indent}pointer += (Int32){serializer}.Serialize(buffer[pointer..], {target});");
