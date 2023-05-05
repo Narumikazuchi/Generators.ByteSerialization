@@ -37,13 +37,20 @@ static public partial class ByteSerializer
 
     static private IByteSerializer FindHandler()
     {
-        Type[] types = AppDomain.CurrentDomain.GetAssemblies()
-                                              .SelectMany(a => a.GetTypes())
-                                              .ToArray();
-        types = types.Where(t => !t.IsInterface)
-                     .Where(AttributeResolver.HasAttribute<CompilerGeneratedAttribute>)
-                     .Where(t => t.IsAssignableTo(typeof(IByteSerializer)))
-                     .ToArray();
+        List<Type> types = new();
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            try
+            {
+                Type[] assemblyTypes = assembly.GetTypes();
+                IEnumerable<Type> reduced = assemblyTypes.Where(t => !t.IsInterface)
+                                                         .Where(AttributeResolver.HasAttribute<CompilerGeneratedAttribute>)
+                                                         .Where(t => t.IsAssignableTo(typeof(IByteSerializer)));
+                types.AddRange(reduced);
+            }
+            catch { }
+        }
+
         IByteSerializer? instance = default;
         foreach (Type type in types)
         {
