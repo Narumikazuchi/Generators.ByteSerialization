@@ -2,8 +2,6 @@
 
 namespace Narumikazuchi.Generators.ByteSerialization;
 
-#pragma warning disable CS8500
-
 public partial class ByteSerializer
 {
     /// <summary>

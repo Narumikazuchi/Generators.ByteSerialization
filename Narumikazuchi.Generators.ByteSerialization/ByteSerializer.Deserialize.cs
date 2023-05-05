@@ -138,20 +138,36 @@ public partial class ByteSerializer
                                                                                                                                   CancellationToken cancellationToken = default)
         where TStream : IReadableStream
     {
-        Byte[] buffer = new Byte[4];
-        await stream.ReadAsynchronously(buffer: buffer,
-                                        cancellationToken: cancellationToken);
-        Int32 size = Unsafe.As<Byte, Int32>(ref buffer[0]);
-        buffer = new Byte[size + 4];
-        Unsafe.As<Byte, Int32>(ref buffer[0]) = size;
-        await stream.ReadAsynchronously(buffer: buffer.AsMemory()[4..],
-                                        cancellationToken: cancellationToken);
-        UInt32 read = Deserialize(buffer: buffer,
-                                  result: out TSerializable? result);
-        return new AsynchronousDeserializationResult<TSerializable?>
+        if (typeof(TSerializable).IsUnmanagedStruct())
         {
-            BytesRead = read,
-            Result = result
-        };
+            Byte[] buffer = new Byte[Unsafe.SizeOf<TSerializable>()];
+            await stream.ReadAsynchronously(buffer: buffer,
+                                            cancellationToken: cancellationToken);
+            UInt32 read = Deserialize(buffer: buffer,
+                                      result: out TSerializable? result);
+            return new AsynchronousDeserializationResult<TSerializable?>
+            {
+                BytesRead = read,
+                Result = result
+            };
+        }
+        else
+        {
+            Byte[] buffer = new Byte[4];
+            await stream.ReadAsynchronously(buffer: buffer,
+                                            cancellationToken: cancellationToken);
+            Int32 size = Unsafe.As<Byte, Int32>(ref buffer[0]);
+            buffer = new Byte[size];
+            Unsafe.As<Byte, Int32>(ref buffer[0]) = size;
+            await stream.ReadAsynchronously(buffer: buffer.AsMemory()[4..],
+                                            cancellationToken: cancellationToken);
+            UInt32 read = Deserialize(buffer: buffer,
+                                      result: out TSerializable? result);
+            return new AsynchronousDeserializationResult<TSerializable?>
+            {
+                BytesRead = read,
+                Result = result
+            };
+        }
     }
 }

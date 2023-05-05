@@ -363,5 +363,16 @@
             </summary>
             <param name="type">The type that failed to serialize.</param>
         </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization">
+            <summary>
+            Represents the exception for when the deserialization of a type fails due to the serialized type being different.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization"/> exception.
+            </summary>
+            <param name="type">The type that failed to deserialize.</param>
+        </member>
     </members>
 </doc>
