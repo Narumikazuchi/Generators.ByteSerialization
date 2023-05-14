@@ -17,7 +17,7 @@ public readonly record struct TypeIdentifier
     static public TypeIdentifier CreateFrom(Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-
+        
         if (s_Cached.TryGetValue(key: type,
                                  value: out TypeIdentifier result))
         {

@@ -95,15 +95,25 @@ public partial class ByteSerializer
                                                              out TSerializable? result)
         where TStream : IReadableStream
     {
-        Byte[] buffer = new Byte[4];
-        stream.Read(buffer);
-        Int32 size = Unsafe.As<Byte, Int32>(ref buffer[0]);
-        buffer = new Byte[size + 4];
-        Unsafe.As<Byte, Int32>(ref buffer[0]) = size;
-        stream.Read(buffer.AsSpan()[4..]);
-        UInt32 read = Deserialize(buffer: buffer,
-                                  result: out result);
-        return read;
+        if (typeof(TSerializable).IsUnmanagedStruct())
+        {
+            Byte[] buffer = new Byte[Unsafe.SizeOf<TSerializable>()];
+            stream.Read(buffer);
+            result = Unsafe.As<Byte, TSerializable>(ref buffer[0]);
+            return (UInt32)Unsafe.SizeOf<TSerializable>();
+        }
+        else
+        {
+            Byte[] buffer = new Byte[4];
+            stream.Read(buffer);
+            Int32 size = Unsafe.As<Byte, Int32>(ref buffer[0]);
+            buffer = new Byte[size + 4];
+            Unsafe.As<Byte, Int32>(ref buffer[0]) = size;
+            stream.Read(buffer.AsSpan()[4..]);
+            UInt32 read = Deserialize(buffer: buffer,
+                                      result: out result);
+            return read;
+        }
     }
 
     /// <summary>

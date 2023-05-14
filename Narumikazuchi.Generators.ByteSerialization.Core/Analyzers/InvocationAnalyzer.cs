@@ -11,7 +11,11 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
 {
     public override void Initialize(AnalysisContext context)
     {
-        context.EnableConcurrentExecution();
+        if (!Debugger.IsAttached)
+        {
+            context.EnableConcurrentExecution();
+        }
+
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.RegisterSyntaxNodeAction(action: this.Analyze,
                                          SyntaxKind.InvocationExpression);
@@ -32,19 +36,16 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
     private void Analyze(SyntaxNodeAnalysisContext context)
     {
         InvocationExpressionSyntax invocation = (InvocationExpressionSyntax)context.Node;
-        ImmutableArray<ITypeSymbol> types = MethodToTypeReferenceFinder.FindTypes(compilation: context.SemanticModel.Compilation,
-                                                                                  invocation: invocation);
-        if (types.IsEmpty)
+        ITypeSymbol type = MethodToTypeReferenceFinder.FilterType(compilation: context.SemanticModel.Compilation,
+                                                                  invocation: invocation);
+        if (type is null)
         {
             return;
         }
 
-        foreach (ITypeSymbol type in types)
-        {
-            ReportDiagnosticsForType(type: type,
-                                     context: context,
-                                     invocation: invocation);
-        }
+        ReportDiagnosticsForType(type: type,
+                                 context: context,
+                                 invocation: invocation);
     }
 
     static private void ReportDiagnosticsForType(ITypeSymbol type,
@@ -209,6 +210,11 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
             ReportDiagnosticsForType(type: array.ElementType,
                                      context: context,
                                      invocation: invocation);
+        }
+        else if (type is ITypeParameterSymbol typeParameter &&
+                 !typeParameter.HasUnmanagedTypeConstraint)
+        {
+            context.ReportDiagnostic(CreateOpenGenericsUnsupportedDiagnostic(invocation));
         }
     }
 

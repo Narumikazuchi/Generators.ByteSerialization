@@ -14,10 +14,10 @@ public sealed partial class SerializableGenerator
         return syntaxNode is InvocationExpressionSyntax;
     }
 
-    static private ImmutableArray<ITypeSymbol> TransformToType(GeneratorSyntaxContext context,
-                                                               CancellationToken cancellationToken)
+    static private ITypeSymbol TransformToType(GeneratorSyntaxContext context,
+                                               CancellationToken cancellationToken)
     {
-        return MethodToTypeReferenceFinder.FindTypes(compilation: context.SemanticModel.Compilation,
+        return MethodToTypeReferenceFinder.FilterType(compilation: context.SemanticModel.Compilation,
                                                      invocation: (InvocationExpressionSyntax)context.Node);
     }
 
@@ -26,7 +26,6 @@ public sealed partial class SerializableGenerator
     {
         CodeAnalysis.Extensions.ClearCaches();
         Extensions.ClearCaches();
-        CustomHandlerFinder.ClearCache();
 
         (Compilation compilation, ImmutableArray<ITypeSymbol> types) = compilationAndTypes;
         if (types.IsDefaultOrEmpty)

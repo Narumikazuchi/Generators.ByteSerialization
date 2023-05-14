@@ -8,7 +8,7 @@ public partial class SerializableGenerator : IIncrementalGenerator
     {
         IncrementalValuesProvider<ITypeSymbol> declarations = context.SyntaxProvider.CreateSyntaxProvider(predicate: IsEligableTypeSyntax,
                                                                                                           transform: TransformToType)
-                                                                                    .SelectMany((types, _) => types);
+                                                                                    .Where(static type => type is not null);
 
         IncrementalValueProvider<(Compilation, ImmutableArray<ITypeSymbol>)> compilationAndTypes = context.CompilationProvider.Combine(declarations.Collect());
         context.RegisterSourceOutput(source: compilationAndTypes,

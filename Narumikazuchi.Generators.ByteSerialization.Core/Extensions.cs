@@ -231,6 +231,10 @@ static public partial class Extensions
         {
             return result;
         }
+        else if (type is ITypeParameterSymbol)
+        {
+            return false;
+        }
         else if (type.SpecialType is SpecialType.System_IntPtr
                                   or SpecialType.System_UIntPtr
                                   or SpecialType.System_Delegate

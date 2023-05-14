@@ -6,77 +6,58 @@ static public class CustomHandlerFinder
 {
     static public ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> FindTypesWithCustomHandlerIn(Compilation compilation)
     {
-        Monitor.Enter(s_Cache);
-        if (s_Cache.TryGetValue(key: compilation.Assembly,
-                                value: out ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> result))
-        {
-            Monitor.Exit(s_Cache);
-            return result;
-        }
-        else
-        {
-            INamedTypeSymbol @interface = compilation.GetTypeByMetadataName($"{GlobalNames.NAMESPACE}.{GlobalNames.ISERIALIZATIONHANDLER}");
+        INamedTypeSymbol @interface = compilation.GetTypeByMetadataName($"{GlobalNames.NAMESPACE}.{GlobalNames.ISERIALIZATIONHANDLER}");
 
-            ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>>.Builder builder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
-            ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> results;
-            foreach (MetadataReference reference in compilation.ExternalReferences)
+        ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>>.Builder builder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
+        ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> results;
+        foreach (MetadataReference reference in compilation.ExternalReferences)
+        {
+            ISymbol assemblyOrModule = compilation.GetAssemblyOrModuleSymbol(reference);
+            if (assemblyOrModule is IAssemblySymbol assembly &&
+                !assembly.Name.StartsWith("System"))
             {
-                ISymbol assemblyOrModule = compilation.GetAssemblyOrModuleSymbol(reference);
-                if (assemblyOrModule is IAssemblySymbol assembly &&
-                    !assembly.Name.StartsWith("System"))
+                results = TypesWithCustomHandlerIn(@namespace: assembly.GlobalNamespace,
+                                                   @interface: @interface);
+                foreach (KeyValuePair<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> element in results)
                 {
-                    results = TypesWithCustomHandlerIn(@namespace: assembly.GlobalNamespace,
-                                                       @interface: @interface);
-                    foreach (KeyValuePair<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> element in results)
+                    try
                     {
-                        try
-                        {
-                            builder.Add(key: element.Key,
-                                        value: element.Value);
-                        }
-                        catch { }
+                        builder.Add(key: element.Key,
+                                    value: element.Value);
                     }
-                }
-                else if (assemblyOrModule is IModuleSymbol module &&
-                         !module.Name.StartsWith("System"))
-                {
-                    results = TypesWithCustomHandlerIn(@namespace: module.GlobalNamespace,
-                                                       @interface: @interface);
-                    foreach (KeyValuePair<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> element in results)
-                    {
-                        try
-                        {
-                            builder.Add(key: element.Key,
-                                        value: element.Value);
-                        }
-                        catch { }
-                    }
+                    catch { }
                 }
             }
-
-            results = TypesWithCustomHandlerIn(@namespace: compilation.Assembly.GlobalNamespace,
-                                               @interface: @interface);
-            foreach (KeyValuePair<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> element in results)
+            else if (assemblyOrModule is IModuleSymbol module &&
+                     !module.Name.StartsWith("System"))
             {
-                try
+                results = TypesWithCustomHandlerIn(@namespace: module.GlobalNamespace,
+                                                   @interface: @interface);
+                foreach (KeyValuePair<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> element in results)
                 {
-                    builder.Add(key: element.Key,
-                                value: element.Value);
+                    try
+                    {
+                        builder.Add(key: element.Key,
+                                    value: element.Value);
+                    }
+                    catch { }
                 }
-                catch { }
             }
-
-            result = builder.ToImmutable();
-            s_Cache.GetOrAdd(key: compilation.Assembly,
-                             value: result);
-            Monitor.Exit(s_Cache);
-            return result;
         }
-    }
 
-    static public void ClearCache()
-    {
-        s_Cache.Clear();
+        results = TypesWithCustomHandlerIn(@namespace: compilation.Assembly.GlobalNamespace,
+                                           @interface: @interface);
+        foreach (KeyValuePair<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> element in results)
+        {
+            try
+            {
+                builder.Add(key: element.Key,
+                            value: element.Value);
+            }
+            catch { }
+        }
+
+        return builder.ToImmutable();
     }
 
     static private ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> TypesWithCustomHandlerIn(INamespaceSymbol @namespace,
@@ -130,6 +111,4 @@ static public class CustomHandlerFinder
 
         return builder.ToImmutable();
     }
-
-    static private readonly ConcurrentDictionary<IAssemblySymbol, ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>>> s_Cache = new(SymbolEqualityComparer.Default);
 }
