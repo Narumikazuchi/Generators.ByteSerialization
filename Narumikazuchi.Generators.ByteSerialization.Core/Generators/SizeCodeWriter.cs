@@ -5,12 +5,14 @@ namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 public sealed class SizeCodeWriter
 {
-    public SizeCodeWriter(ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers)
+    public SizeCodeWriter(ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers,
+                          Logger logger)
     {
         m_CustomSerializers = customSerializers;
         m_CustomSerializerVars = new(SymbolEqualityComparer.Default);
         m_SerializerBuilder = new();
         m_CodeBuilder = new();
+        m_Logger = logger;
     }
 
     public String WriteMethod(ITypeSymbol type)
@@ -19,7 +21,7 @@ public sealed class SizeCodeWriter
         builder.AppendLine("    [CompilerGenerated]");
         builder.AppendLine($"    Int32 {GlobalNames.ISerializationHandler(type)}.GetExpectedArraySize({type.ToFrameworkString()} value)");
         builder.AppendLine("    {");
-        builder.AppendLine($"        var size = sizeof(Int64) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+        builder.AppendLine($"        var size = sizeof(Int64) + {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
         Int32 varCounter = -1;
         this.WriteForType(type: type,
@@ -41,6 +43,7 @@ public sealed class SizeCodeWriter
                               String target,
                               ref Int32 varCounter)
     {
+        m_Logger.LogInformation($"Writing size approximation code for target '{target}' of type '{type.ToFrameworkString()}'.");
         if (m_CustomSerializers.TryGetValue(key: type,
                                             value: out ImmutableHashSet<INamedTypeSymbol> implementingTypes))
         {
@@ -54,6 +57,7 @@ public sealed class SizeCodeWriter
                 m_SerializerBuilder.AppendLine($"        {GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
             }
 
+            m_Logger.LogInformation($"Using custom serializer for size approximation code for target '{target}' of type '{type.ToFrameworkString()}'.");
             m_CodeBuilder.AppendLine($"{indent}size += {serializer}.GetExpectedArraySize({target});");
         }
         else if (type is IArrayTypeSymbol array)
@@ -101,16 +105,18 @@ public sealed class SizeCodeWriter
         if (array.Rank is 1 &&
             array.ElementType.IsUnmanagedSerializable())
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as an array of unmanaged types.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
-            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>() + {target}.Length * Unsafe.SizeOf<{array.ElementType.ToFrameworkString()}>();");
+            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) + {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{array.ToFrameworkString()}>()) + {target}.Length * Unsafe.SizeOf<{array.ElementType.ToFrameworkString()}>();");
             m_CodeBuilder.AppendLine($"{indent}}}");
         }
         else
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as a regular array.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
-            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) * {array.Rank} + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    size += sizeof(Int32) * {array.Rank} + {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{array.ToFrameworkString()}>());");
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    foreach (var _var{varCounter} in {target})");
             m_CodeBuilder.AppendLine($"{indent}    {{");
@@ -132,10 +138,12 @@ public sealed class SizeCodeWriter
     {
         if (type.IsUnmanagedSerializable())
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as an unmanaged type.");
             m_CodeBuilder.AppendLine($"{indent}size += Unsafe.SizeOf<{type.ToFrameworkString()}>();");
         }
         else if (type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<"))
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as special type 'KeyValuePair`2'.");
             IPropertySymbol property = type.GetMembers("Key")
                                            .OfType<IPropertySymbol>()
                                            .First();
@@ -154,7 +162,8 @@ public sealed class SizeCodeWriter
         }
         else
         {
-            m_CodeBuilder.AppendLine($"{indent}size += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_Logger.LogInformation($"Target '{target}' is handled as managed struct.");
+            m_CodeBuilder.AppendLine($"{indent}size += {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
             ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
             foreach (ISymbol member in members)
@@ -191,9 +200,10 @@ public sealed class SizeCodeWriter
                                     String target,
                                     ref Int32 varCounter)
     {
-        m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+        m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
         if (type.SpecialType is SpecialType.System_String)
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as special type 'String'.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    size += 4 * {target}.Length;");
@@ -201,6 +211,7 @@ public sealed class SizeCodeWriter
         }
         else
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as sealed class.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is not null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
 
@@ -242,7 +253,8 @@ public sealed class SizeCodeWriter
                                       String target,
                                       ref Int32 varCounter)
     {
-        m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+        m_Logger.LogInformation($"Target '{target}' is handled as abstract class.");
+        m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
         ImmutableArray<INamedTypeSymbol> derivedTypes = type.GetDerivedTypes();
         Boolean first = true;
@@ -312,7 +324,8 @@ public sealed class SizeCodeWriter
         }
         else
         {
-            m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_Logger.LogInformation($"Target '{target}' is handled as polymorphic non-sealed class.");
+            m_CodeBuilder.AppendLine($"{indent}size += sizeof(Byte) + {GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.GetExpectedArraySize({GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
             Boolean first = true;
             foreach (INamedTypeSymbol derivedType in derivedTypes)
@@ -402,6 +415,7 @@ public sealed class SizeCodeWriter
                                     String target,
                                     ref Int32 varCounter)
     {
+        m_Logger.LogInformation($"Target '{target}' is handled as collection type.");
         if (elementType.IsUnmanagedSerializable())
         {
             if (type.GetMembers("Count")
@@ -434,4 +448,5 @@ public sealed class SizeCodeWriter
     private readonly ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> m_CustomSerializers;
     private readonly StringBuilder m_SerializerBuilder;
     private readonly StringBuilder m_CodeBuilder;
+    private readonly Logger m_Logger;
 }

@@ -88,6 +88,7 @@
 		<Using Include="System.Collections.Immutable" />
 		<Using Include="System.IO" />
 		<Using Include="System.Linq" />
+		<Using Include="System.Numerics" />
 		<Using Include="System.Reflection" />
 		<Using Include="System.Reflection.Emit" />
 		<Using Include="System.Runtime.CompilerServices" />

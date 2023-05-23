@@ -22,4 +22,6 @@ static public class GlobalNames
     public const String ISERIALIZATIONHANDLER = "ISerializationHandler`1";
     public const String SERIALIZEFROMMEMBERATTRIBUTE = NAMESPACE + ".SerializeFromMemberAttribute";
     public const String SERIALIZEDEFAULTATTRIBUTE = NAMESPACE + ".SerializeDefaultAttribute";
+    public const String DATALAYOUTATTRIBUTE = NAMESPACE + ".DataLayoutAttribute";
+    public const String DATALAYOUTPOSITIONATTRIBUTE = NAMESPACE + ".DataLayoutPositionAttribute";
 }

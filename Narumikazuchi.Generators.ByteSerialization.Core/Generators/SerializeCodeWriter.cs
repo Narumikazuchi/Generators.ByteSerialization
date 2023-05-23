@@ -5,12 +5,14 @@ namespace Narumikazuchi.Generators.ByteSerialization.Generators;
 
 public sealed class SerializeCodeWriter
 {
-    public SerializeCodeWriter(ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers)
+    public SerializeCodeWriter(ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers,
+                               Logger logger)
     {
         m_CustomSerializers = customSerializers;
         m_CustomSerializerVars = new(SymbolEqualityComparer.Default);
         m_SerializerBuilder = new();
         m_CodeBuilder = new();
+        m_Logger = logger;
     }
 
     public String WriteMethod(ITypeSymbol type)
@@ -42,6 +44,7 @@ public sealed class SerializeCodeWriter
                               String target,
                               ref Int32 varCounter)
     {
+        m_Logger.LogInformation($"Writing serialization code for target '{target}' of type '{type.ToFrameworkString()}'.");
         if (m_CustomSerializers.TryGetValue(key: type,
                                             value: out ImmutableHashSet<INamedTypeSymbol> implementingTypes))
         {
@@ -55,6 +58,7 @@ public sealed class SerializeCodeWriter
                 m_SerializerBuilder.AppendLine($"        {GlobalNames.ISerializationHandler(type)} {serializer} = new {implementingTypes.First().ToFrameworkString()}();");
             }
 
+            m_Logger.LogInformation($"Using custom serializer for serialization code for target '{target}' of type '{type.ToFrameworkString()}'.");
             m_CodeBuilder.AppendLine($"{indent}pointer += (Int32){serializer}.Serialize(buffer[pointer..], {target});");
         }
         else if (type is IArrayTypeSymbol array)
@@ -102,17 +106,16 @@ public sealed class SerializeCodeWriter
         if (array.Rank is 1 &&
             array.ElementType.IsUnmanagedSerializable())
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as an array of unmanaged types.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x0;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{array.ToFrameworkString()}>());");
             m_CodeBuilder.AppendLine($"{indent}}}");
             m_CodeBuilder.AppendLine($"{indent}else");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x1;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{array.ToFrameworkString()}>());");
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = MemoryMarshal.AsBytes<{array.ElementType.ToFrameworkString()}>({target});");
             m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, Int32>(ref buffer[pointer]) = _var{varCounter}.Length;");
@@ -123,17 +126,16 @@ public sealed class SerializeCodeWriter
         }
         else
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as a regular array.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x0;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{array.ToFrameworkString()}>());");
             m_CodeBuilder.AppendLine($"{indent}}}");
             m_CodeBuilder.AppendLine($"{indent}else");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x1;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({array.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{array.ToFrameworkString()}>());");
 
             for (Int32 index = 0;
                  index < array.Rank;
@@ -164,11 +166,13 @@ public sealed class SerializeCodeWriter
     {
         if (type.IsUnmanagedSerializable())
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as an unmanaged type.");
             m_CodeBuilder.AppendLine($"{indent}Unsafe.As<Byte, {type.ToFrameworkString()}>(ref buffer[pointer]) = {target};");
             m_CodeBuilder.AppendLine($"{indent}pointer += Unsafe.SizeOf<{type.ToFrameworkString()}>();");
         }
         else if (type.ToFrameworkString().StartsWith("System.Collections.Generic.KeyValuePair<"))
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as special type 'KeyValuePair`2'.");
             IPropertySymbol property = type.GetMembers("Key")
                                            .OfType<IPropertySymbol>()
                                            .First();
@@ -187,8 +191,9 @@ public sealed class SerializeCodeWriter
         }
         else
         {
-            m_CodeBuilder.AppendLine($"{indent}Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_Logger.LogInformation($"Target '{target}' is handled as managed struct.");
+            m_CodeBuilder.AppendLine($"{indent}buffer[pointer++] = 0x1;");
+            m_CodeBuilder.AppendLine($"{indent}pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
             ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
             foreach (ISymbol member in members)
@@ -227,17 +232,16 @@ public sealed class SerializeCodeWriter
     {
         if (type.SpecialType is SpecialType.System_String)
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as special type 'String'.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x0;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
             m_CodeBuilder.AppendLine($"{indent}}}");
             m_CodeBuilder.AppendLine($"{indent}else");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x1;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
             varCounter++;
             m_CodeBuilder.AppendLine($"{indent}    var _var{varCounter} = MemoryMarshal.AsBytes({target}.AsSpan());");
             m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, Int32>(ref buffer[pointer]) = _var{varCounter}.Length;");
@@ -249,17 +253,16 @@ public sealed class SerializeCodeWriter
         }
         else
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as sealed class.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x0;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
             m_CodeBuilder.AppendLine($"{indent}}}");
             m_CodeBuilder.AppendLine($"{indent}else");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x1;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
             ImmutableArray<ISymbol> members = type.GetMembersToSerialize();
             String furtherIndent = indent + "    ";
@@ -299,11 +302,11 @@ public sealed class SerializeCodeWriter
                                       String target,
                                       ref Int32 varCounter)
     {
+        m_Logger.LogInformation($"Target '{target}' is handled as abstract class.");
         m_CodeBuilder.AppendLine($"{indent}if ({target} is null)");
         m_CodeBuilder.AppendLine($"{indent}{{");
         m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x0;");
-        m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-        m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+        m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
         m_CodeBuilder.AppendLine($"{indent}}}");
         m_CodeBuilder.AppendLine($"{indent}else");
         m_CodeBuilder.AppendLine($"{indent}{{");
@@ -325,8 +328,7 @@ public sealed class SerializeCodeWriter
 
             m_CodeBuilder.AppendLine($"{indent}    {{");
             m_CodeBuilder.AppendLine($"{indent}        buffer[pointer++] = 0x1;");
-            m_CodeBuilder.AppendLine($"{indent}        Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({derivedType.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}        pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}        pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{derivedType.ToFrameworkString()}>());");
 
             ImmutableArray<ISymbol> members = derivedType.GetMembersToSerialize();
             String furtherIndent = indent + "        ";
@@ -381,11 +383,11 @@ public sealed class SerializeCodeWriter
         }
         else
         {
+            m_Logger.LogInformation($"Target '{target}' is handled as polymorphic non-sealed class.");
             m_CodeBuilder.AppendLine($"{indent}if ({target} is null)");
             m_CodeBuilder.AppendLine($"{indent}{{");
             m_CodeBuilder.AppendLine($"{indent}    buffer[pointer++] = 0x0;");
-            m_CodeBuilder.AppendLine($"{indent}    Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}    pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}    pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
             m_CodeBuilder.AppendLine($"{indent}}}");
             m_CodeBuilder.AppendLine($"{indent}else");
             m_CodeBuilder.AppendLine($"{indent}{{");
@@ -406,8 +408,7 @@ public sealed class SerializeCodeWriter
 
                 m_CodeBuilder.AppendLine($"{indent}    {{");
                 m_CodeBuilder.AppendLine($"{indent}        buffer[pointer++] = 0x1;");
-                m_CodeBuilder.AppendLine($"{indent}        Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({derivedType.ToFrameworkString()}));");
-                m_CodeBuilder.AppendLine($"{indent}        pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+                m_CodeBuilder.AppendLine($"{indent}        pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{derivedType.ToFrameworkString()}>());");
 
                 members = derivedType.GetMembersToSerialize();
                 furtherIndent = indent + "        ";
@@ -445,8 +446,7 @@ public sealed class SerializeCodeWriter
             m_CodeBuilder.AppendLine($"{indent}    else if ({target} is {type.ToFrameworkString()} _var{varCounter})");
             m_CodeBuilder.AppendLine($"{indent}    {{");
             m_CodeBuilder.AppendLine($"{indent}        buffer[pointer++] = 0x0;");
-            m_CodeBuilder.AppendLine($"{indent}        Unsafe.As<Byte, {GlobalNames.NAMESPACE}.TypeIdentifier>(ref buffer[pointer]) = {GlobalNames.NAMESPACE}.TypeIdentifier.CreateFrom(typeof({type.ToFrameworkString()}));");
-            m_CodeBuilder.AppendLine($"{indent}        pointer += Unsafe.SizeOf<{GlobalNames.NAMESPACE}.TypeIdentifier>();");
+            m_CodeBuilder.AppendLine($"{indent}        pointer += (Int32){GlobalNames.NAMESPACE}.TypeLayoutSerializationHandler.Default.Serialize(buffer[pointer..], {GlobalNames.NAMESPACE}.TypeLayout.CreateFrom<{type.ToFrameworkString()}>());");
 
             members = type.GetMembersToSerialize();
             furtherIndent = indent + "        ";
@@ -488,6 +488,7 @@ public sealed class SerializeCodeWriter
                                     String target,
                                     ref Int32 varCounter)
     {
+        m_Logger.LogInformation($"Target '{target}' is handled as collection type.");
         if (type.GetMembers("Count")
                 .OfType<IPropertySymbol>()
                 .Any(property => property.DeclaredAccessibility is Accessibility.Public))
@@ -517,4 +518,5 @@ public sealed class SerializeCodeWriter
     private readonly ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> m_CustomSerializers;
     private readonly StringBuilder m_SerializerBuilder;
     private readonly StringBuilder m_CodeBuilder;
+    private readonly Logger m_Logger;
 }

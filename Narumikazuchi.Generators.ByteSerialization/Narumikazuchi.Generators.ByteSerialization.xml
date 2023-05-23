@@ -210,6 +210,58 @@
             </remarks>
             <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.DataLayout">
+            <summary>
+            Represents the serialized layout of data.
+            </summary>
+        </member>
+        <member name="F:Narumikazuchi.Generators.ByteSerialization.DataLayout.Sequential">
+            <summary>
+            Data will be serialized in the order the properties/fields appear in the type declaration.
+            </summary>
+        </member>
+        <member name="F:Narumikazuchi.Generators.ByteSerialization.DataLayout.Explicit">
+            <summary>
+            Data will be serialized in the order specified by the <see cref="T:Narumikazuchi.Generators.ByteSerialization.DataLayoutPositionAttribute"/>.
+            </summary>
+        </member>
+        <member name="F:Narumikazuchi.Generators.ByteSerialization.DataLayout.Default">
+            <summary>
+            Data will be serialized in the default order.
+            </summary>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.DataLayoutAttribute">
+            <summary>
+            Specifies the serialized data layout for this type.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.DataLayoutAttribute.#ctor(Narumikazuchi.Generators.ByteSerialization.DataLayout)">
+            <summary>
+            Specifies the serialized data layout for this type.
+            </summary>
+            <param name="layout">The layout style to use for serialization.</param>
+        </member>
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.DataLayoutAttribute.Layout">
+            <summary>
+            Gets the layout style.
+            </summary>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.DataLayoutPositionAttribute">
+            <summary>
+            Determines the position of this data member in the serialization order.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.DataLayoutPositionAttribute.#ctor(System.Byte)">
+            <summary>
+            Determines the position of this data member in the serialization order.
+            </summary>
+            <param name="position">The position in the serialization order.</param>
+        </member>
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.DataLayoutPositionAttribute.Position">
+            <summary>
+            Gets the position in the serialization order.
+            </summary>
+        </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.FailedToGenerateCode">
             <summary>
             Represents the failure of the generator to generate serialization code.
@@ -267,6 +319,11 @@
             <param name="buffer">The buffer into which to store the serialized value.</param>
             <param name="graph">The value to serialize.</param>
             <returns>The amount of bytes written to the buffer.</returns>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.LayoutMemberType">
+            <summary>
+            Represents the type of the member for a <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeLayout"/>.
+            </summary>
         </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.MirroredMap`2">
             <summary>
@@ -330,27 +387,56 @@
             <see langword="nameof"/> is more robust and therefore recommended.
             </remarks>
         </member>
-        <member name="T:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier">
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.TypeLayout">
             <summary>
-            Represents a semi-unique identifier for a type.
+            Represents the layout for a type.
             </summary>
-            <remarks>
-            The identifier is basically a SHA-512 hash, which makes collision as unlikely as possible.
-            This doesn't mean they can't happen, it's just extremely unlikely.
-            </remarks>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(System.Type)">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayout.CreateFrom``1">
             <summary>
-            Initializes a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier"/> struct.
+            Creates a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeLayout"/> struct for the specified <typeparamref name="T"/>.
             </summary>
-            <param name="type">The type to create an identifier for.</param>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayout.CreateFrom(System.Type)">
+            <summary>
+            Creates a new instance of the <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeLayout"/> struct for the specified <paramref name="type"/>.
+            </summary>
+            <param name="type">The type to create a layout for.</param>
             <exception cref="T:System.ArgumentNullException"/>
         </member>
-        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.ToString">
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayout.ToString">
             <summary>
-            Returns the string-representation of this identifier.
+            Returns the string representation of this object.
             </summary>
-            <returns>The string-representation of this identifier.</returns>
+            <returns>The string representation of this object.</returns>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayout.Equals(Narumikazuchi.Generators.ByteSerialization.TypeLayout)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayout.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayout.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="T:Narumikazuchi.Generators.ByteSerialization.TypeLayoutSerializationHandler">
+            <summary>
+            Implements the serialization behavior for <see cref="T:Narumikazuchi.Generators.ByteSerialization.TypeLayout"/> objects.
+            </summary>
+        </member>
+        <member name="P:Narumikazuchi.Generators.ByteSerialization.TypeLayoutSerializationHandler.Default">
+            <summary>
+            The default handler used by the code generator.
+            </summary>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayoutSerializationHandler.Deserialize(System.ReadOnlySpan{System.Byte},Narumikazuchi.Generators.ByteSerialization.TypeLayout@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayoutSerializationHandler.GetExpectedArraySize(Narumikazuchi.Generators.ByteSerialization.TypeLayout)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.TypeLayoutSerializationHandler.Serialize(System.Span{System.Byte},Narumikazuchi.Generators.ByteSerialization.TypeLayout)">
+            <inheritdoc/>
         </member>
         <member name="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable">
             <summary>

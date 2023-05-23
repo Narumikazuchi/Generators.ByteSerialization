@@ -358,29 +358,6 @@ static public partial class Extensions
         }
     }
 
-    static public Boolean IsSerializationHandler(this INamedTypeSymbol type)
-    {
-        if (s_IsSerializationHandlerCache.TryGetValue(key: type,
-                                                      value: out Boolean result))
-        {
-            return result;
-        }
-        else if (type.BaseType is null &&
-                 (type.ToFrameworkString().StartsWith($"{GlobalNames.NAMESPACE}.ISimpleSerializationHandler<") ||
-                 type.ToFrameworkString().StartsWith($"{GlobalNames.NAMESPACE}.IComplexSerializationHandler<")))
-        {
-            s_IsSerializationHandlerCache.GetOrAdd(key: type,
-                                                   value: true);
-            return true;
-        }
-        else
-        {
-            s_IsSerializationHandlerCache.GetOrAdd(key: type,
-                                                   value: false);
-            return false;
-        }
-    }
-
     static public Boolean IsUnmanagedSerializable(this ITypeSymbol type)
     {
         if (s_IsUnmanagedCache.TryGetValue(key: type,

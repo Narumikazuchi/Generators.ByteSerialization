@@ -43,9 +43,15 @@ static public partial class ByteSerializer
             try
             {
                 Type[] assemblyTypes = assembly.GetTypes();
+#if DEBUG
+                Type[] notInterface = assemblyTypes.Where(t => !t.IsInterface).ToArray();
+                Type[] compilerGenerated = notInterface.Where(AttributeResolver.HasAttribute<CompilerGeneratedAttribute>).ToArray();
+                Type[] reduced = compilerGenerated.Where(t => t.IsAssignableTo(typeof(IByteSerializer))).ToArray();
+#else
                 IEnumerable<Type> reduced = assemblyTypes.Where(t => !t.IsInterface)
                                                          .Where(AttributeResolver.HasAttribute<CompilerGeneratedAttribute>)
                                                          .Where(t => t.IsAssignableTo(typeof(IByteSerializer)));
+#endif
                 types.AddRange(reduced);
             }
             catch { }
