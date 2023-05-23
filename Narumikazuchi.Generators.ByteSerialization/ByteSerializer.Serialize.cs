@@ -14,7 +14,7 @@ public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Byte[] Serialize<TSerializable>(TSerializable? graph)
+    static public ReadOnlySpan<Byte> Serialize<TSerializable>(TSerializable? graph)
     {
         if (typeof(TSerializable).IsUnmanagedStruct())
         {
@@ -24,15 +24,10 @@ public partial class ByteSerializer
         }
         else if (Handlers is ISerializationHandler<TSerializable> handler)
         {
-            Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph));
-            UInt32 written = handler.Serialize(buffer: buffer,
-                                               graph: graph);
-            Byte[] result = new Byte[written];
-            Array.Copy(sourceArray: buffer,
-                       destinationArray: result,
-                       length: written);
-            ArrayPool<Byte>.Shared.Return(buffer);
-            return result;
+            Span<Byte> buffer = stackalloc Byte[handler.GetExpectedArraySize(graph)];
+            Int32 written = (Int32)handler.Serialize(buffer: buffer,
+                                                     graph: graph);
+            return buffer[..written].ToArray();
         }
         else
         {
@@ -132,7 +127,7 @@ public partial class ByteSerializer
                                                            TSerializable? graph)
         where TStream : IWriteableStream
     {
-        Byte[] buffer = Serialize(graph);
+        ReadOnlySpan<Byte> buffer = Serialize(graph);
         stream.Write(buffer);
         return (UInt32)buffer.Length;
     }
@@ -174,9 +169,26 @@ public partial class ByteSerializer
                                                                                      CancellationToken cancellationToken = default)
         where TStream : IWriteableStream
     {
-        Byte[] buffer = Serialize(graph);
-        await stream.WriteAsynchronously(buffer: buffer,
-                                         cancellationToken: cancellationToken);
-        return (UInt32)buffer.Length;
+        if (typeof(TSerializable).IsUnmanagedStruct())
+        {
+            Byte[] buffer = new Byte[Unsafe.SizeOf<TSerializable>()];
+            Unsafe.As<Byte, TSerializable>(ref buffer[0]) = graph!;
+            await stream.WriteAsynchronously(buffer: buffer,
+                                             cancellationToken: cancellationToken);
+            return (UInt32)buffer.Length;
+        }
+        else if (Handlers is ISerializationHandler<TSerializable> handler)
+        {
+            Byte[] buffer = ArrayPool<Byte>.Shared.Rent(handler.GetExpectedArraySize(graph));
+            Int32 written = (Int32)handler.Serialize(buffer: buffer,
+                                                     graph: graph);
+            await stream.WriteAsynchronously(buffer: buffer.AsMemory()[..written],
+                                             cancellationToken: cancellationToken);
+            return (UInt32)written;
+        }
+        else
+        {
+            throw new TypeNotSerializable(graph?.GetType() ?? typeof(TSerializable));
+        }
     }
 }
