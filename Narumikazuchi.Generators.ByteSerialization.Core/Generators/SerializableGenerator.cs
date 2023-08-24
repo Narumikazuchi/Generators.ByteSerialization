@@ -35,9 +35,14 @@ public sealed partial class SerializableGenerator
             return;
         }
 
+        ImmutableArray<IAssemblySymbol> assemblies = compilation.References.Select(compilation.GetAssemblyOrModuleSymbol)
+                                                                           .OfType<IAssemblySymbol>()
+                                                                           .Concat(new IAssemblySymbol[] { compilation.Assembly })
+                                                                           .ToImmutableArray();
+
         ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers = CustomHandlerFinder.FindTypesWithCustomHandlerIn(compilation);
 
-        types = types.Where(type => type.CanBeSerialized(customSerializers))
+        types = types.Where(type => type.CanBeSerialized(assemblies, customSerializers))
                      .Where(type => !type.IsUnmanagedSerializable())
                      .Distinct<ITypeSymbol>(SymbolEqualityComparer.Default)
                      .ToImmutableArray();
@@ -64,27 +69,23 @@ public sealed partial class SerializableGenerator
             builder.AppendLine("#pragma warning disable");
             builder.AppendLine("#nullable disable");
             builder.AppendLine();
-            builder.AppendLine("using System;");
-            builder.AppendLine("using System.Reflection;");
-            builder.AppendLine("using System.Reflection.Emit;");
-            builder.AppendLine("using System.Runtime.CompilerServices;");
-            builder.AppendLine("using System.Runtime.InteropServices;");
-            builder.AppendLine("using System.Threading;");
-            builder.AppendLine();
             builder.AppendLine("namespace Narumikazuchi.Generated.Internals.ByteSerialization;");
             builder.AppendLine();
             builder.AppendLine($"public partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} : {GlobalNames.ISerializationHandler(type)}");
             builder.AppendLine("{");
 
-            DeserializeCodeWriter deserializeCodeWriter = new(customSerializers: customSerializers,
+            DeserializeCodeWriter deserializeCodeWriter = new(assemblies: assemblies,
+                                                              customSerializers: customSerializers,
                                                               logger: m_Logger);
             builder.AppendLine(deserializeCodeWriter.WriteMethod(type));
 
-            SizeCodeWriter sizeCodeWriter = new(customSerializers: customSerializers,
+            SizeCodeWriter sizeCodeWriter = new(assemblies: assemblies,
+                                                customSerializers: customSerializers,
                                                 logger: m_Logger);
             builder.AppendLine(sizeCodeWriter.WriteMethod(type));
 
-            SerializeCodeWriter serializeCodeWriter = new(customSerializers: customSerializers,
+            SerializeCodeWriter serializeCodeWriter = new(assemblies: assemblies,
+                                                          customSerializers: customSerializers,
                                                           logger: m_Logger);
             builder.Append(serializeCodeWriter.WriteMethod(type));
 

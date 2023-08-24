@@ -35,6 +35,10 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
         {
             var _var0 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
             pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+            if (_var0 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof({0}[])))
+            {
+                throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof({0}[]));
+            }
             var _var1 = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));
             pointer += Unsafe.SizeOf<Int32>();
             result = MemoryMarshal.Cast<Byte, {0}>(buffer[pointer..(pointer + _var1)]).ToArray();

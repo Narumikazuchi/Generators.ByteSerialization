@@ -36,7 +36,7 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
     private void Analyze(SyntaxNodeAnalysisContext context)
     {
         InvocationExpressionSyntax invocation = (InvocationExpressionSyntax)context.Node;
-        ITypeSymbol type = MethodToTypeReferenceFinder.FilterType(compilation: context.SemanticModel.Compilation,
+        ITypeSymbol type = MethodToTypeReferenceFinder.FilterType(compilation: context.Compilation,
                                                                   invocation: invocation);
         if (type is null)
         {
@@ -52,7 +52,7 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
                                                  SyntaxNodeAnalysisContext context,
                                                  InvocationExpressionSyntax invocation)
     {
-        if (type.IsUnmanagedSerializable() ||
+        if (type.IsUnmanagedStruct() ||
             type.SpecialType is SpecialType.System_String)
         {
             return;
@@ -82,8 +82,12 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(CreateOpenGenericsUnsupportedDiagnostic(invocation));
             }
 
+            ImmutableArray<IAssemblySymbol> assemblies = context.Compilation.References.Select(context.Compilation.GetAssemblyOrModuleSymbol)
+                                                                                       .OfType<IAssemblySymbol>()
+                                                                                       .Concat(new IAssemblySymbol[] { context.Compilation.Assembly })
+                                                                                       .ToImmutableArray();
             if (named.IsAbstract &&
-                named.GetDerivedTypes().Length is 0)
+                named.GetDerivedTypes(assemblies).Length is 0)
             {
                 context.ReportDiagnostic(CreateNoImplementationDiagnostic(method: invocation,
                                                                           typename: named.Name));
@@ -106,7 +110,7 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
                 }
             }
 
-            ImmutableArray<ISymbol> notSerializable = members.Where(member => !member.CanBeSerialized(customSerializers))
+            ImmutableArray<ISymbol> notSerializable = members.Where(member => !member.CanBeSerialized(assemblies, customSerializers))
                                                              .ToImmutableArray();
             if (named.HasDefaultConstructor())
             {
@@ -222,11 +226,11 @@ public sealed partial class InvocationAnalyzer : DiagnosticAnalyzer
     {
         if (member is IFieldSymbol field)
         {
-            return field.Type.IsUnmanagedSerializable();
+            return field.Type.IsUnmanagedStruct();
         }
         else if (member is IPropertySymbol property)
         {
-            return property.Type.IsUnmanagedSerializable();
+            return property.Type.IsUnmanagedStruct();
         }
         else
         {

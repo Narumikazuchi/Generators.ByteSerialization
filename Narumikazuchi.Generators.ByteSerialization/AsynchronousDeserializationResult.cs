@@ -8,7 +8,7 @@ public readonly struct AsynchronousDeserializationResult<TSerializable>
     /// <summary>
     /// The amount of bytes read during the operation.
     /// </summary>
-    public UInt32 BytesRead
+    public Unsigned31BitInteger BytesRead
     {
         get;
         init;

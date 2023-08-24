@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Narumikazuchi.Generators.ByteSerialization;
 
 namespace Narumikazuchi.CodeAnalysis;
 
@@ -13,30 +14,75 @@ static public class Extensions
         }
         else
         {
-            result = type.ToDisplayString()
-                         .Replace("*", "");
-
-            if (!type.IsValueType)
+            if (s_BuiltInTypes.Contains(type.Name))
             {
-                result = result.Replace("?", "");
-            }
+                result = $"System.{type.Name}";
+                s_FrameworkStringCache.GetOrAdd(key: type,
+                                                value: result);
 
-            foreach (KeyValuePair<String, String> kv in s_BuiltInTypes)
+                return result;
+
+            }
+            else if (type is IArrayTypeSymbol array)
             {
-                result = result.Replace(kv.Key, kv.Value);
-            }
+                StringBuilder builder = new();
+                builder.Append(array.ElementType.ToFrameworkString());
+                builder.Append('[');
+                builder.Append(new String(Enumerable.Repeat(',', array.Rank - 1).ToArray()));
+                builder.Append(']');
 
-            if ((type.ContainingNamespace is not null &&
-                 type.ContainingNamespace.Name is "System") ||
-                (result.Count(c => c == '.') is 1 &&
-                result.StartsWith("System.")))
+                result = builder.ToString();
+
+                s_FrameworkStringCache.GetOrAdd(key: type,
+                                                value: result);
+
+                return result;
+            }
+            else
             {
-                result = result.Replace("System.", "");
-            }
-            s_FrameworkStringCache.GetOrAdd(key: type,
-                                            value: result);
+                if (type is not INamedTypeSymbol named)
+                {
+                    return type.Name;
+                }
 
-            return result;
+                StringBuilder builder = new();
+                if (type.ContainingType is not null)
+                {
+                    builder.Append(type.ContainingType.ToFrameworkString());
+                }
+                else if (type.ContainingNamespace is not null)
+                {
+                    builder.Append(type.ContainingNamespace.ToDisplayString());
+                }
+
+                builder.Append('.');
+                builder.Append(type.Name);
+
+                if (named.IsGenericType)
+                {
+                    builder.Append('<');
+                    Boolean first = true;
+                    foreach (ITypeSymbol typeArgument in named.TypeArguments)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            builder.Append(", ");
+                        }
+
+                        builder.Append(typeArgument.ToFrameworkString());
+                    }
+
+                    builder.Append('>');
+                }
+
+                result = builder.ToString();
+
+                return result;
+            }
         }
     }
 
@@ -60,7 +106,8 @@ static public class Extensions
         }
     }
 
-    static public ImmutableArray<INamedTypeSymbol> GetDerivedTypes(this INamedTypeSymbol type)
+    static public ImmutableArray<INamedTypeSymbol> GetDerivedTypes(this INamedTypeSymbol type,
+                                                                   ImmutableArray<IAssemblySymbol> assemblies)
     {
         if (s_DerivedTypeCache.TryGetValue(key: type,
                                            value: out ImmutableArray<INamedTypeSymbol> result))
@@ -69,7 +116,6 @@ static public class Extensions
         }
         else
         {
-            IAssemblySymbol assembly = type.ContainingAssembly;
             List<INamedTypeSymbol> builder = new();
 
             void ScanNamespace(INamespaceSymbol @namespace)
@@ -82,8 +128,12 @@ static public class Extensions
                     }
                     else if (member is INamedTypeSymbol typeSymbol)
                     {
-                        if (type.BaseType is null &&
-                            typeSymbol.ImplementsInterface(type))
+                        if (typeSymbol.IsInterface())
+                        {
+                            continue;
+                        }
+                        else if (type.IsInterface() &&
+                                 typeSymbol.ImplementsInterface(type))
                         {
                             builder.Add(typeSymbol);
                         }
@@ -125,7 +175,11 @@ static public class Extensions
                 }
             }
 
-            ScanNamespace(assembly.GlobalNamespace);
+            foreach (IAssemblySymbol assembly in assemblies)
+            {
+                ScanNamespace(assembly.GlobalNamespace);
+            }
+
             builder.Sort(SortBySealed);
             result = builder.ToImmutableArray();
             s_DerivedTypeCache.GetOrAdd(key: type,
@@ -141,6 +195,7 @@ static public class Extensions
         while (baseType is not null)
         {
             result++;
+            baseType = baseType.BaseType;
         }
 
         return result;
@@ -295,24 +350,24 @@ static public class Extensions
     static private readonly ConcurrentDictionary<InheritancePair, Boolean> s_ImplementsInterfaceCache = new();
     static private readonly ConcurrentDictionary<InheritancePair, Boolean> s_ExtendsClassCache = new();
 
-    static private readonly Dictionary<String, String> s_BuiltInTypes = new()
+    static private readonly ImmutableArray<String> s_BuiltInTypes = new String[]
     {
-        { "decimal", "Decimal" },
-        { "double", "Double" },
-        { "ushort", "UInt16" },
-        { "object", "Object" },
-        { "string", "String" },
-        { "float", "Single" },
-        { "sbyte", "SByte" },
-        { "nuint", "UIntPtr" },
-        { "ulong", "UInt64" },
-        { "short", "Int16" },
-        { "bool", "Boolean" },
-        { "long", "Int64" },
-        { "nint", "IntPtr" },
-        { "uint", "UInt32" },
-        { "byte", "Byte" },
-        { "char", "Char" },
-        { "int", "Int32" },
-    };
+        "Decimal",
+        "Double",
+        "UInt16",
+        "Object",
+        "String",
+        "Single",
+        "SByte",
+        "UIntPtr",
+        "UInt64",
+        "Int16",
+        "Boolean",
+        "Int64",
+        "IntPtr",
+        "UInt32",
+        "Byte",
+        "Char",
+        "Int32"
+    }.ToImmutableArray();
 }

@@ -18,7 +18,7 @@ using System;
 
 public class Application
 {{
-    static public Byte[] Run()
+    static public ReadOnlySpan<Byte> Run()
     {{
         return ByteSerializer.Serialize({type}.Zero);
     }}

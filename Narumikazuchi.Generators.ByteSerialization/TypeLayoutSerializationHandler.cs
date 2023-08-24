@@ -11,8 +11,8 @@ public sealed class TypeLayoutSerializationHandler : ISerializationHandler<TypeL
     static public TypeLayoutSerializationHandler Default { get; } = new();
 
     /// <inheritdoc/>
-    public UInt32 Deserialize(ReadOnlySpan<Byte> buffer,
-                              out TypeLayout result)
+    public Unsigned31BitInteger Deserialize(ReadOnlySpan<Byte> buffer,
+                                            out TypeLayout result)
     {
         Int32 pointer = 0;
         LayoutMemberType type = Unsafe.As<Byte, LayoutMemberType>(ref MemoryMarshal.GetReference(buffer[pointer..]));
@@ -20,7 +20,7 @@ public sealed class TypeLayoutSerializationHandler : ISerializationHandler<TypeL
         if (type is not LayoutMemberType.Object)
         {
             result = new(type);
-            return (UInt32)pointer;
+            return pointer;
         }
 
         Byte memberCount = buffer[pointer++];
@@ -36,19 +36,19 @@ public sealed class TypeLayoutSerializationHandler : ISerializationHandler<TypeL
                  counter < memberCount;
                  counter++)
             {
-                pointer += (Int32)this.Deserialize(buffer: buffer[pointer..],
-                                                   result: out TypeLayout member);
+                pointer += this.Deserialize(buffer: buffer[pointer..],
+                                            result: out TypeLayout member);
                 members[counter] = member;
             }
         }
 
         result = new(memberType: type,
                      members: members);
-        return (UInt32)pointer;
+        return pointer;
     }
 
     /// <inheritdoc/>
-    public Int32 GetExpectedArraySize(TypeLayout graph)
+    public Unsigned31BitInteger GetExpectedArraySize(TypeLayout graph)
     {
         Int32 size = Unsafe.SizeOf<LayoutMemberType>();
         if (graph.m_Type is LayoutMemberType.Object)
@@ -67,15 +67,15 @@ public sealed class TypeLayoutSerializationHandler : ISerializationHandler<TypeL
     }
 
     /// <inheritdoc/>
-    public UInt32 Serialize(Span<Byte> buffer,
-                            TypeLayout graph)
+    public Unsigned31BitInteger Serialize(Span<Byte> buffer,
+                                          TypeLayout graph)
     {
         Int32 pointer = 0;
         Unsafe.As<Byte, LayoutMemberType>(ref buffer[pointer]) = graph.m_Type;
         pointer += Unsafe.SizeOf<LayoutMemberType>();
         if (graph.m_Type is not LayoutMemberType.Object)
         {
-            return (UInt32)pointer;
+            return pointer;
         }
 
         if (graph.m_Members is null)
@@ -89,11 +89,11 @@ public sealed class TypeLayoutSerializationHandler : ISerializationHandler<TypeL
             pointer++;
             foreach (TypeLayout member in graph.m_Members)
             {
-                pointer += (Int32)this.Serialize(buffer: buffer[pointer..],
-                                                 graph: member);
+                pointer += this.Serialize(buffer: buffer[pointer..],
+                                          graph: member);
             }
         }
 
-        return (UInt32)pointer;
+        return pointer;
     }
 }

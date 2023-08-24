@@ -10,7 +10,8 @@ static internal class __Extensions
             return result;
         }
 
-        if (!type.IsValueType)
+        if (!type.IsValueType ||
+            type.IsPointer)
         {
             s_UnmanagedTypeCache.Add(key: type,
                                      value: false);
@@ -35,6 +36,14 @@ static internal class __Extensions
         s_UnmanagedTypeCache.Add(key: type,
                                  value: result);
         return result;
+    }
+
+    static internal Boolean IsUnmanagedSerializable(this Type type)
+    {
+        return (type.IsValueType &&
+               s_BuiltIn.Contains(type)) ||
+               (type.IsValueType &&
+               !type.GetInterfaces().Any());
     }
 
     static internal Boolean IsRecord(this Type type)
@@ -98,4 +107,22 @@ static internal class __Extensions
 
     static private readonly Dictionary<Type, Boolean> s_UnmanagedTypeCache = new();
     static private readonly Dictionary<Type, Boolean> s_IsRecordeCache = new();
+    static private readonly ImmutableArray<Type> s_BuiltIn = new Type[]
+    {
+        typeof(Boolean),
+        typeof(Byte),
+        typeof(Char),
+        typeof(Decimal),
+        typeof(Double),
+        typeof(Int16),
+        typeof(Int32),
+        typeof(Int64),
+        typeof(Object),
+        typeof(SByte),
+        typeof(Single),
+        typeof(String),
+        typeof(UInt16),
+        typeof(UInt32),
+        typeof(UInt64)
+    }.ToImmutableArray();
 }

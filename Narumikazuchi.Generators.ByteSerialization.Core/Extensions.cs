@@ -224,6 +224,7 @@ static public partial class Extensions
     }
 
     static public Boolean CanBeSerialized(this ITypeSymbol type,
+                                          ImmutableArray<IAssemblySymbol> assemblies,
                                           ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers)
     {
         if (s_CanBeSerializedCache.TryGetValue(key: type,
@@ -244,7 +245,7 @@ static public partial class Extensions
                                             value: false);
             return false;
         }
-        else if (type.IsUnmanagedSerializable())
+        else if (type.IsUnmanagedStruct())
         {
             s_CanBeSerializedCache.GetOrAdd(key: type,
                                             value: true);
@@ -266,11 +267,20 @@ static public partial class Extensions
                 return false;
             }
             else if (named.IsAbstract &&
-                     named.GetDerivedTypes().Length is 0)
+                     named.GetDerivedTypes(assemblies).Length is 0)
             {
                 s_CanBeSerializedCache.GetOrAdd(key: type,
                                                 value: false);
                 return false;
+            }
+            else if (named.IsAbstract &&
+                     named.GetDerivedTypes(assemblies).Length > 0 &&
+                     named.GetDerivedTypes(assemblies)
+                          .All(derived => derived.CanBeSerialized(assemblies, customSerializers)))
+            {
+                s_CanBeSerializedCache.GetOrAdd(key: type,
+                                                value: true);
+                return true;
             }
             else if (named.SpecialType is SpecialType.System_String)
             {
@@ -281,7 +291,7 @@ static public partial class Extensions
             else if (named.HasDefaultConstructor())
             {
                 result = named.GetMembersToSerialize()
-                              .All(member => member.CanBeSerialized(customSerializers));
+                              .All(member => member.CanBeSerialized(assemblies, customSerializers));
                 s_CanBeSerializedCache.GetOrAdd(key: type,
                                                 value: result);
                 return result;
@@ -289,7 +299,7 @@ static public partial class Extensions
             else if (named.IsRecord)
             {
                 result = named.GetMembersToSerialize()
-                              .All(member => member.CanBeSerialized(customSerializers));
+                              .All(member => member.CanBeSerialized(assemblies, customSerializers));
                 s_CanBeSerializedCache.GetOrAdd(key: type,
                                                 value: result);
                 return result;
@@ -297,7 +307,7 @@ static public partial class Extensions
             else if (named.ParameterizedConstructor() is not null)
             {
                 result = named.GetMembersToSerialize()
-                              .All(member => member.CanBeSerialized(customSerializers));
+                              .All(member => member.CanBeSerialized(assemblies, customSerializers));
                 s_CanBeSerializedCache.GetOrAdd(key: type,
                                                 value: result);
                 return result;
@@ -311,7 +321,7 @@ static public partial class Extensions
         }
         else if (type is IArrayTypeSymbol array)
         {
-            result = array.ElementType.CanBeSerialized(customSerializers);
+            result = array.ElementType.CanBeSerialized(assemblies, customSerializers);
             s_CanBeSerializedCache.GetOrAdd(key: type,
                                             value: result);
             return result;
@@ -325,19 +335,20 @@ static public partial class Extensions
     }
 
     static public Boolean CanBeSerialized(this ISymbol member,
+                                          ImmutableArray<IAssemblySymbol> assemblies,
                                           ImmutableDictionary<ITypeSymbol, ImmutableHashSet<INamedTypeSymbol>> customSerializers)
     {
         if (member is IFieldSymbol field)
         {
-            return field.Type.CanBeSerialized(customSerializers);
+            return field.Type.CanBeSerialized(assemblies, customSerializers);
         }
         else if (member is IPropertySymbol property)
         {
-            return property.Type.CanBeSerialized(customSerializers);
+            return property.Type.CanBeSerialized(assemblies, customSerializers);
         }
         else if (member is ITypeSymbol type)
         {
-            return type.CanBeSerialized(customSerializers);
+            return type.CanBeSerialized(assemblies, customSerializers);
         }
         else
         {
@@ -358,10 +369,10 @@ static public partial class Extensions
         }
     }
 
-    static public Boolean IsUnmanagedSerializable(this ITypeSymbol type)
+    static public Boolean IsUnmanagedStruct(this ITypeSymbol type)
     {
-        if (s_IsUnmanagedCache.TryGetValue(key: type,
-                                           value: out Boolean result))
+        if (s_IsUnmanagedStructCache.TryGetValue(key: type,
+                                                 value: out Boolean result))
         {
             return result;
         }
@@ -369,6 +380,32 @@ static public partial class Extensions
                  type.TypeKind is not TypeKind.Pointer &&
                  type.Name is not "IntPtr"
                            and not "UIntPtr")
+        {
+            s_IsUnmanagedStructCache.GetOrAdd(key: type,
+                                              value: true);
+            return true;
+        }
+        else
+        {
+            s_IsUnmanagedStructCache.GetOrAdd(key: type,
+                                              value: false);
+            return false;
+        }
+    }
+
+    static public Boolean IsUnmanagedSerializable(this ITypeSymbol type)
+    {
+        if (s_IsUnmanagedCache.TryGetValue(key: type,
+                                           value: out Boolean result))
+        {
+            return result;
+        }
+        else if (s_BuiltInTypes.ContainsKey(type.Name) ||
+                 (type.IsUnmanagedType &&
+                 type.TypeKind is not TypeKind.Pointer &&
+                 type.AllInterfaces.Length is 0 &&
+                 type.Name is not "IntPtr"
+                           and not "UIntPtr"))
         {
             s_IsUnmanagedCache.GetOrAdd(key: type,
                                         value: true);
@@ -420,6 +457,7 @@ static public partial class Extensions
         s_IsCompilerGeneratedCache.Clear();
         s_IsSerializationHandlerCache.Clear();
         s_IsUnmanagedCache.Clear();
+        s_IsUnmanagedStructCache.Clear();
         s_MemberCache.Clear();
     }
 
@@ -451,6 +489,7 @@ static public partial class Extensions
     static private readonly ConcurrentDictionary<ITypeSymbol, String> s_FileStringCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_CanBeSerializedCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_IsUnmanagedCache = new(SymbolEqualityComparer.Default);
+    static private readonly ConcurrentDictionary<ITypeSymbol, Boolean> s_IsUnmanagedStructCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_IsCompilerGeneratedCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_HasDefaultConstructorCache = new(SymbolEqualityComparer.Default);
     static private readonly ConcurrentDictionary<INamedTypeSymbol, Boolean> s_IsSerializationHandlerCache = new(SymbolEqualityComparer.Default);

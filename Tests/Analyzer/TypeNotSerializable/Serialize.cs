@@ -16,7 +16,7 @@ using System;
 
 public class Application
 {
-    static public Byte[] Run(System.Net.Cookie graph)
+    static public ReadOnlySpan<Byte> Run(System.Net.Cookie graph)
     {
         return ByteSerializer.Serialize(graph);
     }
@@ -37,7 +37,7 @@ using System;
 
 public class Application
 {
-    static public Byte[] Run(TypeNotSerializable graph)
+    static public ReadOnlySpan<Byte> Run(TypeNotSerializable graph)
     {
         return ByteSerializer.Serialize(graph);
     }

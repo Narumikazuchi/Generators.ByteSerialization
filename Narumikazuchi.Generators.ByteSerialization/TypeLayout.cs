@@ -21,9 +21,11 @@ public readonly partial struct TypeLayout
     {
         ArgumentNullException.ThrowIfNull(type);
 
+        Monitor.Enter(s_Cached);
         if (s_Cached.TryGetValue(key: type,
                                  value: out TypeLayout result))
         {
+            Monitor.Exit(s_Cached);
             return result;
         }
         else
@@ -114,6 +116,7 @@ public readonly partial struct TypeLayout
 
             s_Cached.Add(key: type,
                          value: result);
+            Monitor.Exit(s_Cached);
             return result;
         }
     }

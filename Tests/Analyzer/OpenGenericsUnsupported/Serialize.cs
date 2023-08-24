@@ -16,7 +16,7 @@ using System;
 
 public class Application<T>
 {
-    static public Byte[] Run(ArraySegment<T> graph)
+    static public ReadOnlySpan<Byte> Run(ArraySegment<T> graph)
     {
         return ByteSerializer.Serialize(graph);
     }

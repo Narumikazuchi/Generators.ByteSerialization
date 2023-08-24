@@ -16,7 +16,7 @@ using System;
 
 public class Application
 {
-    static public Byte[] Run(StoreMap graph)
+    static public ReadOnlySpan<Byte> Run(StoreMap graph)
     {
         return ByteSerializer.Serialize(graph);
     }

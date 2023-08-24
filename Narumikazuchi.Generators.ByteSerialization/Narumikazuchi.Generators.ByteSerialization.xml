@@ -53,6 +53,19 @@
             </remarks>
             <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.ReadOnlyMemory{System.Byte},``0@)">
+            <summary>
+            Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/>-representation of the object.</param>
+            <param name="result">The runtime object of type <typeparamref name="TSerializable"/> that the <see cref="T:System.Byte"/>[] array represents.</param>
+            <returns>The number of bytes read from the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
+        </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Deserialize``1(System.Byte*,``0@)">
             <summary>
             Deserializes the object from it's <see cref="T:System.Byte"/>-representation back into a runtime object of type <typeparamref name="TSerializable"/>.
@@ -131,6 +144,19 @@
             <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
         </member>
         <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Span{System.Byte},``0)">
+            <summary>
+            Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
+            </summary>
+            <param name="buffer">The buffer into which the <see cref="T:System.Byte"/>-representation of the specified runtime object will be stored.</param>
+            <param name="graph">The runtime object to serialize.</param>
+            <returns>The amount bytes written to the buffer.</returns>
+            <remarks>
+            This should NOT throw an exception however if it still does, then it indicates a problem with the code generation.
+            If you encounter an exception it would help if you could contact me for a timely fix.
+            </remarks>
+            <exception cref="T:Narumikazuchi.Generators.ByteSerialization.TypeNotSerializable"/>
+        </member>
+        <member name="M:Narumikazuchi.Generators.ByteSerialization.ByteSerializer.Serialize``1(System.Memory{System.Byte},``0)">
             <summary>
             Serializes the specified runtime object into it's raw <see cref="T:System.Byte"/>-representation.
             </summary>

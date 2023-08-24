@@ -48,6 +48,10 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
         {
             var _var0 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
             pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+            if (_var0 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(Person[])))
+            {
+                throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(Person[]));
+            }
             var _var1 = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));
             pointer += sizeof(Int32);
             result = new Person[_var1];
@@ -58,11 +62,19 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
                 {
                     var _var4 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                     pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+                    if (_var4 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(Person)))
+                    {
+                        throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(Person));
+                    }
                     var _var5 = default(String);
                     if (buffer[pointer++] == 0x1)
                     {
                         var _var6 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                         pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+                        if (_var6 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(String)))
+                        {
+                            throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(String));
+                        }
                         var _var7 = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                         pointer += Unsafe.SizeOf<Int32>();
                         _var5 = new String(MemoryMarshal.Cast<Byte, Char>(buffer[pointer..(pointer + _var7)]));
@@ -77,6 +89,10 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
                     {
                         var _var9 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                         pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+                        if (_var9 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(String)))
+                        {
+                            throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(String));
+                        }
                         var _var10 = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                         pointer += Unsafe.SizeOf<Int32>();
                         _var8 = new String(MemoryMarshal.Cast<Byte, Char>(buffer[pointer..(pointer + _var10)]));
@@ -125,9 +141,15 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
                 if (_var0 is not null)
                 {
                     size += sizeof(Byte) + Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
-                    size += 4 * _var0.FirstName.Length;
+                    if (_var0.FirstName is not null)
+                    {
+                        size += 4 * _var0.FirstName.Length;
+                    }
                     size += sizeof(Byte) + Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
-                    size += 4 * _var0.LastName.Length;
+                    if (_var0.LastName is not null)
+                    {
+                        size += 4 * _var0.LastName.Length;
+                    }
                     size += Unsafe.SizeOf<DateOnly>();
                     size += Unsafe.SizeOf<Guid>();
                 }

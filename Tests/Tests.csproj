@@ -7,11 +7,20 @@
 		<PlatformTarget>x64</PlatformTarget>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<NoWarn>NU1608;NU1803;1701;1702,0282</NoWarn>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="Narumikazuchi.config" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AdditionalFiles Include="Narumikazuchi.config" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
@@ -25,6 +34,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Narumikazuchi.Generators.ByteSerialization.Core\Narumikazuchi.Generators.ByteSerialization.Core.csproj" />
+		<ProjectReference Include="..\Narumikazuchi.Generators.ByteSerialization.Core\Narumikazuchi.Generators.ByteSerialization.Core.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\Narumikazuchi.Generators.ByteSerialization\Narumikazuchi.Generators.ByteSerialization.csproj" />
 	</ItemGroup>
 
@@ -36,24 +46,25 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Using Include="Microsoft.CodeAnalysis" />
-		<Using Include="Microsoft.CodeAnalysis.CSharp" />
-		<Using Include="Microsoft.CodeAnalysis.CSharp.Testing" />
-		<Using Include="Microsoft.CodeAnalysis.Diagnostics" />
-		<Using Include="Microsoft.CodeAnalysis.Testing" />
-		<Using Include="Microsoft.CodeAnalysis.Testing.Verifiers" />
-		<Using Include="Microsoft.CodeAnalysis.Text" />
-		<Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
 		<Using Include="System" />
 		<Using Include="System.Collections.Generic" />
 		<Using Include="System.Collections.Immutable" />
+		<Using Include="System.IO" />
 		<Using Include="System.Text" />
 		<Using Include="System.Threading" />
 		<Using Include="System.Threading.Tasks" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="CodeGenerator\" />
+	  <Folder Include="CodeGenerator\Unmanaged_ICollection\" />
+	  <Folder Include="Functionality\Managed_ICollection\JaggedArray\" />
+	  <Folder Include="Functionality\Managed_ICollection\OneDimensionalArray\" />
+	  <Folder Include="Functionality\Managed_ICollection\SingleObject\" />
+	  <Folder Include="Functionality\Managed_ICollection\TwoDimensionalArray\" />
+	  <Folder Include="Functionality\Unmanaged_ICollection\JaggedArray\" />
+	  <Folder Include="Functionality\Unmanaged_ICollection\OneDimensionalArray\" />
+	  <Folder Include="Functionality\Unmanaged_ICollection\SingleObject\" />
+	  <Folder Include="Functionality\Unmanaged_ICollection\TwoDimensionalArray\" />
 	</ItemGroup>
 
 </Project>

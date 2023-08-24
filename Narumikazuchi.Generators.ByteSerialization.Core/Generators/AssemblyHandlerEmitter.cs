@@ -50,15 +50,10 @@ static public class AssemblyHandlerEmitter
 #pragma warning disable
 #nullable enable
 
-using System;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-
 namespace Narumikazuchi.Generated.Internals.ByteSerialization;
 
-[EditorBrowsable(EditorBrowsableState.Never)]
-[CompilerGenerated]
+[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+[System.Runtime.CompilerServices.CompilerGenerated]
 public partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} :
     {GlobalNames.IBYTESERIALIZER}{interfaces}
 {{
@@ -71,8 +66,8 @@ public partial interface IAssemblyHandler_{compilation.Assembly.Name.ToValidCSha
     }}
 }}
 
-[EditorBrowsable(EditorBrowsableState.Never)]
-[CompilerGenerated]
+[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+[System.Runtime.CompilerServices.CompilerGenerated]
 public sealed class AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()} : IAssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()}
 {{
     public AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpTypename()}()
@@ -109,7 +104,6 @@ public sealed class AssemblyHandler_{compilation.Assembly.Name.ToValidCSharpType
             else if (member is INamedTypeSymbol type)
             {
                 if (!SymbolEqualityComparer.Default.Equals(byteSerializer, type) &&
-                    type.BaseType is null &&
                     type.ImplementsInterface(byteSerializer))
                 {
                     candidates.Add(type);

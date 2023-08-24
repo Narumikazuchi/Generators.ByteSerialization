@@ -19,11 +19,17 @@ static public partial class ByteSerializer
     /// If you encounter an exception it would help if you could contact me for a timely fix.
     /// </remarks>
     /// <exception cref="TypeNotSerializable"/>
-    static public Int32 GetExpectedSerializedSize<TSerializable>(TSerializable? graph)
+    static public Unsigned31BitInteger GetExpectedSerializedSize<TSerializable>(TSerializable? graph)
     {
-        if (typeof(TSerializable).IsUnmanagedStruct())
+        if (typeof(TSerializable).IsUnmanagedSerializable())
         {
             return Unsafe.SizeOf<TSerializable>();
+        }
+        else if (typeof(TSerializable).IsUnmanagedStruct())
+        {
+            return sizeof(Int64) +
+                   TypeLayoutSerializationHandler.Default.GetExpectedArraySize(TypeLayout.CreateFrom(typeof(TSerializable))) +
+                   Unsafe.SizeOf<TSerializable>();
         }
         else if (Handlers is ISerializationHandler<TSerializable> handler)
         {

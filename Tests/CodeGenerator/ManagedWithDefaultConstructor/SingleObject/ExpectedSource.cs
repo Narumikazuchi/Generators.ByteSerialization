@@ -48,11 +48,19 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
         {
             var _var0 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
             pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+            if (_var0 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(Person)))
+            {
+                throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(Person));
+            }
             var _var1 = default(String);
             if (buffer[pointer++] == 0x1)
             {
                 var _var2 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                 pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+                if (_var2 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(String)))
+                {
+                    throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(String));
+                }
                 var _var3 = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                 pointer += Unsafe.SizeOf<Int32>();
                 _var1 = new String(MemoryMarshal.Cast<Byte, Char>(buffer[pointer..(pointer + _var3)]));
@@ -67,6 +75,10 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
             {
                 var _var5 = Unsafe.As<Byte, Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                 pointer += Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
+                if (_var5 != Narumikazuchi.Generators.ByteSerialization.TypeIdentifier.CreateFrom(typeof(String)))
+                {
+                    throw new Narumikazuchi.Generators.ByteSerialization.WrongTypeDeserialization(typeof(String));
+                }
                 var _var6 = Unsafe.As<Byte, Int32>(ref MemoryMarshal.GetReference(buffer[pointer..]));
                 pointer += Unsafe.SizeOf<Int32>();
                 _var4 = new String(MemoryMarshal.Cast<Byte, Char>(buffer[pointer..(pointer + _var6)]));
@@ -103,9 +115,15 @@ public partial interface IAssemblyHandler_TestProject : Narumikazuchi.Generators
         if (value is not null)
         {
             size += sizeof(Byte) + Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
-            size += 4 * value.FirstName.Length;
+            if (value.FirstName is not null)
+            {
+                size += 4 * value.FirstName.Length;
+            }
             size += sizeof(Byte) + Unsafe.SizeOf<Narumikazuchi.Generators.ByteSerialization.TypeIdentifier>();
-            size += 4 * value.LastName.Length;
+            if (value.LastName is not null)
+            {
+                size += 4 * value.LastName.Length;
+            }
             size += Unsafe.SizeOf<DateOnly>();
             size += Unsafe.SizeOf<Guid>();
         }

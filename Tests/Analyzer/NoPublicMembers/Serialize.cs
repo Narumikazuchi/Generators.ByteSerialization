@@ -16,7 +16,7 @@ using System;
 
 public class Application
 {
-    static public Byte[] Run(Version graph)
+    static public ReadOnlySpan<Byte> Run(Version graph)
     {
         return ByteSerializer.Serialize(graph);
     }

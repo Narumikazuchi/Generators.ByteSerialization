@@ -37,7 +37,7 @@
 		<DocumentationFile>Narumikazuchi.Generators.ByteSerialization.xml</DocumentationFile>
 		<Authors>Narumikazuchi</Authors>
 		<Copyright>©2023 Narumikazuchi</Copyright>
-		<Version>2023.5.23.1-prerelease</Version>
+		<Version>2023.7.18.1-prerelease</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -77,7 +77,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Narumikazuchi.InputOutput" Version="2023.4.13.1-prerelease" />
+		<PackageReference Include="Narumikazuchi.InputOutput" Version="2023.8.24.1-prerelease" />
 	</ItemGroup>
 
 	<ItemGroup>

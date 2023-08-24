@@ -26,7 +26,7 @@ public class Test : ITest
 
 public class Application
 {
-    static public Byte[] Run(ITest graph)
+    static public ReadOnlySpan<Byte> Run(ITest graph)
     {
         return ByteSerializer.Serialize(graph);
     }
